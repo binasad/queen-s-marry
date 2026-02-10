@@ -98,12 +98,22 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Health check endpoint
+// Health check endpoint (root and versioned)
 app.get('/health', (req, res) => {
   console.log('🏥 Health check requested');
   res.json({
     success: true,
     message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    environment: env.nodeEnv,
+    apiVersion: env.apiVersion,
+  });
+});
+app.get(`/api/${env.apiVersion}/health`, (req, res) => {
+  console.log('🏥 API v1 health check requested');
+  res.json({
+    success: true,
+    message: 'API v1 is healthy',
     timestamp: new Date().toISOString(),
     environment: env.nodeEnv,
     apiVersion: env.apiVersion,
