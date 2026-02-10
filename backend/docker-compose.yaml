@@ -1,0 +1,12 @@
+services:
+  backend:
+    build: .
+    container_name: salon-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    # Removed depends_on: db because we are using Supabase
+    volumes:
+      - .:/app
+      - /app/node_modules

@@ -1,0 +1,91 @@
+### Variables
+@baseUrl = http://localhost:5000/api/v1
+@accessToken = 
+@refreshToken = 
+@verificationToken = 
+@resetToken = 
+
+### 1. Register User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Alice Tester",
+  "email": "alice@example.com",
+  "password": "Str0ng!Pass",
+  "address": "123 Main St",
+  "phone": "+11234567890",
+  "gender": "Female"
+}
+
+### 2. Verify Email
+# Get token from Ethereal email, paste it here
+GET {{baseUrl}}/auth/verify-email/{{verificationToken}}
+
+### 3. Login User
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "Str0ng!Pass"
+}
+
+### 4. Login Admin (after promoting user in DB)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin!Pass123"
+}
+
+### 5. Resend Verification Email
+POST {{baseUrl}}/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "alice@example.com"
+}
+
+### 6. Forgot Password
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "alice@example.com"
+}
+
+### 7. Reset Password
+# Get token from Ethereal email, paste it here
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "{{resetToken}}",
+  "newPassword": "NewStr0ng!Pass"
+}
+
+### 8. Refresh Token
+POST {{baseUrl}}/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 9. Change Password (Authenticated)
+POST {{baseUrl}}/auth/change-password
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "currentPassword": "NewStr0ng!Pass",
+  "newPassword": "AnotherStr0ng!1"
+}
+
+### 10. Get Current User Profile (Test Auth)
+GET {{baseUrl}}/users/profile
+Authorization: Bearer {{accessToken}}
+
+###

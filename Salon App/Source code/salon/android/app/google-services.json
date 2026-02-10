@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "624818969498",
+    "project_id": "merry-queen",
+    "storage_bucket": "merry-queen.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:624818969498:android:e15dad6962a0563a47f823",
+        "android_client_info": {
+          "package_name": "com.example.salon"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "624818969498-qcbue1faf4sfi4usmdppeek0f26srvgd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFAkViZTxnpkDRWKqF965jHcVuWw3Jzwk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "624818969498-qcbue1faf4sfi4usmdppeek0f26srvgd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "624818969498-4ivjbhergbiivtpue12c6s2jeh6ftrc1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.salon"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
