@@ -1,0 +1,15 @@
+name: Salon App CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'salon-app/**' # Only triggers if files in the salon-app folder change
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Add your build and deployment steps for salon-app here

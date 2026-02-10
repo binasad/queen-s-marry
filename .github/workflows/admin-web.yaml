@@ -1,0 +1,15 @@
+name: Admin Web CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'admin-web/**' # Only triggers if files in the admin-web folder change
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Add your build and deployment steps for admin-web here

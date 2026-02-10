@@ -1,0 +1,19 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**' # Only triggers if files in the backend folder change
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: |
+          docker build -t shersaad/salon-backend ./backend
+
+      # Add your deployment steps (SSH to EC2, Docker Login, Docker Pull) here
