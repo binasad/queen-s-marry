@@ -38,7 +38,7 @@ Thumbs.db
 
 # Testing
 coverage/
-firebase-admin-sdk.json
+firebase-admin-sdk.json.json
 .nyc_output/
 
 # Build
