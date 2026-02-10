@@ -1,6 +1,21 @@
 # Root-level .gitignore for monorepo
 # This complements individual project .gitignore files
 
+# Ignore Gradle and Android build artifacts
+**/android/GradleCache/
+**/android/.gradle/
+**/android/build/
+**/android/app/build/
+*.pyc
+*.log
+
+# Ignore Node modules
+**/node_modules/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
 # OS Files
 .DS_Store
 .DS_Store?
