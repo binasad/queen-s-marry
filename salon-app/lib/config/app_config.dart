@@ -5,24 +5,25 @@ class AppConfig {
   // Use environment variable or default to Android emulator
   static const String devBaseUrl = String.fromEnvironment(
     'BACKEND_URL',
-    defaultValue: 'http://192.168.18.110:5000/api/v1', // Android emulator default
+    defaultValue: 'http://44.215.209.41:5000/api/v1', // AWS EC2 backend
   );
-  
+
   static const String devWebBaseUrl =
-      'http://localhost:5000/api/v1'; // Web/desktop
+      'http://44.215.209.41:5000/api/v1'; // AWS EC2 backend for web/desktop
 
   // Optional: override for physical device over LAN (set via --dart-define)
   // Example: flutter run --dart-define=DEV_DEVICE_BASE_URL=http://YOUR_IP:5000/api/v1
   static const String devDeviceBaseUrl = String.fromEnvironment(
     'DEV_DEVICE_BASE_URL',
-    defaultValue: '', // Set via --dart-define for physical devices
+    defaultValue:
+        'http://44.215.209.41:5000/api/v1', // AWS EC2 backend for physical devices
   );
 
   // Production
-  static const String prodBaseUrl = 'https://api.yoursalon.com/api/v1';
+  static const String prodBaseUrl = 'http://44.215.209.41:5000/api/v1';
 
   // Toggle this for prod
-  static const bool isProduction = false;
+  static const bool isProduction = true;
 
   static String get baseUrl {
     if (isProduction) return prodBaseUrl;
