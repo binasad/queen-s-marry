@@ -51,7 +51,7 @@ const env = {
   // URLs
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   adminWebUrl: process.env.ADMIN_WEB_URL || 'http://localhost:3001',
-  backendUrl: process.env.BACKEND_URL || 'http://localhost:5000',
+  backendUrl: process.env.BACKEND_URL || 'http://44.215.209.41/:5000',
 
   // AWS S3
   s3: {
