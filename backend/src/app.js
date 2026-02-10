@@ -193,6 +193,7 @@ app.use(`/api/${API_VERSION}`, offersRoutes);
 // 404 handler
 app.use((req, res) => {
   console.log(`❌ 404 - Route not found: ${req.method} ${req.path}`);
+  console.log("hello");
   res.status(404).json({
     success: false,
     message: 'Route not found',
