@@ -7,26 +7,26 @@ on:
       - 'backend/**'
 
 jobs:
-  build-and-deploy: # This must contain ALL steps
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # STEP 1: LOGIN (Missing in your current log)
+      # 1. Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      # STEP 2: BUILD AND PUSH (Your log only shows Build)
+      # 2. Build and Push (Your log showed only Build, now we add Push)
       - name: Build and Push Docker Image
         run: |
           docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest ./backend
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
 
-      # STEP 3: DEPLOY (Missing in your current log)
+      # 3. SSH to EC2 and Deploy (This is the part that sends it to your server)
       - name: SSH to EC2 and Update
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -41,5 +41,10 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
             sudo docker stop salon-backend || true
             sudo docker rm salon-backend || true
-            sudo docker run -d --name salon-backend -p 5000:5000 --restart always --env-file /home/ubuntu/Aztrosys/backend/.env ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
+            sudo docker run -d \
+              --name salon-backend \
+              -p 5000:5000 \
+              --restart always \
+              --env-file /home/ubuntu/Aztrosys/backend/.env \
+              ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
             sudo docker image prune -f
