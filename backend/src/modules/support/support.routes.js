@@ -7,12 +7,7 @@ const { validationRules } = require('./support.validation');
 const { handleValidationErrors } = require('../auth/auth.validation');
 
 // Public route - anyone can create a ticket
-router.post(
-  '/support/tickets',
-  validationRules.createTicket,
-  handleValidationErrors,
-  supportController.createTicket
-);
+router.post('/support/tickets', auth, validationRules.createTicket, handleValidationErrors, supportController.createTicket);
 
 // Admin routes
 router.get(
