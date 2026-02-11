@@ -45,7 +45,7 @@ global.io = io;
 server.listen(PORT, '0.0.0.0', async () => {
   console.log(`\n🚀 Server running on port ${PORT}`);
   console.log(`📝 Environment: ${env.nodeEnv}`);
-  console.log(`🔗 API Base URL: ${env.backendUrl}/api/${env.apiVersion}`);
+  console.log(`🔗 API Base URL: ${env.backendUrl}`);
   console.log(`🔌 WebSocket enabled`);
 
   // Test database connection
