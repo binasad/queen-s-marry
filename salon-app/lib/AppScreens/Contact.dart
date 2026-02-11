@@ -8,7 +8,10 @@ class ContactSalonScreen extends StatelessWidget {
     final TextEditingController _messageController = TextEditingController();
     return Scaffold(
       appBar: AppBar(
-        leading: const Icon(Icons.help_outline, color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
           "Help & Support",
           style: TextStyle(fontWeight: FontWeight.bold),

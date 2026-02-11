@@ -358,8 +358,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
 
                         ProfileTile(
-                          icon: CupertinoIcons.phone,
-                          title: "Contact Salon",
+                          icon: Icons.support_agent,
+                          title: "Help & Support",
                           onTap: () {
                             Navigator.push(
                               context,
