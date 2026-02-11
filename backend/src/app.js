@@ -34,7 +34,11 @@ app.use(helmet({
 }));
 
 // CORS configuration - more permissive in development
-const allowedOrigins = [env.frontendUrl, env.adminWebUrl].filter(Boolean);
+const allowedOrigins = [
+  env.frontendUrl,
+  env.adminWebUrl,
+  'https://admin-web-navy-three.vercel.app'
+].filter(Boolean);
 const corsOptions = {
   origin: (origin, callback) => {
     // Mobile apps (Android/iOS) don't send origin header - always allow
