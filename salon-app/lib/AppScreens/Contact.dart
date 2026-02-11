@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 
 class ContactSalonScreen extends StatelessWidget {
@@ -10,8 +8,10 @@ class ContactSalonScreen extends StatelessWidget {
     final TextEditingController _messageController = TextEditingController();
     return Scaffold(
       appBar: AppBar(
-        title: Text("Contact Salon",
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        leading: const Icon(Icons.help_outline, color: Colors.white),
+        title: const Text(
+          "Help & Support",
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
         flexibleSpace: Container(
@@ -86,7 +86,9 @@ class ContactSalonScreen extends StatelessWidget {
                   height: 40,
                   width: 120,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30), // adjust the radius as needed
+                    borderRadius: BorderRadius.circular(
+                      30,
+                    ), // adjust the radius as needed
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black26,
@@ -97,11 +99,16 @@ class ContactSalonScreen extends StatelessWidget {
                   ),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.zero, // remove default padding so gradient fills
-                      backgroundColor: Colors.transparent, // make ElevatedButton transparent
-                      shadowColor: Colors.transparent, // optional: remove shadow color
+                      padding: EdgeInsets
+                          .zero, // remove default padding so gradient fills
+                      backgroundColor:
+                          Colors.transparent, // make ElevatedButton transparent
+                      shadowColor:
+                          Colors.transparent, // optional: remove shadow color
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12), // rounded corners
+                        borderRadius: BorderRadius.circular(
+                          12,
+                        ), // rounded corners
                       ),
                     ),
                     onPressed: () {
@@ -113,10 +120,7 @@ class ContactSalonScreen extends StatelessWidget {
                     child: Ink(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            Color(0xFFFD6C57),
-                            Color(0xFFFE9554)
-                          ],
+                          colors: [Color(0xFFFD6C57), Color(0xFFFE9554)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -124,16 +128,22 @@ class ContactSalonScreen extends StatelessWidget {
                       ),
                       child: Container(
                         alignment: Alignment.center,
-                        constraints: const BoxConstraints(minWidth: 100, minHeight: 50), // button size
+                        constraints: const BoxConstraints(
+                          minWidth: 100,
+                          minHeight: 50,
+                        ), // button size
                         child: const Text(
                           "Send",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                )
-
+                ),
               ],
             ),
           ),
