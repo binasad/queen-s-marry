@@ -34,7 +34,7 @@ jobs:
         run: npm run build
         working-directory: ./admin-web
 
-      # Deploy (example: Vercel CLI, replace with your deployment method)
-      # - name: Deploy to Vercel
-      #   run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
-      #   working-directory: ./admin-web
+      # Deploy to Vercel
+      - name: Deploy to Vercel
+        run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+        working-directory: ./admin-web
