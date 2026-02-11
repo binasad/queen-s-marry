@@ -1,3 +1,8 @@
+      - name: Create .env.local
+        run: |
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.local
+          echo "NEXT_PUBLIC_BACKEND_URL=${{ secrets.NEXT_PUBLIC_BACKEND_URL }}" >> .env.local
+        working-directory: ./admin-web
 name: Admin Web CI/CD
 
 on:
