@@ -133,3 +133,4 @@ export const INITIAL_RBAC_MATRIX: Record<string, string[]> = {
     'reports.view',
   ],
 };
+console.log("ok");
