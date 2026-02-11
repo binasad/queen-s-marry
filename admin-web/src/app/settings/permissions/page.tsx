@@ -458,8 +458,8 @@ export default function PermissionsPage() {
       setMatrix(initialMatrix);
       
       // Expand all groups by default
-      const allGroups = new Set(
-        loadedPermissions.map((p: Permission) => p.slug.split('.')[0] || 'other')
+      const allGroups = new Set<string>(
+        loadedPermissions.map((p: Permission) => String(p.slug.split('.')[0] || 'other'))
       );
       setExpandedGroups(allGroups);
     } catch (error: any) {
