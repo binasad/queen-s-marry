@@ -25,6 +25,7 @@ export const updateRolePermissions = async (matrix: Record<string, string[]>) =>
     return response.data;
   } catch (error) {
     console.error('Failed to sync permissions:', error);
+    console.log("hello");
     throw error;
   }
 };
