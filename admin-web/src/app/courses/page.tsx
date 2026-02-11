@@ -55,7 +55,7 @@ export default function CoursesPage() {
     wsService.onCourseDeleted = (data) => {
       console.log('📚 Course deleted via WebSocket:', data);
       loadCourses(); // Refresh the list
-      toast.success('Course deleted!!');
+      toast.success('Course deleted!!!');
     };
 
     // Connect WebSocket
