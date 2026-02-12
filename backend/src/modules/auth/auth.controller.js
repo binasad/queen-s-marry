@@ -85,8 +85,8 @@ class AuthController {
     try {
       console.log('👤 Guest login request received');
 
-      // Use Guest role instead of default User role
-      const roleId = await getRoleIdByName('Customer');
+      // Use Guest role (not Customer - guests appear only under Guest in admin)
+      const roleId = await getRoleIdByName('Guest');
       const guestId = crypto.randomUUID();
       const guestEmail = `guest_${guestId}@salon.guest`;
       

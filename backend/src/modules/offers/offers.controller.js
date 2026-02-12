@@ -181,6 +181,19 @@ class OffersController {
         global.io.emit('offers-updated', { action: 'created', offer: newOffer });
       }
 
+      // Notify customers about new offer
+      const pushService = require('../../services/pushNotificationService');
+      const discount = newOffer.discount_percentage
+        ? `${newOffer.discount_percentage}% off`
+        : newOffer.discount_amount
+          ? `${newOffer.discount_amount} off`
+          : 'Special offer';
+      pushService.sendToCustomers({
+        title: 'New Offer!',
+        body: `${newOffer.title}: ${discount} – Valid until ${new Date(newOffer.end_date).toLocaleDateString()}`,
+        data: { type: 'offer', id: String(newOffer.id) },
+      }).catch(() => {});
+
       res.status(201).json({
         success: true,
         data: { offer: newOffer },

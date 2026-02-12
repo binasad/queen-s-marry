@@ -1,8 +1,11 @@
 const app = require('./app');
 const env = require('./config/env');
 const { pool } = require('./config/db');
+const { initFirebase } = require('./services/pushNotificationService');
 const http = require('http');
 const { Server } = require('socket.io');
+
+initFirebase();
 
 const PORT = env.port;
 

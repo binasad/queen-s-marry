@@ -218,6 +218,14 @@ class CoursesController {
         global.io.to('admin').emit('course-application-created', { application });
       }
 
+      // Push to admins (works when app is closed)
+      const pushService = require('../../services/pushNotificationService');
+      pushService.sendToAdmins({
+        title: 'New Course Application',
+        body: `${name} applied for ${courseResult.rows[0].title}`,
+        data: { type: 'course_application', id: application.id },
+      }).catch(() => {});
+
       res.status(201).json({
         success: true,
         message: 'Application submitted successfully.',
