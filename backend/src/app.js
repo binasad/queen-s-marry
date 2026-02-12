@@ -19,6 +19,7 @@ const supportRoutes = require('./modules/support/support.routes');
 const notificationsRoutes = require('./modules/notifications/notifications.routes');
 const offersRoutes = require('./modules/offers/offers.routes');
 const paymentRoutes = require('./modules/payments/payments.routes');
+const blogsRoutes = require('./modules/blogs/blogs.routes');
 
 const app = express();
 
@@ -209,6 +210,7 @@ app.use(`/api/${API_VERSION}`, notificationsRoutes);
 
 app.use(`/api/${API_VERSION}/payments`, paymentRoutes);
 app.use(`/api/${API_VERSION}`, offersRoutes);
+app.use(`/api/${API_VERSION}`, blogsRoutes);
 
 // 404 handler
 app.use((req, res) => {
