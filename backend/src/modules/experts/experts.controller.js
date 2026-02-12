@@ -7,7 +7,8 @@ class ExpertsController {
       const { serviceId, search, isActive, page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
 
-      let queryText = 'SELECT * FROM experts WHERE 1=1';
+      // Use alias e for consistency (required for ORDER BY and optional filters)
+      let queryText = 'SELECT e.* FROM experts e WHERE 1=1';
       const queryParams = [];
       let paramCounter = 1;
 
@@ -33,7 +34,7 @@ class ExpertsController {
         paramCounter++;
       }
 
-      queryText += ` ORDER BY e.rating DESC, e.name ASC LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
+      queryText += ` ORDER BY e.rating DESC NULLS LAST, e.name ASC LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
       queryParams.push(limit, offset);
 
       const result = await query(queryText, queryParams);
