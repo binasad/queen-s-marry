@@ -1,5 +1,12 @@
 const { query } = require('../../config/db');
 const s3Service = require('../../services/s3Service');
+const { uploadToLocal } = require('../../services/localUploadService');
+
+const isS3Configured = () => {
+  const key = process.env.AWS_ACCESS_KEY_ID || '';
+  const secret = process.env.AWS_SECRET_ACCESS_KEY || '';
+  return key && secret && !key.includes('your_') && !secret.includes('your_');
+};
 
 class ServicesController {
   // Get all service categories
@@ -315,7 +322,7 @@ class ServicesController {
     }
   }
 
-  // Upload image to S3 (Admin only)
+  // Upload image to S3 or local (Admin only)
   async uploadImage(req, res) {
     try {
       if (!req.file) {
@@ -325,11 +332,22 @@ class ServicesController {
         });
       }
 
-      const { folder = 'assets' } = req.body; // Default to 'assets', can be 'categories' or 'services'
+      const { folder = 'assets' } = req.body; // Default to 'assets', can be 'categories', 'services', 'profiles'
       const fileBuffer = req.file.buffer;
       const originalName = req.file.originalname;
 
-      const imageUrl = await s3Service.uploadImage(fileBuffer, originalName, folder);
+      let imageUrl;
+      if (isS3Configured()) {
+        try {
+          imageUrl = await s3Service.uploadImage(fileBuffer, originalName, folder);
+        } catch (s3Error) {
+          console.warn('S3 upload failed, using local fallback:', s3Error.message);
+          imageUrl = await uploadToLocal(fileBuffer, originalName, folder);
+        }
+      } else {
+        console.log('S3 not configured (placeholder credentials), using local storage');
+        imageUrl = await uploadToLocal(fileBuffer, originalName, folder);
+      }
 
       res.json({
         success: true,
