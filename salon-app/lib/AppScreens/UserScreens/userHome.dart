@@ -21,6 +21,7 @@ import '../../widgets/cached_image.dart';
 import '../Services/userServices.dart';
 import '../Services/ApiCategoryServicesTabbed.dart';
 import '../Services/servicesdetails.dart';
+import 'AppointmentBooking.dart';
 import 'Course Screens/CourseDetails.dart';
 import '../../services/course_service.dart';
 import '../googleMap.dart';
@@ -160,6 +161,8 @@ class _UserHomeState extends ConsumerState<UserHome>
             ),
             'service_id': offer['service_id']?.toString(),
             'course_id': offer['course_id']?.toString(),
+            'discount_percentage': offer['discount_percentage'],
+            'discount_amount': offer['discount_amount'],
           };
         }).toList();
         setState(() {
@@ -563,6 +566,20 @@ class _UserHomeState extends ConsumerState<UserHome>
     );
   }
 
+  double _applyOfferDiscount(double price, Map<String, dynamic> offer) {
+    final pct = offer['discount_percentage'];
+    final amt = offer['discount_amount'];
+    if (pct != null) {
+      final val = double.tryParse(pct.toString()) ?? 0;
+      return (price * (1 - val / 100)).roundToDouble();
+    }
+    if (amt != null) {
+      final val = double.tryParse(amt.toString()) ?? 0;
+      return (price - val).clamp(0.0, double.infinity);
+    }
+    return price;
+  }
+
   Future<void> _onOfferTap(Map<String, dynamic> offer) async {
     final serviceId = offer['service_id']?.toString();
     final courseId = offer['course_id']?.toString();
@@ -571,10 +588,19 @@ class _UserHomeState extends ConsumerState<UserHome>
       try {
         final service = await ServiceCatalogService().getServiceById(serviceId);
         if (mounted && service.isNotEmpty) {
+          final basePrice = (double.tryParse(service['price']?.toString() ?? '0') ?? 0);
+          final discountedPrice = _applyOfferDiscount(basePrice, offer);
+          final serviceWithOffer = Map<String, dynamic>.from(service);
+          serviceWithOffer['price'] = discountedPrice;
+          serviceWithOffer['_offer_id'] = offer['id']?.toString();
+          serviceWithOffer['_offer_title'] = offer['title']?.toString();
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ServiceDetailedScreen(service: service),
+              builder: (_) => AppointmentBookingScreen(
+                service: serviceWithOffer,
+                offerId: offer['id']?.toString(),
+              ),
             ),
           );
         }
@@ -591,16 +617,20 @@ class _UserHomeState extends ConsumerState<UserHome>
       try {
         final raw = await CourseService().getCourseById(courseId);
         if (mounted && raw.isNotEmpty) {
+          final basePrice = (double.tryParse(raw['price']?.toString() ?? '0') ?? 0);
+          final discountedPrice = _applyOfferDiscount(basePrice, offer);
           final course = {
             'id': raw['id']?.toString() ?? '',
             'title': raw['title']?.toString() ?? 'Course',
             'duration': raw['duration']?.toString() ?? 'Flexible',
-            'price': raw['price']?.toString() ?? '0',
+            'price': discountedPrice.toStringAsFixed(0),
             'image': raw['image_url']?.toString() ?? raw['image'] ?? '',
             'description': raw['description']?.toString() ?? '',
             'subjects': (raw['description']?.toString().contains('Subjects Included:') ?? false)
                 ? raw['description'].toString().split('Subjects Included:')[1].split(',').map((e) => e.trim()).toList()
                 : ['Professional Training'],
+            '_offer_id': offer['id']?.toString(),
+            '_offer_title': offer['title']?.toString(),
           };
           Navigator.push(
             context,

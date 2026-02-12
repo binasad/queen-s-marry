@@ -80,6 +80,24 @@ class CourseDetailScreen extends StatelessWidget {
         _badge(Icons.timer_outlined, course["duration"]),
         const SizedBox(width: 12),
         _badge(Icons.payments_outlined, "PKR ${course["price"]}"),
+        if (course["_offer_title"] != null) ...[
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: brandPink.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.local_offer, size: 14, color: brandPink),
+                const SizedBox(width: 6),
+                Text("${course["_offer_title"]}", style: const TextStyle(color: brandPink, fontWeight: FontWeight.bold, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -146,7 +164,11 @@ class CourseDetailScreen extends StatelessWidget {
           elevation: 10,
           shadowColor: brandPink.withOpacity(0.5),
         ),
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ApplyFormScreen(course: course["title"]))),
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ApplyFormScreen(
+          course: course["title"],
+          courseId: course["id"]?.toString(),
+          offerId: course["_offer_id"]?.toString(),
+        ))),
         child: const Text("Enroll in Academy", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
       ),
     );

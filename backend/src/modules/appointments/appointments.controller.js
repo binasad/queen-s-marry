@@ -17,6 +17,7 @@ class AppointmentsController {
         notes,
         payNow,
         paymentMethod,
+        offerId,
       } = req.body;
 
       // 1. Get service details for pricing
@@ -30,7 +31,31 @@ class AppointmentsController {
       }
 
       const service = serviceResult.rows[0];
-      const totalPrice = service.price;
+      let totalPrice = parseFloat(service.price) || 0;
+
+      // Apply offer discount if valid offerId provided
+      let appliedOfferId = null;
+      if (offerId) {
+        const offerResult = await query(
+          `SELECT id, title, discount_percentage, discount_amount, service_id, start_date, end_date, is_active
+           FROM offers WHERE id = $1 AND is_active = TRUE
+           AND start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE`,
+          [offerId]
+        );
+        if (offerResult.rows.length > 0) {
+          const offer = offerResult.rows[0];
+          const offerServiceId = offer.service_id?.toString();
+          if (!offerServiceId || offerServiceId === serviceId) {
+            appliedOfferId = offer.id;
+            if (offer.discount_percentage != null) {
+              totalPrice = totalPrice * (1 - parseFloat(offer.discount_percentage) / 100);
+            } else if (offer.discount_amount != null) {
+              totalPrice = Math.max(0, totalPrice - parseFloat(offer.discount_amount));
+            }
+            totalPrice = Math.round(totalPrice * 100) / 100;
+          }
+        }
+      }
 
       // 2. Logic for Status & Expiration
       let status = 'reserved';
@@ -46,14 +71,14 @@ class AppointmentsController {
         expiresAt = new Date(Date.now() + 4 * 60 * 60 * 1000); // 4-hour window
       }
 
-      // 3. Create appointment (FIXED THE $15 MISSING PLACEHOLDER)
+      // 3. Create appointment
       const result = await query(
         `INSERT INTO appointments (
           user_id, service_id, expert_id, customer_name, customer_phone, 
           customer_email, appointment_date, appointment_time, status, 
-          payment_status, payment_method, total_price, notes, expires_at, paid_at
+          payment_status, payment_method, total_price, notes, expires_at, paid_at, offer_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING *`,
         [
           req.user.id,
@@ -71,6 +96,7 @@ class AppointmentsController {
           notes || '',
           expiresAt,
           paidAt,
+          appliedOfferId,
         ]
       );
 
@@ -152,11 +178,13 @@ class AppointmentsController {
 
       let queryText = `
         SELECT a.*, s.name as service_name, s.duration,
-               e.name as expert_name, u.name as user_name, u.email as user_email
+               e.name as expert_name, u.name as user_name, u.email as user_email,
+               o.title as offer_title, o.id as offer_id
         FROM appointments a
         LEFT JOIN services s ON a.service_id = s.id
         LEFT JOIN experts e ON a.expert_id = e.id
         LEFT JOIN users u ON a.user_id = u.id
+        LEFT JOIN offers o ON a.offer_id = o.id
         WHERE 1=1
       `;
       const queryParams = [];
@@ -449,9 +477,11 @@ class AppointmentsController {
   async getRecentAppointments(req, res) {
     try {
       const result = await query(
-        `SELECT a.id, a.customer_name, a.customer_email, a.appointment_date, a.appointment_time, a.status, s.name as service_name
+        `SELECT a.id, a.customer_name, a.customer_email, a.appointment_date, a.appointment_time, a.status,
+                a.offer_id, o.title as offer_title, s.name as service_name
          FROM appointments a
          JOIN services s ON a.service_id = s.id
+         LEFT JOIN offers o ON a.offer_id = o.id
          ORDER BY a.appointment_date DESC, a.appointment_time DESC
          LIMIT 10`
       );

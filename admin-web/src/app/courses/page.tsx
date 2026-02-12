@@ -19,12 +19,27 @@ interface Course {
   created_at?: string;
 }
 
+interface CourseApplication {
+  id: string;
+  course_id: string;
+  course_title: string;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  offer_id?: string;
+  offer_title?: string;
+  status: string;
+  applied_at: string;
+}
+
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [applications, setApplications] = useState<CourseApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [search, setSearch] = useState('');
+  const [showApplications, setShowApplications] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -68,12 +83,23 @@ export default function CoursesPage() {
       const params: any = {};
       if (search) params.search = search;
       const res = await coursesAPI.getAll(params);
-      setCourses(res.data.data.courses || []);
+      setCourses(res.data?.data?.courses || res.data?.courses || []);
     } catch (error: any) {
       console.error('Failed to load courses:', error);
       toast.error(error.response?.data?.message || 'Failed to load courses');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadApplications = async () => {
+    try {
+      const res = await coursesAPI.getApplications();
+      const data = res.data?.data || res.data;
+      setApplications(data?.applications || []);
+    } catch (error: any) {
+      console.error('Failed to load applications:', error);
+      toast.error(error.response?.data?.message || 'Failed to load applications');
     }
   };
 
@@ -148,7 +174,16 @@ export default function CoursesPage() {
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Courses</h1>
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center">
+                  <button
+                    onClick={() => {
+                      setShowApplications(!showApplications);
+                      if (!showApplications) loadApplications();
+                    }}
+                    className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    {showApplications ? 'Hide' : 'View'} Applications
+                  </button>
                   <input
                     type="text"
                     placeholder="Search courses..."
@@ -168,6 +203,54 @@ export default function CoursesPage() {
                   </button>
                 </div>
               </div>
+
+              {showApplications && (
+                <div className="bg-white rounded-lg shadow mb-8 overflow-hidden">
+                  <h2 className="text-lg font-semibold p-4 border-b">Course Applications</h2>
+                  <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Name</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Contact</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Course</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Applied</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Offer</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {applications.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No applications yet</td>
+                          </tr>
+                        ) : (
+                          applications.map((app) => (
+                            <tr key={app.id} className="border-b hover:bg-gray-50">
+                              <td className="px-4 py-3 text-sm">{app.customer_name || '—'}</td>
+                              <td className="px-4 py-3 text-sm">
+                                {app.customer_phone || app.customer_email || '—'}
+                              </td>
+                              <td className="px-4 py-3 text-sm">{app.course_title || '—'}</td>
+                              <td className="px-4 py-3 text-sm text-gray-600">
+                                {new Date(app.applied_at).toLocaleDateString()}
+                              </td>
+                              <td className="px-4 py-3">
+                                {app.offer_title ? (
+                                  <span className="px-2 py-0.5 text-xs rounded-full bg-pink-100 text-pink-800">
+                                    🎁 {app.offer_title}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 text-xs">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               {loading ? (
                 <div className="bg-white rounded-lg shadow p-8 text-center">

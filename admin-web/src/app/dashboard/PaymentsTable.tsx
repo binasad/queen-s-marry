@@ -12,6 +12,7 @@ export default function PaymentsTable({ payments }: { payments: any[] }) {
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Amount</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Offer</th>
             </tr>
           </thead>
           <tbody>
@@ -21,6 +22,11 @@ export default function PaymentsTable({ payments }: { payments: any[] }) {
                 <td className="py-3 px-4 text-sm text-gray-800">${payment.total_price}</td>
                 <td className="py-3 px-4 text-sm text-gray-600">{payment.payment_status}</td>
                 <td className="py-3 px-4 text-sm text-gray-600">{new Date(payment.paid_at || payment.created_at).toLocaleString()}</td>
+                <td className="py-3 px-4 text-sm">
+                  {payment.offer_title ? (
+                    <span className="px-2 py-0.5 text-xs rounded-full bg-pink-100 text-pink-800">🎁 {payment.offer_title}</span>
+                  ) : '—'}
+                </td>
               </tr>
             ))}
           </tbody>

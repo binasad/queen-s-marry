@@ -85,6 +85,31 @@ class CourseService {
     }
   }
 
+  /// Apply for a course
+  Future<Map<String, dynamic>> applyForCourse({
+    required String courseId,
+    required String customerName,
+    required String customerPhone,
+    String? customerEmail,
+    String? offerId,
+  }) async {
+    final response = await _api.post(
+      '/courses/$courseId/apply',
+      {
+        'customerName': customerName,
+        'customerPhone': customerPhone,
+        if (customerEmail != null && customerEmail.isNotEmpty) 'customerEmail': customerEmail,
+        if (offerId != null && offerId.isNotEmpty) 'offerId': offerId,
+      },
+      requiresAuth: true,
+    );
+    final data = response['data'];
+    if (data is Map && data['application'] != null) {
+      return Map<String, dynamic>.from(data['application'] as Map);
+    }
+    return Map<String, dynamic>.from(data as Map? ?? {});
+  }
+
   /// Get course by ID
   Future<Map<String, dynamic>> getCourseById(String courseId) async {
     final response = await _api.get('/courses/$courseId');

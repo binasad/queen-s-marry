@@ -44,6 +44,10 @@ const validationRules = {
       .optional()
       .isUUID()
       .withMessage('Invalid expert ID'),
+    body('offerId')
+      .optional()
+      .isUUID()
+      .withMessage('Invalid offer ID'),
   ],
 
   updateAppointmentStatus: [

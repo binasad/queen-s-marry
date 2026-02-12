@@ -5,10 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'CoursesScreen.dart';
+import '../../../services/course_service.dart';
 
 class ApplyFormScreen extends StatefulWidget {
   final String course;
-  const ApplyFormScreen({super.key, required this.course});
+  final String? courseId;
+  final String? offerId;
+
+  const ApplyFormScreen({
+    super.key,
+    required this.course,
+    this.courseId,
+    this.offerId,
+  });
 
   @override
   State<ApplyFormScreen> createState() => _ApplyFormScreenState();
@@ -17,51 +26,71 @@ class ApplyFormScreen extends StatefulWidget {
 class _ApplyFormScreenState extends State<ApplyFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController nameCtrl = TextEditingController();
-  // final TextEditingController fatherCtrl = TextEditingController();
   final TextEditingController numberCtrl = TextEditingController();
   final TextEditingController emailCtrl = TextEditingController();
-  // final TextEditingController cnicCtrl = TextEditingController();
+  bool _isSubmitting = false;
 
-  void submitForm() {
-    if (_formKey.currentState!.validate()) {
-      String now = DateFormat("dd MMM yyyy, hh:mm a").format(DateTime.now());
+  Future<void> submitForm() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-      appliedCandidates.add({
-        "name": nameCtrl.text,
-        // "father": fatherCtrl.text,
-        "number": numberCtrl.text,
-        "email": emailCtrl.text,
-        // "cnic": cnicCtrl.text,
-        "course": widget.course,
-        "appliedAt": now,
-      });
+    setState(() => _isSubmitting = true);
 
-      // Show Snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            "Applied Succuessful!!!",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: Colors.pink,
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+    try {
+      if (widget.courseId != null && widget.courseId!.isNotEmpty) {
+        await CourseService().applyForCourse(
+          courseId: widget.courseId!,
+          customerName: nameCtrl.text.trim(),
+          customerPhone: numberCtrl.text.trim(),
+          customerEmail: emailCtrl.text.trim().isNotEmpty ? emailCtrl.text.trim() : null,
+          offerId: widget.offerId,
+        );
+      }
 
-      // Navigate after a short delay to allow the Snackbar to be visible
-      Future.delayed(const Duration(seconds: 2), () {
-        Navigator.pushReplacement(
-          context,
+      if (mounted) {
+        String now = DateFormat("dd MMM yyyy, hh:mm a").format(DateTime.now());
+        appliedCandidates.add({
+          "name": nameCtrl.text,
+          "number": numberCtrl.text,
+          "email": emailCtrl.text,
+          "course": widget.course,
+          "appliedAt": now,
+        });
 
-          MaterialPageRoute(
-            builder: (_) => CoursesScreen(),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              "Applied Successful!!!",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: Colors.pink,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
-      });
+
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => CoursesScreen()),
+            );
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -327,7 +356,7 @@ class _ApplyFormScreenState extends State<ApplyFormScreen> {
                                     borderRadius: BorderRadius.circular(30),
                                   ),
                                 ),
-                                onPressed: submitForm,
+                                onPressed: _isSubmitting ? null : submitForm,
                                 child: const Text(
                                   "Submit Application",
                                   style: TextStyle(fontSize: 18, color: Colors.white),
