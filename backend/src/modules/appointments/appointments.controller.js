@@ -152,7 +152,7 @@ class AppointmentsController {
   // Get user appointments
   async getUserAppointments(req, res) {
     try {
-      const { status } = req.query;
+      const { status, paymentStatus } = req.query;
 
       let queryText = `
         SELECT a.*, s.name as service_name, s.duration, 
@@ -163,10 +163,18 @@ class AppointmentsController {
         WHERE a.user_id = $1
       `;
       const queryParams = [req.user.id];
+      let paramIndex = 2;
 
       if (status) {
-        queryText += ' AND a.status = $2';
+        queryText += ` AND a.status = $${paramIndex}`;
         queryParams.push(status);
+        paramIndex++;
+      }
+
+      if (paymentStatus) {
+        queryText += ` AND a.payment_status = $${paramIndex}`;
+        queryParams.push(paymentStatus);
+        paramIndex++;
       }
 
       queryText += ' ORDER BY a.appointment_date DESC, a.appointment_time DESC';

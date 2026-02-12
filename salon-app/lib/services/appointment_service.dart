@@ -32,11 +32,17 @@ class AppointmentService {
     return response['data'] as Map<String, dynamic>;
   }
 
-  Future<List<dynamic>> getMyAppointments({String? status}) async {
-    var endpoint = '/appointments/my';
-    if (status != null && status.isNotEmpty) {
-      endpoint += '?status=$status';
+  Future<List<dynamic>> getMyAppointments({
+    String? status,
+    String? paymentStatus,
+  }) async {
+    final params = <String>[];
+    if (status != null && status.isNotEmpty) params.add('status=$status');
+    if (paymentStatus != null && paymentStatus.isNotEmpty) {
+      params.add('paymentStatus=$paymentStatus');
     }
+    var endpoint = '/appointments/my';
+    if (params.isNotEmpty) endpoint += '?${params.join('&')}';
 
     final response = await _api.get(endpoint, requiresAuth: true);
     // Backend format: { success: true, data: { appointments: [...] } }
