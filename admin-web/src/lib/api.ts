@@ -51,6 +51,12 @@ export const authAPI = {
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.post('/auth/change-password', data),
   
+  forgotPassword: (data: { email: string; client?: 'admin' }) =>
+    api.post('/auth/forgot-password', data),
+  
+  resetPassword: (data: { token: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data),
+  
   verifySetupToken: (token: string) =>
     api.get(`/auth/setup-password/${encodeURIComponent(token)}`),
   

@@ -370,8 +370,11 @@ class EmailService {
     }
   }
 
-  async sendPasswordResetEmail(email, token, name) {
-    const resetUrl = `${env.frontendUrl || env.FRONTEND_URL || 'http://localhost:3001'}/reset-password/${token}`;
+  async sendPasswordResetEmail(email, token, name, useAdminWeb = false) {
+    const baseUrl = useAdminWeb
+      ? (env.adminWebUrl || process.env.ADMIN_WEB_URL || 'http://localhost:3001')
+      : (env.frontendUrl || env.FRONTEND_URL || 'http://localhost:3000');
+    const resetUrl = `${baseUrl}/reset-password/${token}`;
 
     const mailOptions = {
       from: env.email?.from || env.EMAIL_FROM || 'noreply@salon.com',

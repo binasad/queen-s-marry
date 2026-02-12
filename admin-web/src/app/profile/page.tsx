@@ -13,18 +13,13 @@ export default function ProfilePage() {
   const { user, updateUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [changingPassword, setChangingPassword] = useState(false);
+  const [sendingResetLink, setSendingResetLink] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     address: '',
     profileImageUrl: '',
-  });
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -94,28 +89,20 @@ export default function ProfilePage() {
     }
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('New passwords do not match');
-      return;
-    }
-    if (passwordForm.newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters with uppercase, number, and special character');
+  const handleSendResetLink = async () => {
+    const email = profile?.email || user?.email;
+    if (!email) {
+      toast.error('No email found');
       return;
     }
     try {
-      setChangingPassword(true);
-      await authAPI.changePassword({
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
-      });
-      toast.success('Password changed successfully');
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setSendingResetLink(true);
+      await authAPI.forgotPassword({ email, client: 'admin' });
+      toast.success('Password reset link sent to your email. Check your inbox.');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to change password');
+      toast.error(err.response?.data?.message || 'Failed to send reset link');
     } finally {
-      setChangingPassword(false);
+      setSendingResetLink(false);
     }
   };
 
@@ -226,49 +213,20 @@ export default function ProfilePage() {
                     </form>
                   </div>
 
-                  {/* Change password */}
+                  {/* Change password via email link */}
                   <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Change Password</h3>
-                    <form onSubmit={handleChangePassword} className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-                        <input
-                          type="password"
-                          value={passwordForm.currentPassword}
-                          onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                          required
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                        <input
-                          type="password"
-                          value={passwordForm.newPassword}
-                          onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                          required
-                          minLength={8}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                        <input
-                          type="password"
-                          value={passwordForm.confirmPassword}
-                          onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                          required
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={changingPassword}
-                        className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
-                      >
-                        {changingPassword ? 'Changing...' : 'Change Password'}
-                      </button>
-                    </form>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Click the button below to receive a password reset link at <strong>{profile?.email}</strong>. The link will expire in 1 hour.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleSendResetLink}
+                      disabled={sendingResetLink}
+                      className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                    >
+                      {sendingResetLink ? 'Sending...' : 'Send password reset link to my email'}
+                    </button>
                   </div>
                 </>
               )}
