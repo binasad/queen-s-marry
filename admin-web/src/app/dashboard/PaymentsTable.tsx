@@ -19,7 +19,9 @@ export default function PaymentsTable({ payments }: { payments: any[] }) {
             {(payments || []).map((payment) => (
               <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="py-3 px-4 text-sm text-gray-800">{payment.customer_name}</td>
-                <td className="py-3 px-4 text-sm text-gray-800">${payment.total_price}</td>
+                <td className="py-3 px-4 text-sm text-gray-800">
+                  Rs. {parseFloat(payment.total_price || 0).toLocaleString()}
+                </td>
                 <td className="py-3 px-4 text-sm text-gray-600">{payment.payment_status}</td>
                 <td className="py-3 px-4 text-sm text-gray-600">{new Date(payment.paid_at || payment.created_at).toLocaleString()}</td>
                 <td className="py-3 px-4 text-sm">

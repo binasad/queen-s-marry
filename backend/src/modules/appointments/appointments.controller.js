@@ -438,30 +438,103 @@ class AppointmentsController {
   // Get dashboard statistics (Admin only)
   async getDashboardStats(req, res) {
     try {
-      const statsResult = await query(`
-        SELECT 
-          COUNT(*) FILTER (WHERE status = 'confirmed') as confirmed_count,
-          COUNT(*) FILTER (WHERE status = 'reserved') as reserved_count,
-          COUNT(*) FILTER (WHERE status = 'completed') as completed_count,
-          COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled_count,
-          COUNT(*) FILTER (WHERE appointment_date = CURRENT_DATE) as today_count,
-          COUNT(*) as total_appointments,
-          COALESCE(SUM(total_price) FILTER (WHERE payment_status = 'paid'), 0) + COALESCE(SUM(total_price) FILTER (WHERE status = 'confirmed' AND payment_status != 'paid'), 0) as total_revenue,
-          COALESCE(SUM(total_price) FILTER (WHERE payment_status = 'paid' AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)), 0) + COALESCE(SUM(total_price) FILTER (WHERE status = 'confirmed' AND payment_status != 'paid' AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)), 0) as monthly_revenue
-        FROM appointments
-      `);
-      const customersResult = await query(
-        `SELECT COUNT(*) as total_customers FROM users u
-         JOIN roles r ON u.role_id = r.id
-         WHERE r.name = 'Customer'`
-      );
+      const period = req.query.period || '7'; // 7, 30, or 90 days for charts
+      const days = parseInt(period, 10) || 7;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      const startStr = startDate.toISOString().split('T')[0];
+
+      const [
+        statsResult,
+        customersResult,
+        servicesResult,
+        revenueByDayResult,
+        topServicesResult,
+        staffResult,
+      ] = await Promise.all([
+        query(`
+          SELECT 
+            COUNT(*) FILTER (WHERE status = 'confirmed') as confirmed_count,
+            COUNT(*) FILTER (WHERE status = 'reserved') as reserved_count,
+            COUNT(*) FILTER (WHERE status = 'completed') as completed_count,
+            COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled_count,
+            COUNT(*) FILTER (WHERE appointment_date = CURRENT_DATE) as today_count,
+            COUNT(*) as total_appointments,
+            COALESCE(SUM(total_price) FILTER (WHERE payment_status = 'paid'), 0) as total_revenue,
+            COALESCE(SUM(total_price) FILTER (WHERE payment_status = 'paid' AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)), 0) as monthly_revenue,
+            COALESCE(SUM(total_price) FILTER (WHERE payment_status = 'paid' AND appointment_date = CURRENT_DATE), 0) as today_revenue
+          FROM appointments
+        `),
+        query(
+          `SELECT COUNT(*) as total_customers FROM users u
+           JOIN roles r ON u.role_id = r.id
+           WHERE r.name = 'Customer'`
+        ),
+        query(`SELECT COUNT(*) as services_count FROM services WHERE is_active = TRUE`),
+        query(`
+          SELECT appointment_date::text as date, COALESCE(SUM(total_price), 0) as revenue, COUNT(*) as count
+          FROM appointments
+          WHERE payment_status = 'paid' AND appointment_date >= $1 AND appointment_date <= CURRENT_DATE
+          GROUP BY appointment_date
+          ORDER BY appointment_date ASC
+        `, [startStr]),
+        query(`
+          SELECT s.name, COUNT(*) as bookings, COALESCE(SUM(a.total_price), 0) as revenue
+          FROM appointments a
+          JOIN services s ON a.service_id = s.id
+          WHERE a.payment_status = 'paid' AND a.appointment_date >= $1
+          GROUP BY s.id, s.name
+          ORDER BY revenue DESC
+          LIMIT 10
+        `, [startStr]),
+        query(`
+          SELECT e.id, e.name, e.specialty,
+                 COUNT(a.id) as appointments,
+                 COALESCE(SUM(a.total_price) FILTER (WHERE a.payment_status = 'paid'), 0) as revenue
+          FROM experts e
+          LEFT JOIN appointments a ON a.expert_id = e.id AND a.appointment_date >= $1
+          WHERE e.is_active = TRUE
+          GROUP BY e.id, e.name, e.specialty
+          ORDER BY appointments DESC
+          LIMIT 8
+        `, [startStr]),
+      ]);
+
+      const revenueRows = revenueByDayResult.rows || [];
+      const revenueData = revenueRows.map((r) => ({
+        date: r.date,
+        day: r.date ? new Date(r.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+        revenue: parseFloat(r.revenue || 0),
+        count: parseInt(r.count || 0),
+      }));
+
+      const staffPerformance = (staffResult.rows || []).map((e) => ({
+        id: e.id,
+        name: e.name || 'Expert',
+        specialty: e.specialty || 'Staff',
+        initials: (e.name || 'E').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2),
+        appointments: parseInt(e.appointments || 0),
+        revenue: parseFloat(e.revenue || 0),
+        rating: '—',
+      }));
+
+      const topServices = (topServicesResult.rows || []).map((s) => ({
+        name: s.name,
+        bookings: parseInt(s.bookings || 0),
+        revenue: parseFloat(s.revenue || 0),
+      }));
+
       res.json({
         success: true,
         data: {
           stats: {
             ...statsResult.rows[0],
-            total_customers: customersResult.rows[0].total_customers
-          }
+            total_customers: customersResult.rows[0]?.total_customers || 0,
+            services_count: parseInt(servicesResult.rows[0]?.services_count || 0),
+          },
+          revenueData,
+          topServices,
+          staffPerformance,
         },
       });
     } catch (error) {
