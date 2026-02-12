@@ -422,7 +422,11 @@ class AppointmentsController {
           COALESCE(SUM(total_price) FILTER (WHERE payment_status = 'paid' AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)), 0) + COALESCE(SUM(total_price) FILTER (WHERE status = 'confirmed' AND payment_status != 'paid' AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)), 0) as monthly_revenue
         FROM appointments
       `);
-      const customersResult = await query(`SELECT COUNT(*) as total_customers FROM users WHERE role = 'Customer'`);
+      const customersResult = await query(
+        `SELECT COUNT(*) as total_customers FROM users u
+         JOIN roles r ON u.role_id = r.id
+         WHERE r.name = 'Customer'`
+      );
       res.json({
         success: true,
         data: {

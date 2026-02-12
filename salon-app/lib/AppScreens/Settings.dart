@@ -299,13 +299,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         //   },
                         // ),
                         ProfileTile(
-                          icon: CupertinoIcons.location,
-                          title: "Saved Addresses",
-                          onTap: () {
-                            // Navigate to address management
-                          },
-                        ),
-                        ProfileTile(
                           icon: Icons.rate_review_outlined,
                           title: "My Reviews",
                           onTap: () {

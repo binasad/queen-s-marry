@@ -13,7 +13,7 @@ import '../../providers/courses_provider.dart';
 import '../Settings.dart';
 import 'AppointmentList.dart';
 import 'Course Screens/CoursesScreen.dart';
-import 'UserGallery.dart';
+import 'BlogsScreen.dart';
 
 class BottomTabBar extends ConsumerStatefulWidget {
   // final String userName;
@@ -61,7 +61,7 @@ class _BottomTabBarState extends ConsumerState<BottomTabBar> {
         key: ValueKey('appointments'),
         onRefresh: () => _refreshScreen(1),
       ), // index 1
-      UserGalleryScreen(), // index 2
+      const BlogsScreen(), // index 2
       CoursesScreen(
         key: ValueKey('courses'),
         onRefresh: () => _refreshScreen(3),
@@ -232,8 +232,8 @@ class _BottomTabBarState extends ConsumerState<BottomTabBar> {
               ),
 
               BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.photo_on_rectangle),
-                label: "Gallery",
+                icon: Icon(CupertinoIcons.doc_text),
+                label: "Blogs",
               ),
 
               // BottomNavigationBarItem(

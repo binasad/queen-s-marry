@@ -147,6 +147,16 @@ export const expertsAPI = {
   delete: (id: string) => api.delete(`/experts/${id}`),
 };
 
+// Blogs API
+export const blogsAPI = {
+  getAll: (params?: any) => api.get('/blogs', { params }),
+  getAllAdmin: (params?: any) => api.get('/blogs/admin', { params }),
+  getById: (id: string) => api.get(`/blogs/${id}`),
+  create: (data: any) => api.post('/blogs', data),
+  update: (id: string, data: any) => api.put(`/blogs/${id}`, data),
+  delete: (id: string) => api.delete(`/blogs/${id}`),
+};
+
 // Support/Tickets API
 export const supportAPI = {
   getAll: (params?: any) => api.get('/support/tickets', { params }),

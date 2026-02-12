@@ -113,17 +113,16 @@ class _UserHomeState extends ConsumerState<UserHome>
   /// Load all data from APIs concurrently
   Future<void> _loadAllData() async {
     await Future.wait([loadUserData(), loadOffers(), loadExperts()]);
-    // Categories are loaded via Riverpod provider
+    // Guard: widget may have been disposed (e.g. user navigated away quickly)
+    if (!mounted) return;
     ref.read(servicesProvider.notifier).loadCategories();
   }
 
   /// Refresh all data (can be called on pull-to-refresh)
   Future<void> refreshData() async {
-    await Future.wait([
-      loadOffers(),
-      loadExperts(),
-      ref.read(servicesProvider.notifier).loadCategories(forceRefresh: true),
-    ]);
+    await Future.wait([loadOffers(), loadExperts()]);
+    if (!mounted) return;
+    ref.read(servicesProvider.notifier).loadCategories(forceRefresh: true);
   }
 
   @override
