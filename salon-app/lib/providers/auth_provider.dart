@@ -27,6 +27,12 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Set user after Google or other token-based login
+  void setUser(Map<String, dynamic> user) {
+    _user = user;
+    notifyListeners();
+  }
+
   Future<void> checkLoginStatus() async {
     final loggedIn = await _authService.isLoggedIn();
     if (loggedIn) {

@@ -1,4 +1,4 @@
-const { query } = require('../../config/db');
+const { query, transaction } = require('../../config/db');
 
 class ExpertsController {
   // Get all experts
@@ -130,11 +130,8 @@ class ExpertsController {
     try {
       const { name, email, phone, specialty, bio, imageUrl, serviceIds } = req.body;
 
-      // Start transaction
-      const client = await query('BEGIN');
-
-      try {
-        const result = await query(
+      const expertResult = await transaction(async (client) => {
+        const result = await client.query(
           `INSERT INTO experts (name, email, phone, specialty, bio, image_url)
            VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING *`,
@@ -143,20 +140,16 @@ class ExpertsController {
 
         const expertId = result.rows[0].id;
 
-        // Add service associations if provided
         if (serviceIds && Array.isArray(serviceIds) && serviceIds.length > 0) {
           for (const serviceId of serviceIds) {
-            await query(
+            await client.query(
               'INSERT INTO expert_services (expert_id, service_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
               [expertId, serviceId]
             );
           }
         }
 
-        await query('COMMIT');
-
-        // Fetch expert with services
-        const expertResult = await query(
+        const expertRes = await client.query(
           `SELECT e.*, 
                   COALESCE(
                     (SELECT json_agg(json_build_object('id', s.id, 'name', s.name))
@@ -168,21 +161,19 @@ class ExpertsController {
            WHERE e.id = $1`,
           [expertId]
         );
+        return expertRes.rows[0];
+      });
 
-        res.status(201).json({
-          success: true,
-          message: 'Expert created successfully.',
-          data: { expert: expertResult.rows[0] },
-        });
-      } catch (error) {
-        await query('ROLLBACK');
-        throw error;
-      }
+      res.status(201).json({
+        success: true,
+        message: 'Expert created successfully.',
+        data: { expert: expertResult },
+      });
     } catch (error) {
       console.error('Create expert error:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to create expert.',
+        message: error.message || 'Failed to create expert.',
       });
     }
   }
@@ -193,11 +184,8 @@ class ExpertsController {
       const { id } = req.params;
       const { name, email, phone, specialty, bio, imageUrl, isActive, serviceIds } = req.body;
 
-      // Start transaction
-      const client = await query('BEGIN');
-
-      try {
-        const result = await query(
+      const expertResult = await transaction(async (client) => {
+        const result = await client.query(
           `UPDATE experts 
            SET name = COALESCE($1, name),
                email = COALESCE($2, email),
@@ -213,22 +201,17 @@ class ExpertsController {
         );
 
         if (result.rows.length === 0) {
-          await query('ROLLBACK');
-          return res.status(404).json({
-            success: false,
-            message: 'Expert not found.',
-          });
+          const err = new Error('Expert not found.');
+          err.code = 'NOT_FOUND';
+          throw err;
         }
 
-        // Update service associations if provided
         if (serviceIds !== undefined) {
-          // Delete existing associations
-          await query('DELETE FROM expert_services WHERE expert_id = $1', [id]);
+          await client.query('DELETE FROM expert_services WHERE expert_id = $1', [id]);
 
-          // Add new associations
           if (Array.isArray(serviceIds) && serviceIds.length > 0) {
             for (const serviceId of serviceIds) {
-              await query(
+              await client.query(
                 'INSERT INTO expert_services (expert_id, service_id) VALUES ($1, $2)',
                 [id, serviceId]
               );
@@ -236,10 +219,7 @@ class ExpertsController {
           }
         }
 
-        await query('COMMIT');
-
-        // Fetch expert with services
-        const expertResult = await query(
+        const expertRes = await client.query(
           `SELECT e.*, 
                   COALESCE(
                     (SELECT json_agg(json_build_object('id', s.id, 'name', s.name))
@@ -251,21 +231,25 @@ class ExpertsController {
            WHERE e.id = $1`,
           [id]
         );
+        return expertRes.rows[0];
+      });
 
-        res.json({
-          success: true,
-          message: 'Expert updated successfully.',
-          data: { expert: expertResult.rows[0] },
-        });
-      } catch (error) {
-        await query('ROLLBACK');
-        throw error;
-      }
+      res.json({
+        success: true,
+        message: 'Expert updated successfully.',
+        data: { expert: expertResult },
+      });
     } catch (error) {
+      if (error.code === 'NOT_FOUND') {
+        return res.status(404).json({
+          success: false,
+          message: 'Expert not found.',
+        });
+      }
       console.error('Update expert error:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to update expert.',
+        message: error.message || 'Failed to update expert.',
       });
     }
   }

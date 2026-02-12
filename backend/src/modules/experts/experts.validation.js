@@ -24,8 +24,12 @@ const validationRules = {
       .optional()
       .trim(),
     body('imageUrl')
-      .optional()
-      .isURL()
+      .optional({ values: 'falsy' })
+      .custom((val) => {
+        if (val == null || val === '') return true;
+        if (typeof val !== 'string') return false;
+        return val.length === 0 || /^(https?:\/\/|\/)/.test(val);
+      })
       .withMessage('Invalid image URL'),
     body('serviceIds')
       .optional()
@@ -60,8 +64,12 @@ const validationRules = {
       .optional()
       .trim(),
     body('imageUrl')
-      .optional()
-      .isURL()
+      .optional({ values: 'falsy' })
+      .custom((val) => {
+        if (val == null || val === '') return true;
+        if (typeof val !== 'string') return false;
+        return val.length === 0 || /^(https?:\/\/|\/)/.test(val);
+      })
       .withMessage('Invalid image URL'),
     body('isActive')
       .optional()

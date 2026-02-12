@@ -54,6 +54,9 @@ yarn-error.log*
 .env.*.local
 !.env.example
 
+# Firebase credentials (NEVER commit)
+**/firebase-admin-sdk.json
+
 # Documentation build
 docs/_build/
 site/

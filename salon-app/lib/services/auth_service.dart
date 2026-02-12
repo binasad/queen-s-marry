@@ -6,7 +6,7 @@ class AuthService {
   final StorageService _storage = const StorageService();
 
   /// Roles allowed to access the mobile app
-  static const List<String> _allowedMobileRoles = ['Customer', 'Guest', 'Admin', 'Owner'];
+  static const List<String> _allowedMobileRoles = ['Customer', 'User', 'Guest', 'Admin', 'Owner'];
 
   /// Guest login - creates a temporary user on the backend
   /// Returns user data with isGuest flag
@@ -249,5 +249,47 @@ class AuthService {
   Future<bool> isLoggedIn() async {
     final token = await _api.getAccessToken();
     return token != null;
+  }
+
+  /// Google Sign-In - send idToken to backend, get JWT tokens
+  Future<Map<String, dynamic>> googleLogin(String idToken) async {
+    try {
+      final response = await _api.post('/auth/google', {
+        'idToken': idToken,
+      }, requiresAuth: false);
+
+      if (!response.containsKey('data')) {
+        throw Exception('Invalid Google login response');
+      }
+
+      final data = response['data'] as Map<String, dynamic>;
+      final accessToken = data['accessToken'] as String?;
+      final refreshToken = data['refreshToken'] as String?;
+
+      if (accessToken != null && refreshToken != null) {
+        await _api.saveTokens(accessToken, refreshToken);
+        await _storage.setGuestStatus(false);
+      }
+
+      if (!data.containsKey('user')) {
+        throw Exception('Invalid Google login response: missing user');
+      }
+
+      final user = data['user'] as Map<String, dynamic>;
+      final role = user['role'] as Map<String, dynamic>?;
+      final roleName = role?['name']?.toString() ?? '';
+
+      if (!_allowedMobileRoles.contains(roleName)) {
+        await _api.clearTokens();
+        throw Exception(
+          'This account is for staff/admin access only. Please use the web portal to login.',
+        );
+      }
+
+      return user;
+    } catch (e) {
+      print('AuthService: Google login error: $e');
+      rethrow;
+    }
   }
 }

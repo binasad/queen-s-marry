@@ -1,12 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import 'package:salon/AppScreens/signup.dart';
 import '../utils/route_animations.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
+import '../providers/auth_provider.dart' as app_auth;
 import 'UserScreens/userTabbar.dart';
 import 'login.dart';
 
@@ -33,15 +34,20 @@ class _LoginOptionState extends State<LoginOption> {
         return;
       }
       final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final idToken = googleAuth.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        _showError('Google sign-in could not get ID token.');
+        setState(() => _isSigningIn = false);
+        return;
+      }
+      // Send idToken to backend, get JWT tokens, save user
+      final user = await _authService.googleLogin(idToken);
       if (!mounted) return;
+      final authProvider = context.read<app_auth.AuthProvider>();
+      authProvider.setUser(user);
       _navigateToHome();
     } catch (e) {
-      _showError('Google login failed: $e');
+      _showError('Google login failed: ${e.toString().replaceAll('Exception: ', '')}');
     } finally {
       if (mounted) setState(() => _isSigningIn = false);
     }
