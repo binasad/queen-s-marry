@@ -44,12 +44,16 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
       }
 
       try {
-        appointments = await _appointmentService.getMyAppointments(status: 'completed');
+        // Fetch completed + paid appointments - only these are reviewable
+        appointments = await _appointmentService.getMyAppointments(
+          status: 'completed',
+          paymentStatus: 'paid',
+        );
       } catch (_) {
         // Appointments failure is non-fatal; we can still show reviews
       }
 
-      // Filter: completed appointments not yet reviewed
+      // Filter: paid+completed appointments not yet reviewed
       final reviewedIds = reviews
           .map((r) => r['appointment_id']?.toString())
           .where((id) => id != null && id.isNotEmpty)
@@ -255,7 +259,7 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
                     children: [
                       if (_reviewableAppointments.isNotEmpty) ...[
                         const Text(
-                          'Rate your experience',
+                          'Services you\'ve paid for',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -263,7 +267,7 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Tap an appointment to leave a review',
+                          'Leave a review for your completed appointments',
                           style: TextStyle(color: Colors.black54, fontSize: 14),
                         ),
                         const SizedBox(height: 12),
@@ -271,22 +275,34 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
                               margin: const EdgeInsets.only(bottom: 12),
                               child: ListTile(
                                 leading: CircleAvatar(
-                                  backgroundColor: Colors.amber[100],
-                                  child: Icon(Icons.rate_review, color: Colors.amber[700]),
+                                  backgroundColor: Colors.green[100],
+                                  child: Icon(Icons.check_circle, color: Colors.green[700]),
                                 ),
-                                title: Text(apt['service_name'] ?? 'Service'),
+                                title: Row(
+                                  children: [
+                                    Expanded(child: Text(apt['service_name'] ?? 'Service')),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green[100],
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text('Paid', style: TextStyle(fontSize: 11, color: Colors.green[800], fontWeight: FontWeight.w600)),
+                                    ),
+                                  ],
+                                ),
                                 subtitle: Text(
                                   '${apt['appointment_date'] ?? ''} • ${apt['expert_name'] ?? 'Expert'}',
                                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                                 ),
-                                trailing: const Icon(Icons.add_comment),
+                                trailing: const Icon(Icons.rate_review, color: Color(0xFFFD6C57)),
                                 onTap: () => _showReviewDialog(apt),
                               ),
                             )),
                         const Divider(height: 32),
                       ],
                       const Text(
-                        'Your reviews',
+                        'My reviews',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -307,7 +323,7 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Complete an appointment and come back to leave a review',
+                                  'Complete and pay for appointments to leave reviews',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                                 ),
