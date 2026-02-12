@@ -1,7 +1,8 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:async';
-import '../config/app_config.dart';
+///import '../config/app_config.dart';
 
 class WebSocketService {
   static final WebSocketService _instance = WebSocketService._internal();
@@ -57,8 +58,11 @@ class WebSocketService {
   }
 
   void _initializeSocket() {
-    // Use the same backend URL as the API service (without /api/v1)
-    final backendUrl = AppConfig.baseUrl.replaceAll('/api/v1', '');
+    // Use the backend URL from dotenv (without /api/v1)
+    final backendUrl = (dotenv.env['API_BASE_URL'] ?? '').replaceAll(
+      '/api/v1',
+      '',
+    );
 
     debugPrint('🔌 WebSocket: Connecting to $backendUrl');
 
@@ -96,7 +100,7 @@ class WebSocketService {
     socket.onConnectError((error) {
       debugPrint('🔌 WebSocket connection error: $error');
       debugPrint(
-        '🔌 Attempted URL: ${AppConfig.baseUrl.replaceAll('/api/v1', '')}',
+        '🔌 Attempted URL: ${(dotenv.env['API_BASE_URL'] ?? '').replaceAll('/api/v1', '')}',
       );
       _isConnected = false;
       // Attempt to reconnect after a delay

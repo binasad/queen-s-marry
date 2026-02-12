@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/support_ticket_service.dart';
+import '../services/user_service.dart';
 
 class ContactSalonScreen extends StatelessWidget {
   const ContactSalonScreen({super.key});
@@ -6,6 +8,7 @@ class ContactSalonScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextEditingController _messageController = TextEditingController();
+    final SupportTicketService ticketService = SupportTicketService();
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -114,11 +117,47 @@ class ContactSalonScreen extends StatelessWidget {
                         ), // rounded corners
                       ),
                     ),
-                    onPressed: () {
-                      // Add sending message logic
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Message sent to salon")),
-                      );
+                    onPressed: () async {
+                      final message = _messageController.text.trim();
+                      if (message.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Please enter a message."),
+                          ),
+                        );
+                        return;
+                      }
+                      try {
+                        // Optionally fetch user info
+                        final userData = await UserService().getProfile();
+                        final user = userData['user'] as Map<String, dynamic>?;
+                        final name = user?['name']?.toString() ?? 'User';
+                        final email = user?['email']?.toString() ?? '';
+                        final phone = user?['phone']?.toString();
+                        await ticketService.createTicket({
+                          'customerName': name,
+                          'customerEmail': email,
+                          'customerPhone': phone,
+                          'subject': 'Mobile App Support',
+                          'message': message,
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Support ticket submitted successfully!",
+                            ),
+                          ),
+                        );
+                        _messageController.clear();
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Failed to submit support ticket: $e",
+                            ),
+                          ),
+                        );
+                      }
                     },
                     child: Ink(
                       decoration: BoxDecoration(
