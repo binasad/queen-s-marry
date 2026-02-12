@@ -8,6 +8,7 @@ import 'FAQs.dart';
 import 'PersonalInfo.dart';
 import 'ShareWithFriends.dart';
 import 'UserScreens/AppointmentList.dart';
+import 'UserScreens/MyReviewsScreen.dart';
 import 'about.dart';
 import 'introSlider.dart';
 import '../services/user_service.dart';
@@ -15,6 +16,7 @@ import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
 import '../utils/error_handler.dart';
+import '../utils/guest_guard.dart';
 
 class SettingsScreen extends StatefulWidget {
   // final String userName;
@@ -301,9 +303,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ProfileTile(
                           icon: Icons.rate_review_outlined,
                           title: "My Reviews",
-                          onTap: () {
-                            // Navigate to reviews
-                          },
+                          onTap: GuestGuard.guardAction(
+                            context,
+                            () async {
+                              if (!context.mounted) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const MyReviewsScreen(),
+                                ),
+                              );
+                            },
+                            actionDescription: 'view and leave reviews',
+                          ) ?? () {},
                         ),
                         // ProfileTile(
                         //   icon: CupertinoIcons.settings,

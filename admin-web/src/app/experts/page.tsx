@@ -46,6 +46,7 @@ export default function ExpertsPage() {
     imageUrl: '',
     serviceIds: [] as string[],
   });
+  const [imageUploading, setImageUploading] = useState(false);
 
   useEffect(() => {
     loadExperts();
@@ -87,6 +88,28 @@ export default function ExpertsPage() {
     }
   };
 
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file (JPG, PNG, etc.)');
+      return;
+    }
+    try {
+      setImageUploading(true);
+      const res = await servicesAPI.uploadImage(file, 'experts');
+      const imageUrl = res.data?.data?.imageUrl;
+      if (imageUrl) {
+        setFormData((prev) => ({ ...prev, imageUrl }));
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setImageUploading(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -111,6 +134,7 @@ export default function ExpertsPage() {
       setShowModal(false);
       setFormData({ name: '', email: '', phone: '', specialty: '', bio: '', imageUrl: '', serviceIds: [] });
       setEditingExpert(null);
+      setImageUploading(false);
       loadExperts();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to save expert');
@@ -174,6 +198,7 @@ export default function ExpertsPage() {
                     onClick={() => {
                       setEditingExpert(null);
                       setFormData({ name: '', email: '', phone: '', specialty: '', bio: '', imageUrl: '', serviceIds: [] });
+                      setImageUploading(false);
                       setShowModal(true);
                     }}
                     className="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition"
@@ -360,15 +385,49 @@ export default function ExpertsPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Image URL
+                          Photo
                         </label>
-                        <input
-                          type="url"
-                          placeholder="https://example.com/image.jpg"
-                          value={formData.imageUrl}
-                          onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        />
+                        {formData.imageUrl ? (
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={formData.imageUrl}
+                              alt="Preview"
+                              className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                            />
+                            <div className="flex flex-col gap-2">
+                              <label className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition cursor-pointer text-center text-sm">
+                                {imageUploading ? 'Uploading...' : 'Change Photo'}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={handleImageChange}
+                                  disabled={imageUploading}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, imageUrl: '' })}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                            <span className="text-sm text-gray-500 mt-2">
+                              {imageUploading ? 'Uploading...' : 'Click to upload image'}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleImageChange}
+                              disabled={imageUploading}
+                            />
+                          </label>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -407,6 +466,7 @@ export default function ExpertsPage() {
                             setShowModal(false);
                             setEditingExpert(null);
                             setFormData({ name: '', email: '', phone: '', specialty: '', bio: '', imageUrl: '', serviceIds: [] });
+                            setImageUploading(false);
                           }}
                           className="flex-1 px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
                         >
