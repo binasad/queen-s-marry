@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../UserScreens/AppointmentBooking.dart';
 import '../../services/service_catalog_service.dart';
+import '../../services/review_service.dart';
 
 class ServiceDetailedScreen extends StatefulWidget {
   final Map<String, dynamic> service;
@@ -18,13 +19,38 @@ class ServiceDetailedScreen extends StatefulWidget {
 
 class _ServiceDetailedScreenState extends State<ServiceDetailedScreen> {
   final ServiceCatalogService _catalog = ServiceCatalogService();
+  final ReviewService _reviewService = ReviewService();
   List<Map<String, dynamic>> _relatedServices = [];
+  List<Map<String, dynamic>> _reviews = [];
+  double _avgRating = 0;
   bool _loadingRelated = true;
+  bool _loadingReviews = true;
 
   @override
   void initState() {
     super.initState();
     _loadRelatedServices();
+    _loadReviews();
+  }
+
+  Future<void> _loadReviews() async {
+    final serviceId = widget.service['id']?.toString();
+    if (serviceId == null || serviceId.isEmpty) {
+      setState(() => _loadingReviews = false);
+      return;
+    }
+    try {
+      final data = await _reviewService.getReviewsByService(serviceId);
+      if (mounted) {
+        setState(() {
+          _reviews = List<Map<String, dynamic>>.from((data['reviews'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []);
+          _avgRating = (data['averageRating'] as num?)?.toDouble() ?? 0;
+          _loadingReviews = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingReviews = false);
+    }
   }
 
   ImageProvider _getImage(Map<String, dynamic> s) {
@@ -61,6 +87,10 @@ class _ServiceDetailedScreenState extends State<ServiceDetailedScreen> {
                         widget.service['description']?.toString() ?? "A premium wellness experience.",
                         style: TextStyle(fontSize: 16, color: Colors.black.withOpacity(0.6), height: 1.6),
                       ),
+                      const SizedBox(height: 32),
+                      const Text("Reviews", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 12),
+                      _buildReviewsSection(),
                       const SizedBox(height: 40),
                       const Text("You may also like", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 16),
@@ -135,6 +165,8 @@ class _ServiceDetailedScreenState extends State<ServiceDetailedScreen> {
   }
 
   Widget _buildStatsRow() {
+    final ratingStr = _avgRating > 0 ? '$_avgRating ★' : '—';
+    final countStr = _reviews.isNotEmpty ? '${_reviews.length}+' : '0';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -144,12 +176,78 @@ class _ServiceDetailedScreenState extends State<ServiceDetailedScreen> {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: const [
-          _StatItem(label: "Rating", value: "4.9 ★"),
-          _StatItem(label: "Reviews", value: "80+"),
-          _StatItem(label: "Price", value: "Premium"),
+        children: [
+          _StatItem(label: "Rating", value: ratingStr),
+          _StatItem(label: "Reviews", value: countStr),
+          _StatItem(label: "Price", value: "PKR ${widget.service['price'] ?? '—'}"),
         ],
       ),
+    );
+  }
+
+  Widget _buildReviewsSection() {
+    if (_loadingReviews) return const Center(child: Padding(padding: EdgeInsets.all(24), child: CupertinoActivityIndicator()));
+    if (_reviews.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12)],
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.rate_review_outlined, size: 40, color: Colors.grey[400]),
+            const SizedBox(width: 16),
+            Text("No reviews yet", style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+          ],
+        ),
+      );
+    }
+    return Column(
+      children: _reviews.take(5).map((r) {
+        final sentiment = r['sentiment']?.toString() ?? 'Good';
+        final color = sentiment == 'Excellent' ? Colors.green : sentiment == 'Good' || sentiment == 'Very Good' ? Colors.amber[700]! : Colors.orange;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12)],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  ...List.generate(5, (i) => Icon(
+                    i < (r['rating'] ?? 0) ? Icons.star : Icons.star_border,
+                    color: Colors.amber[700],
+                    size: 18,
+                  )),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                    child: Text(sentiment, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+                  ),
+                ],
+              ),
+              if (r['user_name'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(r['user_name'] as String, style: TextStyle(fontSize: 13, color: Colors.grey[700], fontWeight: FontWeight.w600)),
+                ),
+              if (r['comment'] != null && (r['comment'] as String).isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(r['comment'] as String, style: const TextStyle(fontSize: 14, height: 1.4)),
+                ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
