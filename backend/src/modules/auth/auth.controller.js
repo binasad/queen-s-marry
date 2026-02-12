@@ -651,7 +651,7 @@ class AuthController {
   // Forgot password
   async forgotPassword(req, res) {
     try {
-      const { email } = req.body;
+      const { email, client } = req.body;
 
       const result = await query(
         'SELECT id, name, email FROM users WHERE email = $1',
@@ -679,7 +679,8 @@ class AuthController {
         [resetToken, resetExpires, user.id]
       );
 
-      await emailService.sendPasswordResetEmail(email, resetToken, user.name);
+      // Use admin-web URL when client=admin so link goes to admin panel
+      await emailService.sendPasswordResetEmail(email, resetToken, user.name, client === 'admin');
 
       res.json({
         success: true,
