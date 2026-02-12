@@ -20,6 +20,14 @@ class ReviewsController {
   // Get current user's reviews
   async getMyReviews(req, res) {
     try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required.',
+        });
+      }
+
       const result = await query(
         `SELECT r.id, r.rating, r.comment, r.created_at,
                 r.appointment_id, r.service_id, r.expert_id,
@@ -29,18 +37,33 @@ class ReviewsController {
          LEFT JOIN experts e ON r.expert_id = e.id
          WHERE r.user_id = $1
          ORDER BY r.created_at DESC`,
-        [req.user.id]
+        [userId]
       );
+
+      // Convert rows to plain objects for safe JSON (pg may return non-plain objects)
+      const rows = (result.rows || []).map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment,
+        created_at: r.created_at,
+        appointment_id: r.appointment_id,
+        service_id: r.service_id,
+        expert_id: r.expert_id,
+        service_name: r.service_name,
+        expert_name: r.expert_name,
+      }));
 
       res.json({
         success: true,
-        data: { reviews: addSentiment(result.rows) },
+        data: { reviews: addSentiment(rows) },
       });
     } catch (error) {
-      console.error('Get my reviews error:', error);
+      console.error('Get my reviews error:', error.message);
+      console.error('Stack:', error.stack);
+      const isDev = process.env.NODE_ENV !== 'production';
       res.status(500).json({
         success: false,
-        message: 'Failed to fetch reviews.',
+        message: isDev ? `Failed to fetch reviews: ${error.message}` : 'Failed to fetch reviews.',
       });
     }
   }

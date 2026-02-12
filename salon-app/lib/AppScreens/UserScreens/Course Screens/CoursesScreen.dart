@@ -10,7 +10,6 @@ import '../../../providers/courses_provider.dart';
 import '../../../services/websocket_service.dart';
 import '../../../utils/haptic_feedback.dart';
 import '../../../widgets/cached_image.dart';
-import '../../../widgets/skeleton_loader.dart';
 
 // GLOBAL list for demo/legacy logic
 List<Map<String, String>> appliedCandidates = [];
@@ -31,7 +30,9 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
   @override
   void initState() {
     super.initState();
-    ref.read(coursesProvider.notifier).loadCourses(isActive: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(coursesProvider.notifier).loadCourses(isActive: true);
+    });
     _setupWebSocket();
   }
 

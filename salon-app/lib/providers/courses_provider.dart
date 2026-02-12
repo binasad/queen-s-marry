@@ -6,19 +6,14 @@ import '../services/cache_service.dart';
 class CoursesNotifier extends StateNotifier<CoursesState> {
   final CourseService _courseService = CourseService();
 
-  CoursesNotifier() : super(CoursesState.initial()) {
-    // Load from cache first for instant UI
-    _loadCoursesFromCache();
-    // Then load from API
-    loadCourses();
-  }
+  CoursesNotifier() : super(_initialState()) {}
 
-  /// Load courses from cache instantly (for better UX)
-  void _loadCoursesFromCache() {
-    final cachedCourses = CacheService.getCourses();
-    if (cachedCourses != null && cachedCourses.isNotEmpty) {
-      state = state.copyWith(courses: cachedCourses);
-    }
+  static CoursesState _initialState() {
+    final cached = CacheService.getCourses();
+    return CoursesState(
+      courses: cached ?? [],
+      loading: false,
+    );
   }
 
   /// Load courses with caching
