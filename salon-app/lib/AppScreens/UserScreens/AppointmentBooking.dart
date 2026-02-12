@@ -25,11 +25,14 @@ class AppColors {
 class AppointmentBookingScreen extends StatefulWidget {
   final Map<String, dynamic> service;
   final String? offerId;
+  /// When booking with an offer, this is the discounted price to charge (overrides service price)
+  final double? offerDiscountedPrice;
 
   const AppointmentBookingScreen({
     Key? key,
     required this.service,
     this.offerId,
+    this.offerDiscountedPrice,
   }) : super(key: key);
 
   @override
@@ -128,6 +131,12 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     return time;
   }
 
+  /// Amount to charge: offer-discounted when booking with offer, otherwise service price
+  double _getChargeAmount() {
+    if (widget.offerDiscountedPrice != null) return widget.offerDiscountedPrice!;
+    return double.tryParse(widget.service['price']?.toString() ?? '0') ?? 0.0;
+  }
+
   Future<void> _bookAppointment() async {
     if (_selectedTimeIndex == -1) {
       _showSnackBar('Please select a time', Colors.orange);
@@ -143,10 +152,10 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       final String rawTimeLabel = _timeSlots[_selectedTimeIndex];
       final String timeStr = _convertTo24Hour(rawTimeLabel);
 
-      // Calculate amount in cents (Stripe expects integers: e.g., 1000 PKR = 100000 cents)
-      final double price =
-          double.tryParse(widget.service['price'].toString()) ?? 0.0;
-      final int amountInCents = (price * 100).toInt();
+      // Calculate amount in cents (Stripe expects integers)
+      // Use offer-discounted price when booking with an offer, otherwise service price
+      final double price = _getChargeAmount();
+      final int amountInCents = (price * 100).round().clamp(100, 999999999); // min 1 PKR
 
       // --- STEP 2: CREATE STRIPE PAYMENT INTENT ---
       // This calls your backend to get the 'clientSecret'
@@ -373,7 +382,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                 Row(
                   children: [
                     Text(
-                      "PKR ${widget.service['price']}",
+                      "PKR ${_getChargeAmount().toStringAsFixed(0)}",
                       style: const TextStyle(
                         color: AppColors.primaryPink,
                         fontWeight: FontWeight.w900,
@@ -383,7 +392,10 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                     if (widget.service['_offer_title'] != null) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryPink.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
