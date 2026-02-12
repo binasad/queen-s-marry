@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import PermissionGuard from '@/components/PermissionGuard';
 import { rolesAPI, usersAPI } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 import CreateRoleModal from './create-role-modal';
 
@@ -27,6 +28,7 @@ interface UserSummary {
 }
 
 export default function RolesPage() {
+  const { user: currentUser } = useAuthStore();
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +108,17 @@ export default function RolesPage() {
       setUsersByRole({});
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to delete "${userName}"? This cannot be undone.`)) return;
+    try {
+      await usersAPI.delete(userId);
+      toast.success('User deleted successfully');
+      loadRoles();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete user');
     }
   };
 
@@ -235,13 +248,30 @@ export default function RolesPage() {
                           ) : (
                             <div className="max-h-40 overflow-y-auto border border-gray-100 rounded-md divide-y">
                               {assignedUsers.map((user) => (
-                                <div key={user.id} className="px-2 py-2 text-xs flex flex-col gap-0.5">
-                                  <span className="font-semibold text-gray-800">
-                                    {user.name || 'Unnamed'} ({user.email})
-                                  </span>
-                                  <span className="text-gray-500">
-                                    {user.phone ? `📞 ${user.phone}` : 'No phone'}
-                                  </span>
+                                <div
+                                  key={user.id}
+                                  className="px-2 py-2 text-xs flex items-center justify-between gap-2 group"
+                                >
+                                  <div className="flex flex-col gap-0.5 min-w-0">
+                                    <span className="font-semibold text-gray-800">
+                                      {user.name || 'Unnamed'} ({user.email})
+                                    </span>
+                                    <span className="text-gray-500">
+                                      {user.phone ? `📞 ${user.phone}` : 'No phone'}
+                                    </span>
+                                  </div>
+                                  {user.id !== currentUser?.id ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteUser(user.id, user.name || user.email)}
+                                      className="shrink-0 px-2 py-1 text-red-600 hover:bg-red-50 rounded text-xs font-medium transition"
+                                      title="Delete user"
+                                    >
+                                      Delete
+                                    </button>
+                                  ) : (
+                                    <span className="shrink-0 text-xs text-gray-400">(You)</span>
+                                  )}
                                 </div>
                               ))}
                             </div>

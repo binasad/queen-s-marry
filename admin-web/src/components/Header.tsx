@@ -23,6 +23,7 @@ export default function Header() {
 
   const mobileNavItems = [
     { name: 'Dashboard', path: '/dashboard' },
+    { name: 'Profile', path: '/profile' },
     { name: 'Appointments', path: '/appointments' },
     { name: 'Services', path: '/services' },
     { name: 'Reports', path: '/reports' },
@@ -41,9 +42,16 @@ export default function Header() {
         </div>
 
         <div className="flex items-center space-x-3 sm:space-x-4">
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
-              {user ? getInitials(user.name) : 'A'}
+          <Link
+            href="/profile"
+            className="flex items-center space-x-2 sm:space-x-3 hover:opacity-90 transition"
+          >
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm overflow-hidden">
+              {user?.profileImage ? (
+                <img src={user.profileImage} alt="" className="w-full h-full object-cover" />
+              ) : (
+                user ? getInitials(user.name) : 'A'
+              )}
             </div>
             <div className="text-right">
               <p className="text-sm font-semibold text-gray-800 truncate max-w-[120px] sm:max-w-none">
@@ -53,7 +61,7 @@ export default function Header() {
                 {user?.role || 'Owner'}
               </p>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
 

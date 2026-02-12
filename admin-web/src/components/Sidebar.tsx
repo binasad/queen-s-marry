@@ -18,6 +18,7 @@ export default function Sidebar() {
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊', permission: 'dashboard.view' },
+    { name: 'Profile', path: '/profile', icon: '👤', permission: null as string | null },
     { name: 'Appointments', path: '/appointments', icon: '📅', permission: 'appointments.view' },
     { name: 'Services', path: '/services', icon: '💇', permission: 'services.manage' },
     { name: 'Offers', path: '/offers', icon: '🎁', permission: 'offers.manage' },
@@ -40,8 +41,8 @@ export default function Sidebar() {
 
       <nav className="flex-1 mt-6 overflow-y-auto">
         {menuItems.map((item) => {
-          // Hide menu items if user doesn't have permission
-          if (item.permission && !hasPermission(item.permission)) {
+          // Hide menu items if user doesn't have permission (null = always show)
+          if (item.permission != null && !hasPermission(item.permission)) {
             return null;
           }
           
