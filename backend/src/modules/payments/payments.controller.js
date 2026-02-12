@@ -23,10 +23,12 @@ class PaymentsController {
     try {
       const { query } = require('../../config/db');
       const result = await query(
-        `SELECT id, customer_name, total_price, payment_status, paid_at, created_at
-         FROM appointments
-         WHERE payment_status = 'paid'
-         ORDER BY paid_at DESC LIMIT 5`
+        `SELECT a.id, a.customer_name, a.total_price, a.payment_status, a.paid_at, a.created_at,
+                a.offer_id, o.title as offer_title
+         FROM appointments a
+         LEFT JOIN offers o ON a.offer_id = o.id
+         WHERE a.payment_status = 'paid'
+         ORDER BY a.paid_at DESC NULLS LAST, a.created_at DESC LIMIT 5`
       );
       res.json({ success: true, payments: result.rows });
     } catch (error) {

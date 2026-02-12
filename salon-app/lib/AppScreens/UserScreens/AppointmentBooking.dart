@@ -24,9 +24,13 @@ class AppColors {
 
 class AppointmentBookingScreen extends StatefulWidget {
   final Map<String, dynamic> service;
+  final String? offerId;
 
-  const AppointmentBookingScreen({Key? key, required this.service})
-    : super(key: key);
+  const AppointmentBookingScreen({
+    Key? key,
+    required this.service,
+    this.offerId,
+  }) : super(key: key);
 
   @override
   State<AppointmentBookingScreen> createState() =>
@@ -178,6 +182,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
         customerPhone: _userPhone ?? '',
         customerEmail: _userEmail ?? '',
         payNow: true, // Set to true because payment was successful
+        offerId: widget.offerId,
       );
 
       if (mounted) _showSuccessDialog();
@@ -365,13 +370,35 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  "PKR ${widget.service['price']}",
-                  style: const TextStyle(
-                    color: AppColors.primaryPink,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      "PKR ${widget.service['price']}",
+                      style: const TextStyle(
+                        color: AppColors.primaryPink,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (widget.service['_offer_title'] != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryPink.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Offer: ${widget.service['_offer_title']}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryPink,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

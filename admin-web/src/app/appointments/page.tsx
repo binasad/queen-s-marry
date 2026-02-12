@@ -22,6 +22,8 @@ interface Appointment {
   payment_method?: string;
   expert_name?: string;
   notes?: string;
+  offer_id?: string;
+  offer_title?: string;
   created_at?: string;
 }
 
@@ -217,7 +219,14 @@ export default function AppointmentsPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{appointment.service_name}</td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">{appointment.service_name}</div>
+                          {appointment.offer_title && (
+                            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-pink-100 text-pink-800" title="Purchased with offer">
+                              🎁 {appointment.offer_title}
+                            </span>
+                          )}
+                        </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">{appointment.appointment_date}</div>
                           <div className="text-sm text-gray-500">{appointment.appointment_time}</div>

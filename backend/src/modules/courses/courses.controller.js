@@ -172,6 +172,90 @@ class CoursesController {
     }
   }
 
+  // Apply for course (user or guest)
+  async applyForCourse(req, res) {
+    try {
+      const { id } = req.params;
+      const { customerName, customerEmail, customerPhone, offerId } = req.body;
+
+      const courseResult = await query('SELECT id, title FROM courses WHERE id = $1 AND is_active = TRUE', [id]);
+      if (courseResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Course not found.' });
+      }
+
+      const userId = req.user?.id || null;
+      const name = customerName?.trim() || 'Applicant';
+      const email = customerEmail?.trim() || null;
+      const phone = customerPhone?.trim() || null;
+
+      if (!email && !phone) {
+        return res.status(400).json({ success: false, message: 'Email or phone is required.' });
+      }
+      if (phone && String(phone).length < 5) {
+        return res.status(400).json({ success: false, message: 'A valid phone number is required.' });
+      }
+
+      let appliedOfferId = null;
+      if (offerId) {
+        const offerResult = await query(
+          `SELECT id FROM offers WHERE id = $1 AND is_active = TRUE 
+           AND start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE 
+           AND (course_id IS NULL OR course_id = $2)`,
+          [offerId, id]
+        );
+        if (offerResult.rows.length > 0) appliedOfferId = offerResult.rows[0].id;
+      }
+
+      const result = await query(
+        `INSERT INTO course_applications (user_id, course_id, offer_id, customer_name, customer_email, customer_phone)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [userId, id, appliedOfferId, name, email, phone]
+      );
+
+      const application = result.rows[0];
+      if (global.io) {
+        global.io.to('admin').emit('course-application-created', { application });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: 'Application submitted successfully.',
+        data: { application },
+      });
+    } catch (error) {
+      console.error('Apply for course error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to submit application.',
+      });
+    }
+  },
+
+  // Get all course applications (Admin only)
+  async getAllApplications(req, res) {
+    try {
+      const result = await query(
+        `SELECT ca.*, c.title as course_title, o.title as offer_title
+         FROM course_applications ca
+         JOIN courses c ON ca.course_id = c.id
+         LEFT JOIN offers o ON ca.offer_id = o.id
+         ORDER BY ca.applied_at DESC`
+      );
+
+      res.json({
+        success: true,
+        data: { applications: result.rows },
+      });
+    } catch (error) {
+      console.error('Get course applications error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch applications.',
+      });
+    }
+  },
+
   // Delete course (Admin only - soft delete)
   async deleteCourse(req, res) {
     try {

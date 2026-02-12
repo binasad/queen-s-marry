@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const coursesController = require('./courses.controller');
-const { auth } = require('../../middlewares/auth.middleware');
+const { auth, optionalAuth } = require('../../middlewares/auth.middleware');
 const { checkPermission } = require('../../middlewares/role.middleware');
 const { validationRules } = require('./courses.validation');
 const { handleValidationErrors } = require('../auth/auth.validation');
 
 // Public routes
 router.get('/courses', coursesController.getAllCourses);
+router.post('/courses/:id/apply', optionalAuth, coursesController.applyForCourse);
 router.get(
   '/courses/:id',
   validationRules.getCourseById,
@@ -41,6 +42,13 @@ router.delete(
   validationRules.deleteCourse,
   handleValidationErrors,
   coursesController.deleteCourse
+);
+
+router.get(
+  '/courses/admin/applications',
+  auth,
+  checkPermission('courses.manage'),
+  coursesController.getAllApplications
 );
 
 module.exports = router;

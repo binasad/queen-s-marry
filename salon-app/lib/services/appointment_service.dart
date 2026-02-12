@@ -14,6 +14,7 @@ class AppointmentService {
     String? notes,
     bool payNow = false,
     String? paymentMethod,
+    String? offerId,
   }) async {
     final response = await _api.post('/appointments', {
       'serviceId': serviceId,
@@ -26,6 +27,7 @@ class AppointmentService {
       if (notes != null) 'notes': notes,
       'payNow': payNow,
       if (paymentMethod != null) 'paymentMethod': paymentMethod,
+      if (offerId != null && offerId.isNotEmpty) 'offerId': offerId,
     });
     return response['data'] as Map<String, dynamic>;
   }

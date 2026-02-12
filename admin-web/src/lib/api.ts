@@ -127,6 +127,8 @@ export const coursesAPI = {
   
   getById: (id: string) => api.get(`/courses/${id}`),
   
+  getApplications: () => api.get('/courses/admin/applications'),
+  
   create: (data: any) => api.post('/courses', data),
   
   update: (id: string, data: any) => api.put(`/courses/${id}`, data),
@@ -181,6 +183,15 @@ export const rolesAPI = {
   
   updateRolePermissions: (roleId: string, permissions: string[]) =>
     api.put(`/roles/${roleId}/permissions`, { permissions }),
+};
+
+// Reports & Sales API
+export const reportsAPI = {
+  getSalesOverview: () => api.get('/reports/sales'),
+  getReports: (params?: { startDate?: string; endDate?: string }, config?: any) =>
+    api.get('/reports/data', { params, ...config }),
+  getTransactions: (params?: { startDate?: string; endDate?: string; page?: number; limit?: number }) =>
+    api.get('/reports/transactions', { params }),
 };
 
 // Offers API
