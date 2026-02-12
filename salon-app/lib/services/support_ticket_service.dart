@@ -50,6 +50,23 @@ class SupportTicket {
 class SupportTicketService {
   final ApiService _apiService = ApiService();
 
+  /// Get current user's tickets (with status) - for Help & Support screen
+  Future<List<SupportTicket>> getMyTickets() async {
+    try {
+      final response = await _apiService.get('/support/tickets/my');
+      final data = response['data'];
+      if (data is Map && data['tickets'] is List) {
+        return (data['tickets'] as List)
+            .map((t) => SupportTicket.fromJson(Map<String, dynamic>.from(t)))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      print('SupportTicketService Error (getMyTickets): $e');
+      rethrow;
+    }
+  }
+
   Future<List<SupportTicket>> getAllTickets({
     Map<String, String>? params,
   }) async {

@@ -25,6 +25,7 @@ export default function Sidebar() {
     { name: 'Courses', path: '/courses', icon: '📚', permission: 'courses.manage' },
     { name: 'Experts', path: '/experts', icon: '⭐', permission: 'experts.manage' },
     { name: 'Sales', path: '/sales', icon: '💰', permission: 'dashboard.view' },
+    { name: 'Blogs', path: '/blogs', icon: '📝', permission: 'offers.manage' },
     { name: 'Support', path: '/support', icon: '💬', permission: 'support.view' },
     { name: 'Reports', path: '/reports', icon: '📈', permission: 'dashboard.view' },
     { name: 'Settings', path: '/settings', icon: '⚙️', permission: 'roles.view' },
