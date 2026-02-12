@@ -127,6 +127,22 @@ class AppointmentsController {
         global.io.emit('appointments-updated', { type: 'created', appointment });
       }
 
+      // Push to customer and admins
+      const pushService = require('../../services/pushNotificationService');
+      const msg = status === 'confirmed'
+        ? `Your appointment for ${service.name} on ${appointmentDate} is confirmed!`
+        : `Your appointment for ${service.name} is reserved. Pay within 4 hours to confirm.`;
+      pushService.sendToUser(req.user.id, {
+        title: status === 'confirmed' ? 'Appointment Confirmed' : 'Appointment Reserved',
+        body: msg,
+        data: { type: 'appointment', id: appointment.id },
+      }).catch(() => {});
+      pushService.sendToAdmins({
+        title: 'New Booking',
+        body: `${customerName || 'Customer'} booked ${service.name} for ${appointmentDate}${status === 'confirmed' ? ' (paid)' : ''}`,
+        data: { type: 'appointment', id: appointment.id },
+      }).catch(() => {});
+
     } catch (error) {
       console.error('❌ Create appointment error:', error);
       res.status(500).json({ success: false, message: 'Internal server error.' });
@@ -269,6 +285,18 @@ class AppointmentsController {
         global.io.emit('appointments-updated', { type: 'updated', appointment: result.rows[0] });
       }
 
+      // Push to customer when status changes
+      const apt = result.rows[0];
+      if (apt.user_id) {
+        const pushService = require('../../services/pushNotificationService');
+        const titles = { confirmed: 'Appointment Confirmed', cancelled: 'Appointment Cancelled', completed: 'Appointment Completed' };
+        pushService.sendToUser(apt.user_id, {
+          title: titles[status] || 'Appointment Updated',
+          body: `Your appointment status has been updated to ${status}.`,
+          data: { type: 'appointment', id: apt.id, status },
+        }).catch(() => {});
+      }
+
       res.json({
         success: true,
         message: 'Appointment status updated successfully.',
@@ -313,6 +341,22 @@ class AppointmentsController {
         global.io.to('admin').emit('appointment-updated', { appointment: result.rows[0] });
         global.io.emit('appointments-updated', { type: 'paid', appointment: result.rows[0] });
       }
+
+      // Push to customer and admins
+      const apt = result.rows[0];
+      const pushService = require('../../services/pushNotificationService');
+      if (apt.user_id) {
+        pushService.sendToUser(apt.user_id, {
+          title: 'Payment Received',
+          body: 'Your appointment payment has been confirmed. Thank you!',
+          data: { type: 'appointment', id: apt.id },
+        }).catch(() => {});
+      }
+      pushService.sendToAdmins({
+        title: 'Payment Received',
+        body: `${apt.customer_name || 'Customer'} paid ${apt.total_price} for appointment`,
+        data: { type: 'payment', appointmentId: apt.id },
+      }).catch(() => {});
 
       res.json({
         success: true,
@@ -376,6 +420,17 @@ class AppointmentsController {
       if (global.io) {
         global.io.to('admin').emit('appointment-updated', { appointment: result.rows[0] });
         global.io.emit('appointments-updated', { type: 'cancelled', appointment: result.rows[0] });
+      }
+
+      // Push to customer
+      const apt = result.rows[0];
+      if (apt.user_id) {
+        const pushService = require('../../services/pushNotificationService');
+        pushService.sendToUser(apt.user_id, {
+          title: 'Appointment Cancelled',
+          body: 'Your appointment has been cancelled.',
+          data: { type: 'appointment', id: apt.id },
+        }).catch(() => {});
       }
 
       res.json({

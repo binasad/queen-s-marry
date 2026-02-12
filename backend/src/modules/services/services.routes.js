@@ -72,11 +72,10 @@ router.delete(
   servicesController.deleteService
 );
 
-// Image upload route
+// Image upload route - any authenticated user (profile, services, etc.)
 router.post(
   '/upload-image',
   auth,
-  checkPermission('services.manage'),
   upload.single('image'),
   servicesController.uploadImage
 );

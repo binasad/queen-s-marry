@@ -22,7 +22,7 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('customers');
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -39,7 +39,8 @@ export default function CustomersPage() {
       };
       
       if (search) params.search = search;
-      if (roleFilter !== 'all') params.role = roleFilter;
+      if (roleFilter === 'customers') params.excludeRole = 'Guest';
+      else if (roleFilter !== 'all') params.role = roleFilter;
 
       const res = await usersAPI.getAll(params);
       setCustomers(res.data.data.users || []);
@@ -110,10 +111,13 @@ export default function CustomersPage() {
                       }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                     >
+                      <option value="customers">Customers only (exclude Guests)</option>
                       <option value="all">All Roles</option>
                       <option value="User">User</option>
+                      <option value="Customer">Customer</option>
                       <option value="Admin">Admin</option>
                       <option value="Owner">Owner</option>
+                      <option value="Guest">Guest</option>
                     </select>
                   </div>
                 </div>

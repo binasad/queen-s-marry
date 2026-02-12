@@ -6,8 +6,7 @@ class AuthService {
   final StorageService _storage = const StorageService();
 
   /// Roles allowed to access the mobile app
-  /// Roles allowed to access the mobile app
-  static const List<String> _allowedMobileRoles = ['Customer', 'Guest'];
+  static const List<String> _allowedMobileRoles = ['Customer', 'Guest', 'Admin', 'Owner'];
 
   /// Guest login - creates a temporary user on the backend
   /// Returns user data with isGuest flag

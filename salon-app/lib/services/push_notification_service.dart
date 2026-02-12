@@ -1,7 +1,10 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+import 'api_service.dart';
+
 class PushNotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  final ApiService _api = ApiService();
 
   Future<void> initialize() async {
     // 1. Request Permission (Required for iOS)
@@ -15,9 +18,20 @@ class PushNotificationService {
       // 2. Get the Token (Address)
       String? token = await _fcm.getToken();
       print("🔥 My Device Token: $token");
-      
-      // TODO: Call your Backend API here to save this token!
-      // await api.post('/user/save-token', { token: token });
+
+      // Save token to backend when user is logged in
+      if (token != null && token.isNotEmpty) {
+        try {
+          await _api.post(
+            '/notifications/save-token',
+            {'fcmToken': token},
+            requiresAuth: true,
+          );
+          print("✅ FCM token saved to backend");
+        } catch (e) {
+          print("⚠️ Could not save FCM token (user may not be logged in): $e");
+        }
+      }
     }
 
     // 3. Listen for messages while app is open

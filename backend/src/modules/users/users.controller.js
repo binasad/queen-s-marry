@@ -142,7 +142,7 @@ class UsersController {
   // Get all users (Admin only)
   async getAllUsers(req, res) {
     try {
-      const { role, search, page = 1, limit = 10 } = req.query;
+      const { role, excludeRole, search, page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
 
       let queryText = `
@@ -158,6 +158,11 @@ class UsersController {
       if (role) {
         queryText += ` AND r.name = $${paramCounter}`;
         queryParams.push(role);
+        paramCounter++;
+      }
+      if (excludeRole) {
+        queryText += ` AND (r.name IS NULL OR r.name != $${paramCounter})`;
+        queryParams.push(excludeRole);
         paramCounter++;
       }
 
@@ -184,6 +189,10 @@ class UsersController {
         countParams.push(`%${search}%`);
       }
 
+      if (excludeRole) {
+        countQuery += ` AND (r.name IS NULL OR r.name != $${countParams.length + 1})`;
+        countParams.push(excludeRole);
+      }
       const countResult = await query(countQuery, countParams);
       const totalUsers = parseInt(countResult.rows[0].count, 10);
 

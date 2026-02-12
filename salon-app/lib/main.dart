@@ -1,4 +1,7 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'firebase_options.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as provider_package;
 
@@ -6,13 +9,21 @@ import 'AppScreens/OwnerScreens/OwnerTabbar.dart';
 import 'AppScreens/UserScreens/userTabbar.dart';
 import 'AppScreens/introSlider.dart';
 import 'providers/auth_provider.dart';
-import 'services/user_service.dart';
 import 'services/cache_service.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
+import 'services/push_notification_service.dart';
+import 'services/user_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Handles notifications when app is in background/terminated
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Limit image cache to reduce memory (default is 1000 images, 100MB)
   PaintingBinding.instance.imageCache.maximumSize = 150;
@@ -20,6 +31,10 @@ void main() async {
 
   // Load environment variables
   await dotenv.load();
+
+  // Register FCM background handler for notifications when app is closed
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   Stripe.publishableKey =
       'pk_test_51SGV17AdeL5kUQJvRdfCLGn4Dr8lBebNrq7dBFIn7nU7FKVTtflPI3E5haM3nsN2abws9UGoVJ0qlbUyjwQ6rEpa00TnRdVGad';
 
@@ -76,6 +91,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     try {
       final profile = await UserService().getProfile();
+      // Initialize push notifications and save FCM token to backend
+      PushNotificationService().initialize();
       return profile;
     } catch (e) {
       print('Error loading profile: $e');
@@ -104,8 +121,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
           return OnboardingScreen();
         }
 
-        final role = (profile['role'] ?? 'user').toString();
-        if (role == 'admin' || role == 'owner') {
+        final roleObj = profile['user']?['role'] ?? profile['role'];
+        final roleName = (roleObj is Map ? roleObj['name'] : roleObj)?.toString().toLowerCase() ?? 'user';
+        if (roleName == 'admin' || roleName == 'owner') {
           return OwnerBottomTabBar();
         }
         return BottomTabBar();

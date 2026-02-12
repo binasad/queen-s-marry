@@ -110,6 +110,21 @@ class CourseService {
     return Map<String, dynamic>.from(data as Map? ?? {});
   }
 
+  /// Get all course applications (Admin/Owner only)
+  Future<List<Map<String, dynamic>>> getAdminApplications() async {
+    final response = await _api.get(
+      '/courses/admin/applications',
+      requiresAuth: true,
+    );
+    final data = response['data'];
+    if (data is Map && data['applications'] is List) {
+      return List<Map<String, dynamic>>.from(
+        (data['applications'] as List).map((e) => Map<String, dynamic>.from(e as Map)),
+      );
+    }
+    return [];
+  }
+
   /// Get course by ID
   Future<Map<String, dynamic>> getCourseById(String courseId) async {
     final response = await _api.get('/courses/$courseId');
