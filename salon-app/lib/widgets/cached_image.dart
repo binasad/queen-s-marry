@@ -5,6 +5,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 const int _kDefaultMemCacheWidth = 400;
 const int _kDefaultMemCacheHeight = 400;
 
+int _safeToInt(double? v, int fallback) {
+  if (v == null || !v.isFinite) return fallback;
+  return v.toInt();
+}
+
 /// Cached network image with placeholder and error handling.
 /// Uses memCacheWidth/Height to reduce decoded image memory ~4x.
 class CachedImageWidget extends StatelessWidget {
@@ -31,8 +36,8 @@ class CachedImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mw = memCacheWidth ?? (width?.toInt() ?? _kDefaultMemCacheWidth);
-    final mh = memCacheHeight ?? (height?.toInt() ?? _kDefaultMemCacheHeight);
+    final mw = memCacheWidth ?? _safeToInt(width, _kDefaultMemCacheWidth);
+    final mh = memCacheHeight ?? _safeToInt(height, _kDefaultMemCacheHeight);
 
     Widget imageWidget = imageUrl.isNotEmpty
         ? CachedNetworkImage(

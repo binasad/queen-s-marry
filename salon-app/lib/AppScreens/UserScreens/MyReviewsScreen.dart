@@ -22,7 +22,9 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _load();
+    });
   }
 
   Future<void> _load() async {
@@ -31,8 +33,21 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
       _error = null;
     });
     try {
-      final reviews = await _reviewService.getMyReviews();
-      final appointments = await _appointmentService.getMyAppointments(status: 'completed');
+      List<dynamic> reviews = [];
+      List<dynamic> appointments = [];
+
+      try {
+        reviews = await _reviewService.getMyReviews();
+      } catch (e) {
+        if (mounted) ErrorHandler.show(context, e);
+        // Continue with empty reviews - will show error state if both fail
+      }
+
+      try {
+        appointments = await _appointmentService.getMyAppointments(status: 'completed');
+      } catch (_) {
+        // Appointments failure is non-fatal; we can still show reviews
+      }
 
       // Filter: completed appointments not yet reviewed
       final reviewedIds = reviews
@@ -49,6 +64,7 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
           _myReviews = reviews;
           _reviewableAppointments = reviewable;
           _loading = false;
+          _error = null;
         });
       }
     } catch (e) {
