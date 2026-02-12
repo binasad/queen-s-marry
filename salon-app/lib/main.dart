@@ -13,6 +13,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Limit image cache to reduce memory (default is 1000 images, 100MB)
+  PaintingBinding.instance.imageCache.maximumSize = 150;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 80 << 20; // 80 MB
+
   // Load environment variables
   await dotenv.load();
   Stripe.publishableKey =

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../services/service_catalog_service.dart';
+import '../../widgets/cached_image.dart';
 
 class ApiCategoryServicesScreen extends StatefulWidget {
   final String categoryId;
@@ -131,8 +132,8 @@ class _ApiCategoryServicesScreenState extends State<ApiCategoryServicesScreen> {
                       leading: imgUrl.isNotEmpty
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                imgUrl,
+                              child: CachedImageWidget(
+                                imageUrl: imgUrl,
                                 width: 60,
                                 height: 60,
                                 fit: BoxFit.cover,

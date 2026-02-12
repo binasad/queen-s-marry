@@ -58,8 +58,14 @@ const corsOptions = {
         return callback(null, true);
       }
     }
+
+    // Allow all Vercel deployments (*.vercel.app - production + preview URLs)
+    if (origin.endsWith('.vercel.app')) {
+      console.log('✅ Allowing origin (Vercel):', origin);
+      return callback(null, true);
+    }
     
-    // In production, check against whitelist
+    // Production: check explicit whitelist
     if (allowedOrigins.includes(origin)) {
       console.log('✅ Allowing origin (whitelist):', origin);
       return callback(null, true);
