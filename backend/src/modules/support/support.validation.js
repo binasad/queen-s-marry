@@ -39,10 +39,6 @@ const validationRules = {
       .trim()
       .notEmpty()
       .withMessage('Message is required'),
-    body('userId')
-      .optional()
-      .isUUID()
-      .withMessage('Invalid user ID'),
   ],
 
   updateTicket: [

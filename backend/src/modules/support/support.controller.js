@@ -128,16 +128,42 @@ class SupportController {
     }
   }
 
-  // Create ticket (public or authenticated)
+  // Get current user's tickets (registered users only)
+  async getMyTickets(req, res) {
+    try {
+      const userId = req.user.id;
+
+      const result = await query(
+        `SELECT t.* FROM support_tickets t
+         WHERE t.user_id = $1
+         ORDER BY t.created_at DESC`,
+        [userId]
+      );
+
+      res.json({
+        success: true,
+        data: { tickets: result.rows },
+      });
+    } catch (error) {
+      console.error('Get my tickets error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch your tickets.',
+      });
+    }
+  }
+
+  // Create ticket (registered users only - no guests)
   async createTicket(req, res) {
     try {
-      const { customerName, customerEmail, customerPhone, subject, message, userId } = req.body;
+      const { customerName, customerEmail, customerPhone, subject, message } = req.body;
+      const userId = req.user.id; // Use authenticated user, not from body
 
       const result = await query(
         `INSERT INTO support_tickets (user_id, customer_name, customer_email, customer_phone, subject, message)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING *`,
-        [userId || null, customerName, customerEmail, customerPhone || null, subject, message]
+        [userId, customerName, customerEmail, customerPhone || null, subject, message]
       );
 
       res.status(201).json({

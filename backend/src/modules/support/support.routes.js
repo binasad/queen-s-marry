@@ -2,12 +2,15 @@ const express = require('express');
 const router = express.Router();
 const supportController = require('./support.controller');
 const { auth } = require('../../middlewares/auth.middleware');
-const { checkPermission } = require('../../middlewares/role.middleware');
+const { checkPermission, blockGuests } = require('../../middlewares/role.middleware');
 const { validationRules } = require('./support.validation');
 const { handleValidationErrors } = require('../auth/auth.validation');
 
-// Public route - anyone can create a ticket
-router.post('/support/tickets', auth, validationRules.createTicket, handleValidationErrors, supportController.createTicket);
+// User route - get my own tickets (must be before /:id)
+router.get('/support/tickets/my', auth, blockGuests, supportController.getMyTickets);
+
+// Create ticket - only registered users (no guests)
+router.post('/support/tickets', auth, blockGuests, validationRules.createTicket, handleValidationErrors, supportController.createTicket);
 
 // Admin routes
 router.get(
