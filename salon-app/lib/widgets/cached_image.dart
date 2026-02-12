@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-/// Cached network image with placeholder and error handling
+/// Max decoded size for memory - limits RAM usage (typical phone ~1080p)
+const int _kDefaultMemCacheWidth = 400;
+const int _kDefaultMemCacheHeight = 400;
+
+/// Cached network image with placeholder and error handling.
+/// Uses memCacheWidth/Height to reduce decoded image memory ~4x.
 class CachedImageWidget extends StatelessWidget {
   final String imageUrl;
   final String? placeholderAsset;
@@ -9,6 +14,8 @@ class CachedImageWidget extends StatelessWidget {
   final double? width;
   final double? height;
   final BorderRadius? borderRadius;
+  final int? memCacheWidth;
+  final int? memCacheHeight;
 
   const CachedImageWidget({
     super.key,
@@ -18,16 +25,25 @@ class CachedImageWidget extends StatelessWidget {
     this.width,
     this.height,
     this.borderRadius,
+    this.memCacheWidth,
+    this.memCacheHeight,
   });
 
   @override
   Widget build(BuildContext context) {
+    final mw = memCacheWidth ?? (width?.toInt() ?? _kDefaultMemCacheWidth);
+    final mh = memCacheHeight ?? (height?.toInt() ?? _kDefaultMemCacheHeight);
+
     Widget imageWidget = imageUrl.isNotEmpty
         ? CachedNetworkImage(
             imageUrl: imageUrl,
             width: width,
             height: height,
             fit: fit,
+            memCacheWidth: mw > 0 ? mw : null,
+            memCacheHeight: mh > 0 ? mh : null,
+            maxWidthDiskCache: mw > 0 ? (mw * 2) : null,
+            maxHeightDiskCache: mh > 0 ? (mh * 2) : null,
             placeholder: (context, url) => Container(
               width: width,
               height: height,
@@ -92,6 +108,7 @@ class CachedCircleImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = (radius * 2).toInt();
     return CircleAvatar(
       radius: radius,
       backgroundColor: Colors.grey[200],
@@ -102,6 +119,8 @@ class CachedCircleImage extends StatelessWidget {
                 width: radius * 2,
                 height: radius * 2,
                 fit: BoxFit.cover,
+                memCacheWidth: size,
+                memCacheHeight: size,
                 placeholder: (context, url) => _buildPlaceholder(),
                 errorWidget: (context, url, error) => _buildPlaceholder(),
               ),

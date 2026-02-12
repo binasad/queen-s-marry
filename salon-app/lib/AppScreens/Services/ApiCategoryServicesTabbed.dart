@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:async';
 import '../../services/service_catalog_service.dart';
+import '../../widgets/cached_image.dart';
 import '../../services/websocket_service.dart';
 import 'servicesdetails.dart';
 
@@ -287,12 +288,11 @@ class _ApiCategoryServicesTabbedScreenState
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: imgUrl.isNotEmpty
-                          ? Image.network(
-                              imgUrl,
+                          ? CachedImageWidget(
+                              imageUrl: imgUrl,
                               width: 90,
                               height: 90,
                               fit: BoxFit.cover,
-                              errorBuilder: (c, e, s) => _buildPlaceholder(),
                             )
                           : _buildPlaceholder(),
                     ),

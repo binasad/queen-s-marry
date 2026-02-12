@@ -17,6 +17,7 @@ import '../../providers/services_provider.dart';
 import '../../widgets/offline_banner.dart';
 import '../../utils/debouncer.dart';
 import '../../utils/haptic_feedback.dart';
+import '../../widgets/cached_image.dart';
 import '../Services/userServices.dart';
 import '../Services/ApiCategoryServicesTabbed.dart';
 import '../googleMap.dart';
@@ -793,17 +794,12 @@ class _UserHomeState extends ConsumerState<UserHome>
             ),
             child: ClipOval(
               child: imageUrl.isNotEmpty
-                  ? Image.network(
-                      imageUrl,
+                  ? CachedImageWidget(
+                      imageUrl: imageUrl,
                       width: 70,
                       height: 70,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Image.asset(
-                        'assets/FeatherCutting.png',
-                        width: 70,
-                        height: 70,
-                        fit: BoxFit.cover,
-                      ),
+                      placeholderAsset: 'assets/FeatherCutting.png',
                     )
                   : Image.asset(
                       'assets/FeatherCutting.png',

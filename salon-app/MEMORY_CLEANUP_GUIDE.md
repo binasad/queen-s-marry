@@ -1,6 +1,29 @@
 # Memory & Disk Cleanup Guide
 
-## 🧹 C Drive Memory Issues
+## 📱 Flutter App Runtime Memory (RAM)
+
+If the **salon app uses too much RAM** when running:
+
+### Optimizations Already Applied
+- **CachedNetworkImage** uses `memCacheWidth`/`memCacheHeight` (400px) so images decode at display size (~4x less memory per image).
+- **Image cache limits** in `main.dart`: max 150 images, 80 MB (default is 1000 images, 100MB).
+- **CachedImageWidget** used for service/category images instead of raw `Image.network`.
+
+### Additional Tips
+1. **Use profile/release mode** when measuring: `flutter run --profile` (debug adds ~50% overhead).
+2. **Remove unused Firebase packages** from `pubspec.yaml` if you're not using Firestore/Database/Messaging.
+3. **Compress large assets**: Run `flutter pub run flutter_svg` or use TinyPNG for JPG/PNG in `assets/`.
+4. **Lazy-load Lottie**: Don't load all Lottie files at once; load only when the screen is shown.
+
+### Check App Memory
+```bash
+flutter run --profile
+# Then open DevTools → Memory tab, take heap snapshots
+```
+
+---
+
+## 🧹 C Drive / Disk Space Issues
 
 When running Flutter app, Node.js backend, and Next.js web, these locations can fill up your C drive:
 
