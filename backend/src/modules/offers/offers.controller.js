@@ -145,7 +145,7 @@ class OffersController {
   // Create offer (Admin only)
   async createOffer(req, res) {
     try {
-      const { title, description, discountPercentage, discountAmount, imageUrl, startDate, endDate, isActive } = req.body;
+      const { title, description, discountPercentage, discountAmount, imageUrl, startDate, endDate, isActive, serviceId, courseId } = req.body;
 
       // Validate that at least one discount type is provided
       if (!discountPercentage && !discountAmount) {
@@ -156,8 +156,8 @@ class OffersController {
       }
 
       const result = await query(
-        `INSERT INTO offers (title, description, discount_percentage, discount_amount, image_url, start_date, end_date, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO offers (title, description, discount_percentage, discount_amount, image_url, start_date, end_date, is_active, service_id, course_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
         [
           title,
@@ -168,6 +168,8 @@ class OffersController {
           startDate,
           endDate,
           isActive !== undefined ? isActive : true,
+          serviceId || null,
+          courseId || null,
         ]
       );
 
@@ -197,7 +199,7 @@ class OffersController {
   async updateOffer(req, res) {
     try {
       const { id } = req.params;
-      const { title, description, discountPercentage, discountAmount, imageUrl, startDate, endDate, isActive } = req.body;
+      const { title, description, discountPercentage, discountAmount, imageUrl, startDate, endDate, isActive, serviceId, courseId } = req.body;
 
       // Build dynamic update query
       const updates = [];
@@ -235,6 +237,14 @@ class OffersController {
       if (isActive !== undefined) {
         updates.push(`is_active = $${paramCounter++}`);
         values.push(isActive);
+      }
+      if (serviceId !== undefined) {
+        updates.push(`service_id = $${paramCounter++}`);
+        values.push(serviceId || null);
+      }
+      if (courseId !== undefined) {
+        updates.push(`course_id = $${paramCounter++}`);
+        values.push(courseId || null);
       }
 
       if (updates.length === 0) {

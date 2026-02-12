@@ -20,6 +20,9 @@ import '../../utils/haptic_feedback.dart';
 import '../../widgets/cached_image.dart';
 import '../Services/userServices.dart';
 import '../Services/ApiCategoryServicesTabbed.dart';
+import '../Services/servicesdetails.dart';
+import 'Course Screens/CourseDetails.dart';
+import '../../services/course_service.dart';
 import '../googleMap.dart';
 import '../../services/api_service.dart';
 import '../../providers/auth_provider.dart' as app_auth;
@@ -62,7 +65,7 @@ class _UserHomeState extends ConsumerState<UserHome>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _opacityAnimation;
 
-  List<Map<String, String>> filteredOffers = [];
+  List<Map<String, dynamic>> filteredOffers = [];
   List<Map<String, dynamic>> filteredExperts = [];
   String name = "Guest", email = "", profile = "";
 
@@ -155,6 +158,8 @@ class _UserHomeState extends ConsumerState<UserHome>
               offer['start_date'],
               offer['end_date'],
             ),
+            'service_id': offer['service_id']?.toString(),
+            'course_id': offer['course_id']?.toString(),
           };
         }).toList();
         setState(() {
@@ -167,7 +172,7 @@ class _UserHomeState extends ConsumerState<UserHome>
       if (mounted) {
         setState(() {
           filteredOffers = OfferManager.offers
-              .map((o) => Map<String, String>.from(o))
+              .map((o) => Map<String, dynamic>.from(o))
               .toList();
           _offersLoading = false;
         });
@@ -547,6 +552,9 @@ class _UserHomeState extends ConsumerState<UserHome>
                 offer['discount'] ?? '',
                 offer['image'] ?? 'assets/bgbg.png',
                 duration: offer['duration'] ?? 'Limited',
+                serviceId: offer['service_id']?.toString(),
+                courseId: offer['course_id']?.toString(),
+                onTap: () => _onOfferTap(offer),
               ),
             );
           },
@@ -555,11 +563,72 @@ class _UserHomeState extends ConsumerState<UserHome>
     );
   }
 
+  Future<void> _onOfferTap(Map<String, dynamic> offer) async {
+    final serviceId = offer['service_id']?.toString();
+    final courseId = offer['course_id']?.toString();
+    if (serviceId != null && serviceId.isNotEmpty) {
+      HapticHelper.mediumImpact();
+      try {
+        final service = await ServiceCatalogService().getServiceById(serviceId);
+        if (mounted && service.isNotEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ServiceDetailedScreen(service: service),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('Failed to load service: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open service')),
+          );
+        }
+      }
+    } else if (courseId != null && courseId.isNotEmpty) {
+      HapticHelper.mediumImpact();
+      try {
+        final raw = await CourseService().getCourseById(courseId);
+        if (mounted && raw.isNotEmpty) {
+          final course = {
+            'id': raw['id']?.toString() ?? '',
+            'title': raw['title']?.toString() ?? 'Course',
+            'duration': raw['duration']?.toString() ?? 'Flexible',
+            'price': raw['price']?.toString() ?? '0',
+            'image': raw['image_url']?.toString() ?? raw['image'] ?? '',
+            'description': raw['description']?.toString() ?? '',
+            'subjects': (raw['description']?.toString().contains('Subjects Included:') ?? false)
+                ? raw['description'].toString().split('Subjects Included:')[1].split(',').map((e) => e.trim()).toList()
+                : ['Professional Training'],
+          };
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CourseDetailScreen(course: course),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('Failed to load course: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open course')),
+          );
+        }
+      }
+    }
+    // No link: tap does nothing (or could show a toast)
+  }
+
   Widget _buildOfferCard(
     String title,
     String discount,
     String imagePath, {
     String duration = 'Limited',
+    String? serviceId,
+    String? courseId,
+    VoidCallback? onTap,
   }) {
     ImageProvider backgroundImage;
     if (imagePath.startsWith('http')) {
@@ -568,21 +637,24 @@ class _UserHomeState extends ConsumerState<UserHome>
       backgroundImage = AssetImage(imagePath);
     }
 
-    return Container(
-      width: 280,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
+    final hasLink = (serviceId != null && serviceId.isNotEmpty) || (courseId != null && courseId.isNotEmpty);
+    return GestureDetector(
+      onTap: hasLink ? onTap : null,
+      child: Container(
+        width: 280,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
           children: [
             Positioned.fill(
               child: Image(
@@ -689,6 +761,7 @@ class _UserHomeState extends ConsumerState<UserHome>
               ),
             ),
           ],
+        ),
         ),
       ),
     );

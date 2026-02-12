@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AuthGuard from '@/components/AuthGuard';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
-import { offersAPI, servicesAPI } from '@/lib/api';
+import { offersAPI, servicesAPI, coursesAPI } from '@/lib/api';
 import { wsService } from '@/services/websocket';
 import toast from 'react-hot-toast';
 
@@ -18,6 +18,8 @@ interface Offer {
   start_date: string;
   end_date: string;
   is_active?: boolean;
+  service_id?: string;
+  course_id?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -38,7 +40,11 @@ export default function OffersPage() {
     startDate: '',
     endDate: '',
     isActive: true,
+    serviceId: '',
+    courseId: '',
   });
+  const [services, setServices] = useState<{ id: string; name: string }[]>([]);
+  const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -66,6 +72,26 @@ export default function OffersPage() {
   useEffect(() => {
     loadOffers();
   }, [loadOffers]);
+
+  // Load services and courses for offer linking
+  const loadServicesAndCourses = useCallback(async () => {
+    try {
+      const [servicesRes, coursesRes] = await Promise.all([
+        servicesAPI.getAllServices({ limit: 500 }),
+        coursesAPI.getAll({ limit: 500 }),
+      ]);
+      const svcList = servicesRes.data?.data?.services || servicesRes.data?.services || [];
+      const crsList = coursesRes.data?.data?.courses || coursesRes.data?.courses || coursesRes.data || [];
+      setServices(svcList.map((s: any) => ({ id: s.id, name: s.name || s.title || s.id })));
+      setCourses(Array.isArray(crsList) ? crsList.map((c: any) => ({ id: c.id, title: c.title || c.name || c.id })) : []);
+    } catch (e) {
+      console.error('Failed to load services/courses:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showModal) loadServicesAndCourses();
+  }, [showModal, loadServicesAndCourses]);
 
   // Setup WebSocket for real-time updates
   useEffect(() => {
@@ -171,6 +197,8 @@ export default function OffersPage() {
         startDate: formData.startDate,
         endDate: formData.endDate,
         isActive: formData.isActive,
+        serviceId: formData.serviceId || undefined,
+        courseId: formData.courseId || undefined,
       };
 
       // Only include one type of discount
@@ -210,6 +238,8 @@ export default function OffersPage() {
       startDate: offer.start_date ? offer.start_date.split('T')[0] : '',
       endDate: offer.end_date ? offer.end_date.split('T')[0] : '',
       isActive: offer.is_active !== false,
+      serviceId: offer.service_id || '',
+      courseId: offer.course_id || '',
     });
     setImagePreview(offer.image_url || null);
     setShowModal(true);
@@ -248,6 +278,8 @@ export default function OffersPage() {
       startDate: '',
       endDate: '',
       isActive: true,
+      serviceId: '',
+      courseId: '',
     });
     setSelectedFile(null);
     setImagePreview(null);
@@ -603,6 +635,42 @@ export default function OffersPage() {
                           <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
                         </>
                       )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Link to Service or Course - tap takes user to specific screen */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Link to (optional)
+                  </label>
+                  <p className="text-xs text-gray-500">When user taps this offer in the app, they will be taken to the linked service or course.</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Service</label>
+                      <select
+                        value={formData.serviceId}
+                        onChange={(e) => setFormData({ ...formData, serviceId: e.target.value, courseId: e.target.value ? '' : formData.courseId })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      >
+                        <option value="">— None —</option>
+                        {services.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Course</label>
+                      <select
+                        value={formData.courseId}
+                        onChange={(e) => setFormData({ ...formData, courseId: e.target.value, serviceId: e.target.value ? '' : formData.serviceId })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      >
+                        <option value="">— None —</option>
+                        {courses.map((c) => (
+                          <option key={c.id} value={c.id}>{c.title}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
