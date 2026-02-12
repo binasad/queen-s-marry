@@ -1,5 +1,15 @@
 const { body, param } = require('express-validator');
 
+// Allow guest placeholder emails (e.g. guest_uuid@salon.guest)
+const isEmailOrGuestEmail = (value) => {
+  if (!value || typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (/^guest_[a-f0-9-]+@salon\.guest$/i.test(trimmed)) return true;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(trimmed);
+};
+
 const validationRules = {
   createTicket: [
     body('customerName')
@@ -12,7 +22,7 @@ const validationRules = {
       .trim()
       .notEmpty()
       .withMessage('Customer email is required')
-      .isEmail()
+      .custom(isEmailOrGuestEmail)
       .withMessage('Invalid email address'),
     body('customerPhone')
       .optional()

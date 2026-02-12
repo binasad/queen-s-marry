@@ -9,9 +9,12 @@ import 'providers/auth_provider.dart';
 import 'services/user_service.dart';
 import 'services/cache_service.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Load environment variables
+  await dotenv.load();
   Stripe.publishableKey =
       'pk_test_51SGV17AdeL5kUQJvRdfCLGn4Dr8lBebNrq7dBFIn7nU7FKVTtflPI3E5haM3nsN2abws9UGoVJ0qlbUyjwQ6rEpa00TnRdVGad';
 

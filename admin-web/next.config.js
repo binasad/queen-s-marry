@@ -15,7 +15,8 @@ const nextConfig = {
          * error is bypassed.
          */
         source: '/api/v1/:path*',
-        destination: 'http://44.215.209.41:5000/api/v1/:path*',
+        //destination: process.env.NEXT_PUBLIC_API_URL + '/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
       },
       {
         /**
@@ -24,7 +25,7 @@ const nextConfig = {
          * this ensures the handshake also goes through the secure Vercel tunnel.
          */
         source: '/socket.io/:path*',
-        destination: 'http://44.215.209.41:5000/socket.io/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/v1$/, '')}/socket.io/:path*`,
       },
     ];
   },
