@@ -19,6 +19,11 @@ const validationRules = {
       .optional()
       .isIn(['male', 'female', 'other'])
       .withMessage('Gender must be male, female, or other'),
+    body('profileImageUrl')
+      .optional()
+      .trim()
+      .isURL()
+      .withMessage('Profile image must be a valid URL'),
   ],
 
   getUserById: [

@@ -74,16 +74,26 @@ class UsersController {
   // Update profile
   async updateProfile(req, res) {
     try {
-      const { name, address, phone, gender } = req.body;
+      const { name, address, phone, gender, profileImageUrl } = req.body;
+      const updates = [];
+      const values = [];
+      let paramCounter = 1;
 
+      if (name !== undefined) { updates.push(`name = $${paramCounter++}`); values.push(name); }
+      if (address !== undefined) { updates.push(`address = $${paramCounter++}`); values.push(address); }
+      if (phone !== undefined) { updates.push(`phone = $${paramCounter++}`); values.push(phone); }
+      if (gender !== undefined) { updates.push(`gender = $${paramCounter++}`); values.push(gender); }
+      if (profileImageUrl !== undefined) { updates.push(`profile_image_url = $${paramCounter++}`); values.push(profileImageUrl); }
+
+      if (updates.length === 0) {
+        const user = await fetchUserWithRole(req.user.id);
+        return res.json({ success: true, data: { user } });
+      }
+
+      values.push(req.user.id);
       await query(
-        `UPDATE users 
-         SET name = COALESCE($1, name),
-             address = COALESCE($2, address),
-             phone = COALESCE($3, phone),
-             gender = COALESCE($4, gender)
-         WHERE id = $5`,
-        [name, address, phone, gender, req.user.id]
+        `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramCounter}`,
+        values
       );
 
       const user = await fetchUserWithRole(req.user.id);

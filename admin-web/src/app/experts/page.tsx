@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import AuthGuard from '@/components/AuthGuard';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
-import { expertsAPI, servicesAPI } from '@/lib/api';
+import { expertsAPI, servicesAPI, usersAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface Expert {
@@ -21,8 +21,17 @@ interface Expert {
   services?: any[];
 }
 
+interface UserWithExpertRole {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  role_name?: string;
+}
+
 export default function ExpertsPage() {
   const [experts, setExperts] = useState<Expert[]>([]);
+  const [assignedExperts, setAssignedExperts] = useState<UserWithExpertRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingExpert, setEditingExpert] = useState<Expert | null>(null);
@@ -48,8 +57,19 @@ export default function ExpertsPage() {
       setLoading(true);
       const params: any = {};
       if (search) params.search = search;
-      const res = await expertsAPI.getAll(params);
-      setExperts(res.data.data.experts || []);
+      const [expertsRes, usersRes] = await Promise.all([
+        expertsAPI.getAll(params),
+        usersAPI.getAll({ role: 'Expert', page: 1, limit: 100 }),
+      ]);
+      setExperts(expertsRes.data.data?.experts || expertsRes.data?.experts || []);
+      const usersData = usersRes.data?.data?.users || usersRes.data?.users || [];
+      setAssignedExperts(usersData.map((u: any) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        role_name: u.role_name,
+      })));
     } catch (error: any) {
       console.error('Failed to load experts:', error);
       toast.error(error.response?.data?.message || 'Failed to load experts');
@@ -163,15 +183,46 @@ export default function ExpertsPage() {
                 </div>
               </div>
 
+              {/* Users assigned Expert role via Settings */}
+              {assignedExperts.length > 0 && (
+                <div className="bg-white rounded-lg shadow p-6 mb-8">
+                  <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                    Assigned Experts (from Settings &gt; Assign Role)
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {assignedExperts.map((u) => (
+                      <div
+                        key={u.id}
+                        className="border border-gray-200 rounded-lg p-4 flex items-center gap-3"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
+                          {u.name?.charAt(0)?.toUpperCase() || '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-800 truncate">{u.name}</p>
+                          <p className="text-sm text-gray-600 truncate">{u.email}</p>
+                          {u.phone && (
+                            <p className="text-xs text-gray-500">📞 {u.phone}</p>
+                          )}
+                        </div>
+                        <span className="px-2 py-1 text-xs bg-primary-100 text-primary-700 rounded">
+                          Expert
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {loading ? (
                 <div className="bg-white rounded-lg shadow p-8 text-center">
                   <p className="text-gray-500">Loading experts...</p>
                 </div>
-              ) : experts.length === 0 ? (
+              ) : experts.length === 0 && assignedExperts.length === 0 ? (
                 <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-                  No experts found
+                  No experts found. Add experts above or assign Expert role in Settings.
                 </div>
-              ) : (
+              ) : experts.length === 0 ? null : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {experts.map((expert) => (
                     <div key={expert.id} className="bg-white rounded-lg shadow overflow-hidden">
