@@ -350,12 +350,15 @@ class _UserHomeState extends ConsumerState<UserHome>
                     _buildSearchBar(),
                     _buildSectionHeader("Special Offers"),
                     _buildOffersList(),
-                    _buildSectionHeader("Our Services", onSeeAll: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => ServicesScreen()),
-                      );
-                    }),
+                    _buildSectionHeader(
+                      "Our Services",
+                      onSeeAll: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => ServicesScreen()),
+                        );
+                      },
+                    ),
                     _buildServicesList(categories),
                     _buildSectionHeader("Our Experts"),
                     _buildExpertsList(),
@@ -588,7 +591,8 @@ class _UserHomeState extends ConsumerState<UserHome>
       try {
         final service = await ServiceCatalogService().getServiceById(serviceId);
         if (mounted && service.isNotEmpty) {
-          final basePrice = (double.tryParse(service['price']?.toString() ?? '0') ?? 0);
+          final basePrice =
+              (double.tryParse(service['price']?.toString() ?? '0') ?? 0);
           final discountedPrice = _applyOfferDiscount(basePrice, offer);
           final serviceWithOffer = Map<String, dynamic>.from(service);
           serviceWithOffer['price'] = discountedPrice;
@@ -600,6 +604,7 @@ class _UserHomeState extends ConsumerState<UserHome>
               builder: (_) => AppointmentBookingScreen(
                 service: serviceWithOffer,
                 offerId: offer['id']?.toString(),
+                offerDiscountedPrice: discountedPrice,
               ),
             ),
           );
@@ -617,7 +622,8 @@ class _UserHomeState extends ConsumerState<UserHome>
       try {
         final raw = await CourseService().getCourseById(courseId);
         if (mounted && raw.isNotEmpty) {
-          final basePrice = (double.tryParse(raw['price']?.toString() ?? '0') ?? 0);
+          final basePrice =
+              (double.tryParse(raw['price']?.toString() ?? '0') ?? 0);
           final discountedPrice = _applyOfferDiscount(basePrice, offer);
           final course = {
             'id': raw['id']?.toString() ?? '',
@@ -626,8 +632,17 @@ class _UserHomeState extends ConsumerState<UserHome>
             'price': discountedPrice.toStringAsFixed(0),
             'image': raw['image_url']?.toString() ?? raw['image'] ?? '',
             'description': raw['description']?.toString() ?? '',
-            'subjects': (raw['description']?.toString().contains('Subjects Included:') ?? false)
-                ? raw['description'].toString().split('Subjects Included:')[1].split(',').map((e) => e.trim()).toList()
+            'subjects':
+                (raw['description']?.toString().contains(
+                      'Subjects Included:',
+                    ) ??
+                    false)
+                ? raw['description']
+                      .toString()
+                      .split('Subjects Included:')[1]
+                      .split(',')
+                      .map((e) => e.trim())
+                      .toList()
                 : ['Professional Training'],
             '_offer_id': offer['id']?.toString(),
             '_offer_title': offer['title']?.toString(),
@@ -667,7 +682,9 @@ class _UserHomeState extends ConsumerState<UserHome>
       backgroundImage = AssetImage(imagePath);
     }
 
-    final hasLink = (serviceId != null && serviceId.isNotEmpty) || (courseId != null && courseId.isNotEmpty);
+    final hasLink =
+        (serviceId != null && serviceId.isNotEmpty) ||
+        (courseId != null && courseId.isNotEmpty);
     return GestureDetector(
       onTap: hasLink ? onTap : null,
       child: Container(
@@ -685,113 +702,120 @@ class _UserHomeState extends ConsumerState<UserHome>
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Stack(
-          children: [
-            Positioned.fill(
-              child: Image(
-                image: backgroundImage,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: const Color(0xFFE91E63).withOpacity(0.1),
-                  child: const Icon(Icons.image, size: 40, color: Colors.grey),
-                ),
-              ),
-            ),
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+            children: [
+              Positioned.fill(
+                child: Image(
+                  image: backgroundImage,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: const Color(0xFFE91E63).withOpacity(0.1),
+                    child: const Icon(
+                      Icons.image,
+                      size: 40,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              top: 12,
-              left: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE91E63),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  duration,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  discount,
-                  style: const TextStyle(
-                    color: Color(0xFFE91E63),
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+              Positioned(
+                top: 12,
+                left: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
                   ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 16,
-              left: 16,
-              right: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE91E63),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    duration,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    discount,
+                    style: const TextStyle(
+                      color: Color(0xFFE91E63),
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: const Text(
-                      'Claim Now',
-                      style: TextStyle(
-                        color: Color(0xFFE91E63),
-                        fontSize: 13,
+                ),
+              ),
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: const Text(
+                        'Claim Now',
+                        style: TextStyle(
+                          color: Color(0xFFE91E63),
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );
