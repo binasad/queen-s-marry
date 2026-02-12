@@ -43,6 +43,14 @@ const validationRules = {
       .optional()
       .isBoolean()
       .withMessage('isActive must be a boolean'),
+    body('serviceId')
+      .optional()
+      .isUUID()
+      .withMessage('Invalid service ID'),
+    body('courseId')
+      .optional()
+      .isUUID()
+      .withMessage('Invalid course ID'),
   ],
 
   updateOffer: [
@@ -89,6 +97,14 @@ const validationRules = {
       .optional()
       .isBoolean()
       .withMessage('isActive must be a boolean'),
+    body('serviceId')
+      .optional()
+      .isUUID()
+      .withMessage('Invalid service ID'),
+    body('courseId')
+      .optional()
+      .isUUID()
+      .withMessage('Invalid course ID'),
   ],
 
   deleteOffer: [
