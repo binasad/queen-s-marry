@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -118,6 +120,28 @@ class ApiService {
       options: Options(extra: {'requiresAuth': requiresAuth}),
     );
     return _handleResponse(response);
+  }
+
+  /// Upload image file - returns { imageUrl: string }
+  Future<String> uploadImage(File file, {String folder = 'profiles'}) async {
+    final formData = FormData.fromMap({
+      'image': await MultipartFile.fromFile(file.path, filename: file.path.split('/').last),
+      'folder': folder,
+    });
+    final response = await _dio.post(
+      '/upload-image',
+      data: formData,
+      options: Options(
+        extra: {'requiresAuth': true},
+        contentType: 'multipart/form-data',
+      ),
+    );
+    final result = _handleResponse(response);
+    final url = result['data']?['imageUrl'] ?? result['imageUrl'];
+    if (url == null || url.toString().isEmpty) {
+      throw ApiException(statusCode: 500, message: 'No image URL returned from upload.');
+    }
+    return url.toString();
   }
 
   // Keep your existing _handleResponse, _onError, and _refreshToken methods below...

@@ -2,16 +2,16 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  // HARDCODE these keys here. 
+  // marry-queen Firebase project
   // Environment variables (process.env) DO NOT work in Service Workers
-  apiKey: "AIzaSyBSkx7HtbPyp8yuK8uycA9WO1svzjsW65s",
-  authDomain: "salon-app-7b3f5.firebaseapp.com",
-  databaseURL: "https://salon-app-7b3f5-default-rtdb.firebaseio.com",
-  projectId: "salon-app-7b3f5",
-  storageBucket: "salon-app-7b3f5.firebasestorage.app",
-  messagingSenderId: "219343461160",
-  appId: "1:219343461160:web:03a6531e4aecb151bbce1d",
-  measurementId: "G-CRHQ39JZ2J"
+  apiKey: "AIzaSyCuZHbiZlBfJmqFFHUkkIcipOS0WhmAfVM",
+  authDomain: "marry-queen.firebaseapp.com",
+  databaseURL: "https://marry-queen-default-rtdb.firebaseio.com",
+  projectId: "marry-queen",
+  storageBucket: "marry-queen.firebasestorage.app",
+  messagingSenderId: "229108556395",
+  appId: "1:229108556395:web:f0cad17cc59b41f343c72e",
+  measurementId: "G-18FNN8LL7B"
 });
 
 const messaging = firebase.messaging();

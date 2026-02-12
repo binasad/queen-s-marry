@@ -209,6 +209,12 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
   }
 
   Future<void> _pickImage() async {
+    final canProceed = await GuestGuard.canPerformAction(
+      context,
+      actionDescription: 'upload a profile photo',
+    );
+    if (!canProceed) return;
+
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -222,9 +228,7 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
                 final pickedFile = await _picker.pickImage(
                   source: ImageSource.gallery,
                 );
-                if (pickedFile != null) {
-                  setState(() => profileImage = File(pickedFile.path));
-                }
+                if (pickedFile != null) await _uploadAndSetProfilePhoto(File(pickedFile.path));
               },
             ),
             ListTile(
@@ -235,15 +239,36 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
                 final pickedFile = await _picker.pickImage(
                   source: ImageSource.camera,
                 );
-                if (pickedFile != null) {
-                  setState(() => profileImage = File(pickedFile.path));
-                }
+                if (pickedFile != null) await _uploadAndSetProfilePhoto(File(pickedFile.path));
               },
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _uploadAndSetProfilePhoto(File file) async {
+    try {
+      setState(() => isLoading = true);
+      final imageUrl = await ApiService().uploadImage(file, folder: 'profiles');
+      await UserService().updateProfile(profileImageUrl: imageUrl);
+      if (mounted) {
+        setState(() {
+          profile = imageUrl;
+          profileImage = null; // Clear local file after successful upload
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile photo updated')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => isLoading = false);
+        ErrorHandler.show(context, e);
+      }
+    }
   }
 
   @override
@@ -271,54 +296,42 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
                         //   style: TextStyle(fontSize: 28, color: Colors.grey.shade200),
                         // ),
                         child: ClipOval(
-                          child: Image.network(
-                            profile,
-                            fit: BoxFit.cover,
-                            width: 90, // diameter = radius * 2
-                            height: 90,
-                            // جب image لوڈ ہو رہی ہو
-                            loadingBuilder:
-                                (
-                                  BuildContext context,
-                                  Widget child,
-                                  ImageChunkEvent? loadingProgress,
-                                ) {
-                                  if (loadingProgress == null) return child;
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      value:
-                                          loadingProgress.expectedTotalBytes !=
-                                              null
-                                          ? loadingProgress
-                                                    .cumulativeBytesLoaded /
-                                                (loadingProgress
-                                                        .expectedTotalBytes ??
-                                                    1)
-                                          : null,
+                          child: profileImage != null
+                              ? Image.file(
+                                  profileImage!,
+                                  fit: BoxFit.cover,
+                                  width: 90,
+                                  height: 90,
+                                )
+                              : profile.isNotEmpty
+                                  ? Image.network(
+                                      profile,
+                                      fit: BoxFit.cover,
+                                      width: 90,
+                                      height: 90,
+                                      loadingBuilder: (context, child, progress) {
+                                        if (progress == null) return child;
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value: progress.expectedTotalBytes != null
+                                                ? progress.cumulativeBytesLoaded / (progress.expectedTotalBytes ?? 1)
+                                                : null,
+                                          ),
+                                        );
+                                      },
+                                      errorBuilder: (_, __, ___) => Image.asset(
+                                        "assets/profile.jpg",
+                                        fit: BoxFit.cover,
+                                        width: 90,
+                                        height: 90,
+                                      ),
+                                    )
+                                  : Image.asset(
+                                      "assets/profile.jpg",
+                                      fit: BoxFit.cover,
+                                      width: 90,
+                                      height: 90,
                                     ),
-                                  );
-                                },
-                            // جب error آئے
-                            errorBuilder:
-                                (
-                                  BuildContext context,
-                                  Object error,
-                                  StackTrace? stackTrace,
-                                ) {
-                                  return Image.asset(
-                                    "assets/profile.jpg",
-                                    fit: BoxFit.cover,
-                                    width: 90, // diameter = radius * 2
-                                    height: 90,
-                                  );
-                                },
-                          ),
-                          // Image.asset(
-                          //   "assets/profile.jpg",
-                          //   fit: BoxFit.cover,
-                          //   width: 90, // diameter = radius * 2
-                          //   height: 90,
-                          // ),
                         ),
                       ),
                       Positioned(

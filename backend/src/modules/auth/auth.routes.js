@@ -36,6 +36,10 @@ router.post('/guest',
     bind(authController.guestLogin)
 );
 
+router.post('/google',
+    bind(authController.googleLogin)
+);
+
 router.post('/verify-email', 
     validationRules.verifyEmail, 
     handleValidationErrors, 

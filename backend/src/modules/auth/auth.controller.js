@@ -1,5 +1,7 @@
   // (All controller methods are now inside the AuthController class below)
 const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
 const { query } = require('../../config/db');
 const { hashPassword, comparePassword } = require('../../utils/password');
 const { generateTokens, verifyRefreshToken } = require('../../utils/jwt');
@@ -7,6 +9,24 @@ const emailService = require('./auth.service.email');
 const env = require('../../config/env');
 
 const DEFAULT_ROLE = 'User';
+const CUSTOMER_ROLE = 'Customer'; // For mobile app Google sign-in
+
+function getFirebaseAdmin() {
+  try {
+    const admin = require('firebase-admin');
+    if (admin.apps.length === 0) {
+      const credPath = path.join(process.cwd(), 'firebase-admin-sdk.json');
+      if (fs.existsSync(credPath)) {
+        const serviceAccount = require(credPath);
+        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+      }
+    }
+    return admin;
+  } catch (err) {
+    console.error('Firebase Admin init error:', err.message);
+    return null;
+  }
+}
 
 // Generate 6-digit OTP
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
@@ -132,6 +152,93 @@ class AuthController {
       res.status(500).json({
         success: false,
         message: 'Guest login failed. Please try again.',
+      });
+    }
+  }
+
+  // Google Sign-In - verify idToken and create/find user
+  async googleLogin(req, res) {
+    try {
+      const { idToken } = req.body;
+      if (!idToken) {
+        return res.status(400).json({
+          success: false,
+          message: 'Google idToken is required.',
+        });
+      }
+
+      const admin = getFirebaseAdmin();
+      if (!admin) {
+        return res.status(503).json({
+          success: false,
+          message: 'Google sign-in is not configured. Contact support.',
+        });
+      }
+
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const { uid, email, name, picture } = decodedToken;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Google account must have an email.',
+        });
+      }
+
+      const existingUser = await query(
+        'SELECT id FROM users WHERE email = $1',
+        [email]
+      );
+
+      let userId;
+      let userWithRole;
+
+      if (existingUser.rows.length > 0) {
+        userId = existingUser.rows[0].id;
+        userWithRole = await getUserWithRole(userId);
+      } else {
+        const roleId = await getRoleIdByName(CUSTOMER_ROLE);
+        const newUserId = crypto.randomUUID();
+        const passwordPlaceholder = crypto.createHash('sha256').update(uid + email).digest('hex');
+
+        await query(
+          `INSERT INTO users (id, name, email, password_hash, role_id, email_verified, profile_image_url)
+           VALUES ($1, $2, $3, $4, $5, TRUE, $6)
+           RETURNING id`,
+          [newUserId, name || email.split('@')[0], email, passwordPlaceholder, roleId, picture || null]
+        );
+        userId = newUserId;
+        userWithRole = await getUserWithRole(userId);
+      }
+
+      const tokens = generateTokens({ id: userId });
+
+      console.log('✅ Google login successful for:', email);
+
+      res.json({
+        success: true,
+        message: 'Login successful',
+        data: {
+          user: {
+            id: userWithRole.id,
+            name: userWithRole.name,
+            email: userWithRole.email,
+            role: {
+              id: userWithRole.role_id,
+              name: userWithRole.role_name,
+              permissions: userWithRole.permissions,
+            },
+            profileImage: userWithRole.profile_image_url,
+          },
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+        },
+      });
+    } catch (error) {
+      console.error('Google login error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.code === 'auth/id-token-expired' ? 'Google sign-in expired. Please try again.' : 'Google sign-in failed. Please try again.',
       });
     }
   }
