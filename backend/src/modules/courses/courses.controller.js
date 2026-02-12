@@ -230,7 +230,7 @@ class CoursesController {
         message: 'Failed to submit application.',
       });
     }
-  },
+  }
 
   // Get all course applications (Admin only)
   async getAllApplications(req, res) {
@@ -254,7 +254,7 @@ class CoursesController {
         message: 'Failed to fetch applications.',
       });
     }
-  },
+  }
 
   // Delete course (Admin only - soft delete)
   async deleteCourse(req, res) {
