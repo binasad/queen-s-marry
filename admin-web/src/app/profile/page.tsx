@@ -35,13 +35,16 @@ export default function ProfilePage() {
       const data = res.data?.data || res.data;
       const u = data?.user || data;
       setProfile(u);
+      const imageUrl = u?.profile_image_url || '';
       setFormData({
         name: u?.name || '',
         phone: u?.phone || '',
         address: u?.address || '',
-        profileImageUrl: u?.profile_image_url || '',
+        profileImageUrl: imageUrl,
       });
-      setImagePreview(u?.profile_image_url || null);
+      setImagePreview(imageUrl || null);
+      // Sync profile image to auth store so Header shows it
+      if (imageUrl) updateUser({ profileImage: imageUrl });
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to load profile');
     } finally {

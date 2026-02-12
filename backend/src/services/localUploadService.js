@@ -24,9 +24,9 @@ async function uploadToLocal(fileBuffer, originalName, folder = 'assets') {
 
   fs.writeFileSync(filePath, fileBuffer);
 
-  // Base URL for uploads: strip /api/v1 from BACKEND_URL, or use localhost
+  // Use full BACKEND_URL so /api/v1/uploads is included (works behind reverse proxy)
   const backendUrl = env.backendUrl || process.env.BACKEND_URL || '';
-  const baseUrl = backendUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '') || `http://localhost:${env.port}`;
+  const baseUrl = backendUrl.replace(/\/$/, '') || `http://localhost:${env.port}/api/v1`;
   const publicUrl = `${baseUrl}/uploads/${folder}/${uniqueName}`;
 
   return publicUrl;
