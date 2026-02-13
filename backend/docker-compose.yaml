@@ -6,6 +6,8 @@ services:
       - "5000:5000"
     env_file:
       - .env
+    environment:
+      - FIREBASE_ADMIN_SDK_JSON=${FIREBASE_ADMIN_SDK_JSON}
     # Removed depends_on: db because we are using Supabase
     volumes:
       - .:/app

@@ -7,18 +7,37 @@ let isInitialized = false;
 function initFirebase() {
   if (isInitialized) return true;
   try {
-    const credentialPath = path.join(process.cwd(), 'firebase-admin-sdk.json');
-    const fs = require('fs');
-    if (fs.existsSync(credentialPath)) {
-      const serviceAccount = require(credentialPath);
+    let serviceAccount = null;
+
+    // 1. Try env var (GitHub Secrets, Docker secrets, etc.)
+    const envJson = process.env.FIREBASE_ADMIN_SDK_JSON || process.env.FIREBASE_CREDENTIALS_JSON;
+    if (envJson) {
+      try {
+        serviceAccount = JSON.parse(envJson);
+      } catch (e) {
+        console.error('❌ Invalid FIREBASE_ADMIN_SDK_JSON - invalid JSON');
+        return false;
+      }
+    }
+
+    // 2. Fall back to file
+    if (!serviceAccount) {
+      const credentialPath = path.join(process.cwd(), 'firebase-admin-sdk.json');
+      const fs = require('fs');
+      if (fs.existsSync(credentialPath)) {
+        serviceAccount = require(credentialPath);
+      }
+    }
+
+    if (serviceAccount) {
       admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
       isInitialized = true;
       console.log('✅ Firebase Admin initialized for push notifications');
       return true;
-    } else {
-      console.warn('⚠️ firebase-admin-sdk.json not found - push notifications disabled');
-      return false;
     }
+
+    console.warn('⚠️ firebase-admin-sdk.json not found (file or FIREBASE_ADMIN_SDK_JSON env) - push notifications disabled');
+    return false;
   } catch (err) {
     console.error('❌ Firebase Admin init error:', err.message);
     return false;
