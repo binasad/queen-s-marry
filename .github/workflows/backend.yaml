@@ -29,15 +29,19 @@ jobs:
       # 3. SSH to EC2 and Deploy (This is the part that sends it to your server)
       - name: SSH to EC2 and Update
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          FIREBASE_ADMIN_SDK_JSON: ${{ secrets.FIREBASE_ADMIN_SDK_JSON }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: FIREBASE_ADMIN_SDK_JSON
           script: |
             mkdir -p /home/ubuntu/Aztrosys/backend
             cat <<EOF > /home/ubuntu/Aztrosys/backend/.env
             ${{ secrets.ENV_FILE }}
             EOF
+            printf 'FIREBASE_ADMIN_SDK_JSON=%s\n' "$FIREBASE_ADMIN_SDK_JSON" > /home/ubuntu/Aztrosys/backend/firebase.env
             sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
             sudo docker stop salon-backend || true
             sudo docker rm salon-backend || true
@@ -46,5 +50,7 @@ jobs:
               -p 5000:5000 \
               --restart always \
               --env-file /home/ubuntu/Aztrosys/backend/.env \
+              --env-file /home/ubuntu/Aztrosys/backend/firebase.env \
               ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
+            rm -f /home/ubuntu/Aztrosys/backend/firebase.env
             sudo docker image prune -f
