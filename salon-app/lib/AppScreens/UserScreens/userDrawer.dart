@@ -14,9 +14,14 @@ import '../login.dart';
 
 class UserDrawer extends StatelessWidget {
   final String userName, userEmail;
+  final String profileImageUrl;
 
-  UserDrawer({Key? key, required this.userName, required this.userEmail})
-    : super(key: key);
+  UserDrawer({
+    Key? key,
+    required this.userName,
+    required this.userEmail,
+    this.profileImageUrl = '',
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -41,13 +46,29 @@ class UserDrawer extends StatelessWidget {
                           CircleAvatar(
                             radius: 35,
                             backgroundColor: Colors.pink,
-                            child: Text(
-                              userName[0],
-                              style: TextStyle(
-                                fontSize: 28,
-                                color: Colors.white,
-                              ),
-                            ),
+                            child: profileImageUrl.isNotEmpty
+                                ? ClipOval(
+                                    child: Image.network(
+                                      profileImageUrl,
+                                      width: 70,
+                                      height: 70,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Text(
+                                        userName.isNotEmpty ? userName[0] : '?',
+                                        style: TextStyle(
+                                          fontSize: 28,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    userName.isNotEmpty ? userName[0] : '?',
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                           SizedBox(height: 10),
                           Text(

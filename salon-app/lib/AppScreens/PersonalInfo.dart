@@ -9,6 +9,7 @@ import '../services/api_service.dart';
 import '../providers/auth_provider.dart' as app_auth;
 import '../utils/error_handler.dart';
 import '../utils/guest_guard.dart';
+import '../providers/auth_provider.dart';
 
 class UserPersonalInfo extends StatefulWidget {
   const UserPersonalInfo({Key? key}) : super(key: key);
@@ -256,9 +257,12 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
       if (mounted) {
         setState(() {
           profile = imageUrl;
-          profileImage = null; // Clear local file after successful upload
+          profileImage = null;
           isLoading = false;
         });
+        // Update AuthProvider so home/drawer show new photo immediately
+        final authProvider = provider_package.Provider.of<AuthProvider>(context, listen: false);
+        authProvider.updateUserProfile({'profile_image_url': imageUrl});
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile photo updated')),
         );
