@@ -32,7 +32,7 @@ class AuthService {
         await _api.saveTokens(accessToken, refreshToken);
         // Save guest status
         await _storage.setGuestStatus(true);
-        print('Guest tokens saved successfully');
+        print('Guest tokens saved successfullly');
       } else {
         throw Exception('Invalid guest login response: missing tokens');
       }

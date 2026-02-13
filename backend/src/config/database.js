@@ -57,3 +57,4 @@ module.exports = {
   query,
   transaction,
 };
+console.log("pk");
