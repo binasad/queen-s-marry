@@ -35,7 +35,10 @@ async function sendToUser(userId, { title, body, data = {} }) {
   try {
     const result = await query('SELECT fcm_token FROM users WHERE id = $1', [userId]);
     const token = result.rows[0]?.fcm_token;
-    if (!token) return;
+    if (!token) {
+      console.warn(`Push: No FCM token for user ${userId} – user may not have granted permission or token not saved`);
+      return;
+    }
     await sendToToken(token, { title, body, data });
   } catch (err) {
     console.error('Send push to user error:', err.message);

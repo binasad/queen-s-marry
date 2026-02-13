@@ -17,40 +17,56 @@ class PushNotificationService {
       return;
     }
 
-    // 1. Request Permission (Required for iOS)
+    // 1. Request Permission (Required for iOS & Android 13+)
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      // 2. Get the Token (Address)
-      String? token = await _fcm.getToken();
-      print("🔥 My Device Token: $token");
+    print('PushNotificationService: Permission status = ${settings.authorizationStatus}');
 
-      // Save token to backend when user is logged in
-      if (token != null && token.isNotEmpty) {
-        try {
-          await _api.post(
-            '/notifications/save-token',
-            {'fcmToken': token},
-            requiresAuth: true,
-          );
-          print("✅ FCM token saved to backend");
-        } catch (e) {
-          print("⚠️ Could not save FCM token (user may not be logged in): $e");
-        }
+    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional) {
+      // 2. Get the Token
+      String? token = await _fcm.getToken();
+      if (token == null || token.isEmpty) {
+        print('PushNotificationService: ⚠️ FCM returned null/empty token. '
+            'Ensure Firebase is configured (run: flutterfire configure)');
+        return;
       }
+      print('PushNotificationService: Token obtained (${token.length} chars)');
+
+      await _saveTokenToBackend(token);
+
+      // Listen for token refresh (e.g. app reinstall, cache clear)
+      _fcm.onTokenRefresh.listen((newToken) async {
+        print('PushNotificationService: Token refreshed, updating backend');
+        await _saveTokenToBackend(newToken);
+      });
+    } else {
+      print('PushNotificationService: Permission denied (${settings.authorizationStatus})');
     }
 
     // 3. Listen for messages while app is open
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
         print('Message: ${message.notification!.title}');
-        // Show a local snackbar or dialog here
       }
     });
+  }
+
+  Future<void> _saveTokenToBackend(String token) async {
+    try {
+      await _api.post(
+        '/notifications/save-token',
+        {'fcmToken': token},
+        requiresAuth: true,
+      );
+      print('PushNotificationService: ✅ Token saved to backend');
+    } catch (e) {
+      print('PushNotificationService: ❌ Save token failed: $e');
+    }
   }
 
   /// Clear FCM token from backend (e.g. when guest detected or on logout)
