@@ -123,6 +123,34 @@ class NotificationsController {
     }
   }
 
+  // Get current user's notifications (for in-app list)
+  async getMyNotifications(req, res) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.json({ success: true, data: [] });
+      }
+      const result = await query(
+        `SELECT id, title, message, type, is_read, created_at 
+         FROM notifications 
+         WHERE user_id = $1 
+         ORDER BY created_at DESC 
+         LIMIT 100`,
+        [userId]
+      );
+      res.json({
+        success: true,
+        data: result.rows,
+      });
+    } catch (error) {
+      console.error('Get notifications error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch notifications.',
+      });
+    }
+  }
+
   // Test push (admin only) – POST /notifications/test/:userId
   async testPush(req, res) {
     try {
@@ -149,6 +177,11 @@ class NotificationsController {
         body: body || 'This is a test push from Merry Queen Salon.',
         data: { type: 'test' },
       });
+      // Store in DB so it appears in notifications screen
+      await query(
+        'INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)',
+        [userId, title || 'Test Notification', body || 'This is a test push from Merry Queen Salon.', 'test']
+      );
 
       res.json({
         success: true,

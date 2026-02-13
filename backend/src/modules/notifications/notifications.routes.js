@@ -13,6 +13,9 @@ router.post('/notifications/clear-token', auth, notificationsController.clearTok
 // Get FCM token status (for testing)
 router.get('/notifications/token', auth, notificationsController.getToken);
 
+// Get current user's notifications (for in-app list)
+router.get('/notifications/my', auth, notificationsController.getMyNotifications);
+
 // Test push – admin only (send test notification to a user)
 router.post('/notifications/test/:userId', auth, hasRole(['Admin', 'Owner']), notificationsController.testPush);
 

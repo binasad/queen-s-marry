@@ -30,16 +30,22 @@ function initFirebase() {
  * @param {string} userId - User ID (fetches fcm_token from DB)
  * @param {object} payload - { title, body, data? }
  */
-async function sendToUser(userId, { title, body, data = {} }) {
+async function sendToUser(userId, { title, body, data = {}, type = 'general' }) {
   if (!initFirebase()) return;
   try {
     const result = await query('SELECT fcm_token FROM users WHERE id = $1', [userId]);
     const token = result.rows[0]?.fcm_token;
-    if (!token) {
-      console.warn(`Push: No FCM token for user ${userId} – user may not have granted permission or token not saved`);
-      return;
+    if (token) {
+      await sendToToken(token, { title, body, data });
+    } else {
+      console.warn(`Push: No FCM token for user ${userId}`);
     }
-    await sendToToken(token, { title, body, data });
+    // Always store in DB so user sees it in the notifications screen
+    const notifType = data?.type || type;
+    await query(
+      `INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)`,
+      [userId, title || 'Merry Queen Salon', body || 'You have a new notification', notifType]
+    );
   } catch (err) {
     console.error('Send push to user error:', err.message);
   }
