@@ -321,7 +321,7 @@ class _UserHomeState extends ConsumerState<UserHome>
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9FB),
-      drawer: UserDrawer(userName: name, userEmail: email),
+      drawer: UserDrawer(userName: name, userEmail: email, profileImageUrl: profile),
       body: SlideTransition(
         position: _slideAnimation,
         child: FadeTransition(

@@ -5,6 +5,10 @@ on:
     branches: [ main ]
     paths:
       - 'backend/**'
+  workflow_dispatch:
+  # Auto-redeploy every 6 hours - ensures container runs after EC2 reboot
+  schedule:
+    - cron: '0 */6 * * *'
 
 jobs:
   build-and-deploy:
@@ -20,37 +24,70 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      # 2. Build and Push (Your log showed only Build, now we add Push)
+      # 2. Build and Push (skip on schedule - use existing image)
       - name: Build and Push Docker Image
+        if: github.event_name != 'schedule'
         run: |
           docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest ./backend
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
 
-      # 3. SSH to EC2 and Deploy (This is the part that sends it to your server)
+      # 3. SSH to EC2 and Deploy
       - name: SSH to EC2 and Update
         uses: appleboy/ssh-action@v1.0.3
         env:
           FIREBASE_ADMIN_SDK_JSON: ${{ secrets.FIREBASE_ADMIN_SDK_JSON }}
+          ENV_FILE: ${{ secrets.ENV_FILE }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: FIREBASE_ADMIN_SDK_JSON
+          envs: FIREBASE_ADMIN_SDK_JSON,ENV_FILE
           script: |
+            set -e
             mkdir -p /home/ubuntu/Aztrosys/backend
-            cat <<EOF > /home/ubuntu/Aztrosys/backend/.env
-            ${{ secrets.ENV_FILE }}
-            EOF
-            printf 'FIREBASE_ADMIN_SDK_JSON=%s\n' "$FIREBASE_ADMIN_SDK_JSON" > /home/ubuntu/Aztrosys/backend/firebase.env
+            
+            # Write .env (printf preserves newlines; avoid "EOF" in ENV_FILE content)
+            printf '%s\n' "$ENV_FILE" > /home/ubuntu/Aztrosys/backend/.env
+            
+            # Build docker run args - add firebase env only if secret is set
+            ENV_ARGS="--env-file /home/ubuntu/Aztrosys/backend/.env"
+            if [ -n "$FIREBASE_ADMIN_SDK_JSON" ]; then
+              printf 'FIREBASE_ADMIN_SDK_JSON=%s\n' "$FIREBASE_ADMIN_SDK_JSON" > /home/ubuntu/Aztrosys/backend/firebase.env
+              ENV_ARGS="$ENV_ARGS --env-file /home/ubuntu/Aztrosys/backend/firebase.env"
+            fi
+            
             sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
-            sudo docker stop salon-backend || true
-            sudo docker rm salon-backend || true
+            sudo docker stop salon-backend 2>/dev/null || true
+            sudo docker rm salon-backend 2>/dev/null || true
+            
             sudo docker run -d \
               --name salon-backend \
               -p 5000:5000 \
               --restart always \
-              --env-file /home/ubuntu/Aztrosys/backend/.env \
-              --env-file /home/ubuntu/Aztrosys/backend/firebase.env \
+              $ENV_ARGS \
               ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
-            rm -f /home/ubuntu/Aztrosys/backend/firebase.env
+            
+            rm -f /home/ubuntu/Aztrosys/backend/firebase.env 2>/dev/null || true
             sudo docker image prune -f
+
+      # 4. Verify container is running
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "=== Docker containers ==="
+            sudo docker ps -a
+            echo ""
+            if sudo docker ps --format '{{.Names}}' | grep -q salon-backend; then
+              echo "=== salon-backend logs (last 30 lines) ==="
+              sudo docker logs --tail 30 salon-backend
+              echo "Deployment OK"
+            else
+              echo "=== salon-backend logs (if container existed) ==="
+              sudo docker logs --tail 50 salon-backend 2>&1 || true
+              echo "ERROR: salon-backend container is not running!"
+              exit 1
+            fi
