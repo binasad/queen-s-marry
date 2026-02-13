@@ -4,6 +4,9 @@ class NotificationsController {
   // Save FCM token for a user
   async saveToken(req, res) {
     try {
+      if (req.user?.isGuest || !req.user?.id) {
+        return res.json({ success: true, message: 'Guests do not receive push notifications.' });
+      }
       const { fcmToken } = req.body;
       const userId = req.user.id;
 
@@ -54,9 +57,40 @@ class NotificationsController {
     }
   }
 
+  // Clear FCM token (e.g. when user switches to guest or logs out)
+  async clearToken(req, res) {
+    try {
+      if (req.user?.isGuest || !req.user?.id) {
+        return res.json({ success: true, message: 'No token to clear.' });
+      }
+      const userId = req.user.id;
+
+      await query(
+        `UPDATE users 
+         SET fcm_token = NULL, updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $1`,
+        [userId]
+      );
+
+      res.json({
+        success: true,
+        message: 'FCM token cleared.',
+      });
+    } catch (error) {
+      console.error('Clear FCM token error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to clear FCM token.',
+      });
+    }
+  }
+
   // Get user's FCM token (for admin/testing)
   async getToken(req, res) {
     try {
+      if (req.user?.isGuest || !req.user?.id) {
+        return res.json({ success: true, data: { hasToken: false } });
+      }
       const userId = req.user.id;
 
       const result = await query(

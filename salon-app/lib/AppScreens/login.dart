@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../services/push_notification_service.dart';
 import 'OwnerScreens/OwnerTabbar.dart';
 import 'UserScreens/userTabbar.dart';
 import 'signup.dart';
@@ -77,6 +78,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Brief delay so user sees the success state
         await Future.delayed(const Duration(milliseconds: 500));
+
+        // Initialize push notifications (Gatekeeper inside excludes guests)
+        PushNotificationService().initialize();
 
         Navigator.pushAndRemoveUntil(
           context,

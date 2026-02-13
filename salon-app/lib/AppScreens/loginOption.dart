@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:salon/AppScreens/signup.dart';
 import '../utils/route_animations.dart';
 import '../services/auth_service.dart';
+import '../services/push_notification_service.dart';
 import '../services/storage_service.dart';
 import '../providers/auth_provider.dart' as app_auth;
 import 'UserScreens/userTabbar.dart';
@@ -45,6 +46,7 @@ class _LoginOptionState extends State<LoginOption> {
       if (!mounted) return;
       final authProvider = context.read<app_auth.AuthProvider>();
       authProvider.setUser(user);
+      PushNotificationService().initialize();
       _navigateToHome();
     } catch (e) {
       _showError('Google login failed: ${e.toString().replaceAll('Exception: ', '')}');
@@ -86,11 +88,14 @@ class _LoginOptionState extends State<LoginOption> {
 
     setState(() => _isSigningIn = true);
     try {
-      // Use backend guest login instead of Firebase anonymous auth
+      // Use backend guest login instead of Firebase anonymous auth (no DB storage)
       final user = await _authService.guestLogin();
 
       // Save guest status locally
       await _storage.setGuestStatus(true);
+
+      final authProvider = context.read<app_auth.AuthProvider>();
+      authProvider.setUser(user);
 
       print('Guest login successful: ${user['name']}');
       _navigateToHome();

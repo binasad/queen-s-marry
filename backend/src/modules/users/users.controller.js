@@ -31,6 +31,32 @@ class UsersController {
   // Get current user profile
   async getProfile(req, res) {
     try {
+      if (req.user.isGuest) {
+        return res.json({
+          success: true,
+          data: {
+            user: {
+              id: req.user.sessionId,
+              name: 'Guest',
+              email: null,
+              address: null,
+              phone: null,
+              gender: null,
+              profile_image_url: null,
+              email_verified: true,
+              created_at: null,
+              last_login: null,
+              isGuest: true,
+              role: {
+                id: null,
+                name: 'Guest',
+                permissions: [],
+              },
+            },
+          },
+        });
+      }
+
       const user = await fetchUserWithRole(req.user.id);
 
       if (!user) {

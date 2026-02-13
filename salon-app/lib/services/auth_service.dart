@@ -1,5 +1,6 @@
 import 'api_service.dart';
 import 'storage_service.dart';
+import 'push_notification_service.dart';
 
 class AuthService {
   final ApiService _api = ApiService();
@@ -8,8 +9,8 @@ class AuthService {
   /// Roles allowed to access the mobile app
   static const List<String> _allowedMobileRoles = ['Customer', 'User', 'Guest', 'Admin', 'Owner'];
 
-  /// Guest login - creates a temporary user on the backend
-  /// Returns user data with isGuest flag
+  /// Guest login - session-only, no database storage (privacy-first)
+  /// Returns synthetic user data with isGuest flag
   Future<Map<String, dynamic>> guestLogin() async {
     try {
       print('AuthService: Starting guest login');
@@ -242,6 +243,11 @@ class AuthService {
   }
 
   Future<void> logout() async {
+    try {
+      await PushNotificationService().clearToken();
+    } catch (_) {
+      // Ignore – user may already be logged out
+    }
     await _api.clearTokens();
     await _storage.setGuestStatus(false); // Clear guest status on logout
   }

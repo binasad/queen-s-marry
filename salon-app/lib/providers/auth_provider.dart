@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -27,17 +28,28 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Set user after Google or other token-based login
+  /// Set user after Google, guest, or other token-based login
   void setUser(Map<String, dynamic> user) {
     _user = user;
     notifyListeners();
   }
 
   Future<void> checkLoginStatus() async {
-    final loggedIn = await _authService.isLoggedIn();
-    if (loggedIn) {
-      // Optionally fetch profile here with UserService
-      notifyListeners();
+    final hasTokens = await _authService.isLoggedIn();
+    if (hasTokens && _user == null) {
+      try {
+        final profileData = await UserService().getProfile();
+        final profileUser = profileData['user'] as Map<String, dynamic>?;
+        if (profileUser != null) {
+          _user = {
+            ...profileUser,
+            'role': profileUser['role'] ?? {'name': 'User'},
+          };
+        }
+      } catch (_) {
+        // Token may be expired
+      }
     }
+    notifyListeners();
   }
 }

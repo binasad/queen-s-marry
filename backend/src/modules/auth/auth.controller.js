@@ -100,49 +100,34 @@ class AuthController {
       res.status(500).json({ success: false, message: 'Failed to verify email.' });
     }
   }
-  // Guest login - creates a minimal guest user with Guest role and returns tokens
+  // Guest login - session-only, no database storage (privacy-first)
   async guestLogin(req, res) {
     try {
       console.log('👤 Guest login request received');
 
-      // Use Guest role (not Customer - guests appear only under Guest in admin)
-      const roleId = await getRoleIdByName('Guest');
-      const guestId = crypto.randomUUID();
-      const guestEmail = `guest_${guestId}@salon.guest`;
-      
-      // Use a simple hash for guest password (not bcrypt) since guests don't login with password
-      // This speeds up guest login significantly
-      const guestPasswordPlaceholder = crypto.createHash('sha256').update(guestId).digest('hex');
+      const sessionId = crypto.randomUUID();
+      const tokens = generateTokens({ sessionId, isGuest: true });
 
-      await query(
-        `INSERT INTO users (id, name, email, password_hash, role_id, email_verified, is_guest)
-         VALUES ($1, $2, $3, $4, $5, TRUE, TRUE)
-         RETURNING id`,
-        [guestId, 'Guest', guestEmail, guestPasswordPlaceholder, roleId]
-      );
+      const syntheticUser = {
+        id: sessionId,
+        name: 'Guest',
+        email: null,
+        isGuest: true,
+        role: {
+          id: null,
+          name: 'Guest',
+          permissions: [],
+        },
+        profileImage: null,
+      };
 
-      // Generate tokens with isGuest flag embedded
-      const tokens = generateTokens({ id: guestId, isGuest: true });
-      const userWithRole = await getUserWithRole(guestId);
-
-      console.log('✅ Guest login successful, ID:', guestId);
+      console.log('✅ Guest login successful (session-only, no DB):', sessionId);
 
       res.json({
         success: true,
         message: 'Guest login successful',
         data: {
-          user: {
-            id: userWithRole.id,
-            name: userWithRole.name,
-            email: userWithRole.email,
-            isGuest: true,
-            role: {
-              id: userWithRole.role_id,
-              name: userWithRole.role_name,
-              permissions: userWithRole.permissions,
-            },
-            profileImage: userWithRole.profile_image_url,
-          },
+          user: syntheticUser,
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
         },
@@ -936,6 +921,27 @@ class AuthController {
       }
 
       const decoded = verifyRefreshToken(refreshToken);
+
+      if (decoded.isGuest === true && decoded.sessionId) {
+        const tokens = generateTokens({ sessionId: decoded.sessionId, isGuest: true });
+        res.json({
+          success: true,
+          message: 'Token refreshed',
+          data: {
+            user: {
+              id: decoded.sessionId,
+              name: 'Guest',
+              email: null,
+              isGuest: true,
+              role: { id: null, name: 'Guest', permissions: [] },
+              profileImage: null,
+            },
+            ...tokens,
+          },
+        });
+        return;
+      }
+
       const userResult = await query('SELECT id FROM users WHERE id = $1', [decoded.id]);
 
       if (userResult.rows.length === 0) {
