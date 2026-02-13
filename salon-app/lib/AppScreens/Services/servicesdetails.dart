@@ -273,13 +273,18 @@ class _ServiceDetailedScreenState extends State<ServiceDetailedScreen> {
                   flex: 2,
                   child: Padding(
                     padding: const EdgeInsets.only(left: 20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Price", style: TextStyle(color: Colors.white60, fontSize: 12)),
-                        Text("${widget.service['price']} PKR", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      ],
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Price", style: TextStyle(color: Colors.white60, fontSize: 12)),
+                          Text("${widget.service['price']} PKR", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ),
                   ),
                 ),

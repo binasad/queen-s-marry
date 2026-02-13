@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
@@ -29,7 +30,14 @@ class _LoginOptionState extends State<LoginOption> {
     if (_isSigningIn) return;
     setState(() => _isSigningIn = true);
     try {
-      final googleUser = await GoogleSignIn().signIn();
+      // serverClientId = Web OAuth client ID from Firebase/Google Cloud.
+      // Required for backend idToken verification. Get it from:
+      // Google Cloud Console > APIs & Credentials > OAuth 2.0 Client IDs > Web client
+      final serverClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+      final googleSignIn = GoogleSignIn(
+        serverClientId: serverClientId?.isNotEmpty == true ? serverClientId : null,
+      );
+      final googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
         setState(() => _isSigningIn = false);
         return;
@@ -48,8 +56,14 @@ class _LoginOptionState extends State<LoginOption> {
       authProvider.setUser(user);
       PushNotificationService().initialize();
       _navigateToHome();
-    } catch (e) {
-      _showError('Google login failed: ${e.toString().replaceAll('Exception: ', '')}');
+    } catch (e, st) {
+      debugPrint('Google Sign-In error: $e');
+      debugPrint('Stack: $st');
+      final msg = e.toString()
+          .replaceAll('Exception: ', '')
+          .replaceAll('PlatformException(', '')
+          .replaceAll(RegExp(r', null, null\)?$'), '');
+      _showError('Google login failed: $msg');
     } finally {
       if (mounted) setState(() => _isSigningIn = false);
     }
