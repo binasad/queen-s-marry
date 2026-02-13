@@ -1,4 +1,5 @@
 const { query } = require('../../config/db');
+const pushService = require('../../services/pushNotificationService');
 
 class SupportController {
   // Get all support tickets
@@ -243,10 +244,21 @@ class SupportController {
         });
       }
 
+      const ticket = result.rows[0];
+
+      // Notify customer when admin responds
+      if (response !== undefined && response !== null && response !== '' && ticket.user_id) {
+        pushService.sendToUser(ticket.user_id, {
+          title: 'Support Response',
+          body: `We've responded to your support request: "${ticket.subject}". Check the app for details.`,
+          data: { type: 'support', id: ticket.id },
+        }).catch((err) => console.warn('Support push notification failed:', err.message));
+      }
+
       res.json({
         success: true,
         message: 'Ticket updated successfully.',
-        data: { ticket: result.rows[0] },
+        data: { ticket },
       });
     } catch (error) {
       console.error('Update ticket error:', error);
