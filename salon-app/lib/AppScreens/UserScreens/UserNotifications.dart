@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../Manager/NotificationManager.dart';
-
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final notifications = NotificationManager.notifications;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           "Notifications",
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.black, // 👈 text white rakha for contrast
+            color: Colors.black,
           ),
         ),
         centerTitle: true,
@@ -25,22 +23,58 @@ class NotificationsScreen extends StatelessWidget {
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Color(0xFFFF6CBF), // pink
-                Color(0xFFFFC371), // peach
+                Color(0xFFFF6CBF),
+                Color(0xFFFFC371),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
           ),
         ),
+        actions: [
+          ListenableBuilder(
+            listenable: NotificationManager.instance,
+            builder: (context, _) {
+              if (NotificationManager.instance.notifications.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                icon: const Icon(Icons.delete_sweep),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Clear all'),
+                      content: const Text(
+                        'Clear all notifications?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            NotificationManager.instance.clearAll();
+                            Navigator.pop(ctx);
+                          },
+                          child: const Text('Clear'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
-
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFFF6CBF), // pink
-              Color(0xFFFFC371), // peach
+              Color(0xFFFF6CBF),
+              Color(0xFFFFC371),
             ],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
@@ -52,18 +86,29 @@ class NotificationsScreen extends StatelessWidget {
               topLeft: Radius.circular(60),
               topRight: Radius.circular(60),
             ),
-            color: Colors.white
+            color: Colors.white,
           ),
-          child: Padding(
-            padding: const EdgeInsets.only(top: 25),
-            child: notifications.isEmpty
-                ? const Center(
-              child: Text("No notifications yet.",
-                  style: TextStyle(fontSize: 16)),
-            )
-                : ListView.builder(
+        child: ListenableBuilder(
+          listenable: NotificationManager.instance,
+          builder: (context, _) {
+            final notifications = NotificationManager.instance.notifications;
+            if (notifications.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    "No notifications yet.\n\nYou'll see appointment updates and reminders here.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ),
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.only(top: 25, bottom: 24),
               itemCount: notifications.length,
               itemBuilder: (context, index) {
+                final n = notifications[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   shape: RoundedRectangleBorder(
@@ -74,9 +119,9 @@ class NotificationsScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
-                          Color(0xFFFAD0C4), // pastel peach
-                          Color(0xFFFDCBF1), // light pink
-                          Color(0xFFD1FDFF), // sky blue
+                          Color(0xFFFAD0C4),
+                          Color(0xFFFDCBF1),
+                          Color(0xFFD1FDFF),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -86,16 +131,37 @@ class NotificationsScreen extends StatelessWidget {
                     child: ListTile(
                       leading: const Icon(Icons.notifications, color: Colors.black),
                       title: Text(
-                        notifications[index],
-                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                        n.title,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          Text(
+                            n.body,
+                            style: const TextStyle(color: Colors.black87),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat('MMM d, h:mm a').format(n.createdAt),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 );
-
               },
-            ),
-          ),
+            );
+          },
+        ),
         ),
       ),
     );

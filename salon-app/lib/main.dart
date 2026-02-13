@@ -17,7 +17,9 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Handles notifications when app is in background/terminated
+  // Runs in separate isolate when app is background/terminated
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Notification payload is shown by the system; we just ensure Firebase is init
 }
 
 void main() async {
