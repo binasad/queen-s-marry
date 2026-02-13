@@ -2,17 +2,20 @@
 
 If customers are not receiving push notifications, check the following:
 
-## 1. Firebase Configuration (salon-app)
+## 1. Firebase Configuration (salon-app) – ⚠️ MOST COMMON CAUSE
 
-**Critical:** `lib/firebase_options.dart` has placeholders for Android/iOS:
-- `YOUR_ANDROID_APP_ID` 
-- `YOUR_IOS_APP_ID`
+**Critical:** `lib/firebase_options.dart` has placeholders:
+- Android: `appId: '1:229108556395:android:YOUR_ANDROID_APP_ID'`
+- iOS: `appId: '1:229108556395:ios:YOUR_IOS_APP_ID'`
 
-**Fix:** In the salon-app directory, run:
-```bash
-flutterfire configure
-```
-This adds your app to the marry-queen Firebase project and updates firebase_options.dart with real app IDs. If the Android/iOS apps are not yet in Firebase Console, add them first at https://console.firebase.google.com → marry-queen → Project settings → Your apps.
+With these placeholders, `getToken()` returns **null** or an **invalid token**. FCM rejects it when the backend sends.
+
+**Fix:**
+1. Add your Android app in Firebase Console: https://console.firebase.google.com → marry-queen → Project settings → Add app → Android
+   - Package name: `com.example.salon` (from android/app/build.gradle.kts)
+   - Download `google-services.json` → place in `android/app/`
+2. In salon-app directory, run: `flutterfire configure`
+3. Rebuild: `flutter clean && flutter pub get`
 
 ---
 
@@ -84,9 +87,30 @@ When sending, the backend logs:
 
 ---
 
+## Test Push (Admin API)
+
+To verify the full flow, send a test notification to a customer:
+
+```bash
+# Replace TOKEN with your admin JWT, USER_ID with the customer's user ID
+curl -X POST "https://your-api/api/v1/notifications/test/USER_ID" \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test","body":"Can you see this?"}'
+```
+
+- **200 + notification received** → Backend & FCM work. Check appointment triggers.
+- **400 "has no FCM token"** → Token not saved. Check Firebase config + Flutter logs.
+- **500 "messaging/registration-token-not-registered"** → Token invalid/expired. Customer should reopen app (triggers token refresh).
+
+## Diagnostic SQL
+
+Run `backend/database/diagnose_push_notifications.sql` in your SQL editor to see which users have FCM tokens.
+
 ## Quick Checklist
 
-- [ ] `flutterfire configure` run in salon-app
+- [ ] `flutterfire configure` run in salon-app (real app IDs, not YOUR_ANDROID_APP_ID)
+- [ ] `google-services.json` in android/app/
 - [ ] `fcm_token` column exists in users table
 - [ ] `firebase-admin-sdk.json` in backend/
 - [ ] Customer logged in with email/Google (not guest)

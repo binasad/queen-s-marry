@@ -1,4 +1,5 @@
 const { query } = require('../../config/db');
+const pushService = require('../../services/pushNotificationService');
 
 class NotificationsController {
   // Save FCM token for a user
@@ -34,6 +35,7 @@ class NotificationsController {
         });
       }
 
+      console.log(`✅ FCM token saved for user ${userId} (${result.rows[0].email})`);
       res.json({
         success: true,
         message: 'FCM token saved successfully.',
@@ -117,6 +119,47 @@ class NotificationsController {
       res.status(500).json({
         success: false,
         message: 'Failed to get FCM token.',
+      });
+    }
+  }
+
+  // Test push (admin only) – POST /notifications/test/:userId
+  async testPush(req, res) {
+    try {
+      const { userId } = req.params;
+      const { title, body } = req.body || {};
+
+      const userResult = await query(
+        'SELECT u.id, u.email, u.fcm_token, r.name AS role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.id = $1',
+        [userId]
+      );
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'User not found.' });
+      }
+      const user = userResult.rows[0];
+      if (!user.fcm_token) {
+        return res.status(400).json({
+          success: false,
+          message: `User ${user.email || userId} has no FCM token. Have them open the app, log in, and allow notifications.`,
+        });
+      }
+
+      await pushService.sendToToken(user.fcm_token, {
+        title: title || 'Test Notification',
+        body: body || 'This is a test push from Merry Queen Salon.',
+        data: { type: 'test' },
+      });
+
+      res.json({
+        success: true,
+        message: 'Test notification sent.',
+        data: { userId, email: user.email },
+      });
+    } catch (error) {
+      console.error('Test push error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to send test notification.',
       });
     }
   }

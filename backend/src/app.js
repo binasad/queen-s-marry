@@ -219,6 +219,12 @@ app.use(`/api/${API_VERSION}`, expertsRoutes);
 app.use(`/api/${API_VERSION}`, supportRoutes);
 app.use(`/api/${API_VERSION}`, notificationsRoutes);
 
+// Test push – direct route (admin only) to ensure it's registered
+const notificationsController = require('./modules/notifications/notifications.controller');
+const { auth } = require('./middlewares/auth.middleware');
+const { hasRole } = require('./middlewares/role.middleware');
+app.post(`/api/${API_VERSION}/notifications/test/:userId`, auth, hasRole(['Admin', 'Owner']), (req, res) => notificationsController.testPush(req, res));
+
 app.use(`/api/${API_VERSION}/payments`, paymentRoutes);
 app.use(`/api/${API_VERSION}`, offersRoutes);
 app.use(`/api/${API_VERSION}`, blogsRoutes);
