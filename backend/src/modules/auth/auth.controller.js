@@ -158,6 +158,7 @@ class AuthController {
   }
 
   // Google Sign-In - verify idToken and create/find user
+  // Supports two token types: Firebase (aud=projectId) or Google OAuth (aud=Web client ID)
   async googleLogin(req, res) {
     try {
       const { idToken } = req.body;
@@ -168,27 +169,55 @@ class AuthController {
         });
       }
 
-      const admin = getFirebaseAdmin();
-      if (!admin) {
-        console.error('Google login: Firebase Admin not initialized. Add firebase-admin-sdk.json or FIREBASE_ADMIN_SDK_JSON env.');
-        return res.status(503).json({
-          success: false,
-          message: 'Google sign-in is not configured. Contact support.',
-        });
+      let decodedToken;
+      const webClientId = process.env.GOOGLE_WEB_CLIENT_ID?.trim();
+
+      // Token has aud=Web client ID when Flutter uses serverClientId. Use google-auth-library.
+      if (webClientId) {
+        try {
+          const { OAuth2Client } = require('google-auth-library');
+          const client = new OAuth2Client(webClientId);
+          const ticket = await client.verifyIdToken({ idToken, audience: webClientId });
+          const payload = ticket.getPayload();
+          decodedToken = {
+            uid: payload.sub,
+            email: payload.email,
+            name: payload.name || payload.email?.split('@')[0],
+            picture: payload.picture,
+          };
+        } catch (gaErr) {
+          console.error('Google login: OAuth2 verifyIdToken failed:', gaErr.message);
+          return res.status(401).json({
+            success: false,
+            message: 'Google token verification failed. Add GOOGLE_WEB_CLIENT_ID to backend .env (Web OAuth client ID from Firebase).',
+          });
+        }
+      } else {
+        // Fallback: Firebase Admin (expects aud=project ID)
+        const admin = getFirebaseAdmin();
+        if (!admin) {
+          console.error('Google login: Need GOOGLE_WEB_CLIENT_ID in .env for Google Sign-In with serverClientId.');
+          return res.status(503).json({
+            success: false,
+            message: 'Google sign-in not configured. Add GOOGLE_WEB_CLIENT_ID to backend .env.',
+          });
+        }
+        try {
+          decodedToken = await admin.auth().verifyIdToken(idToken);
+        } catch (fbErr) {
+          if (fbErr.code === 'auth/argument-error' && fbErr.message?.includes('audience')) {
+            console.error('Google login: Token has Web client aud. Add GOOGLE_WEB_CLIENT_ID to backend .env.');
+            return res.status(503).json({
+              success: false,
+              message: 'Add GOOGLE_WEB_CLIENT_ID to backend .env (Web OAuth client ID from Firebase/Google Cloud).',
+            });
+          }
+          console.error('Google login: verifyIdToken failed:', fbErr.code || fbErr.message);
+          const msg = fbErr.code === 'auth/id-token-expired' ? 'Google sign-in expired. Please try again.' : 'Google token verification failed.';
+          return res.status(401).json({ success: false, message: msg });
+        }
       }
 
-      let decodedToken;
-      try {
-        decodedToken = await admin.auth().verifyIdToken(idToken);
-      } catch (fbErr) {
-        console.error('Google login: verifyIdToken failed:', fbErr.code || fbErr.message, fbErr.message);
-        const msg = fbErr.code === 'auth/id-token-expired'
-          ? 'Google sign-in expired. Please try again.'
-          : fbErr.code === 'auth/argument-error'
-            ? 'Invalid Google token. Ensure SHA-1 is added to Firebase.'
-            : 'Google token verification failed.';
-        return res.status(401).json({ success: false, message: msg });
-      }
       const { uid, email, name, picture } = decodedToken;
 
       if (!email) {
