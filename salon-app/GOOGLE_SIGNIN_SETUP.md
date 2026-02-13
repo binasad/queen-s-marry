@@ -28,19 +28,15 @@ Your `google-services.json` has empty `oauth_client` - this means Google Sign-In
 2. Enable **Google** provider
 3. Add support email if prompted
 
-## 3. Add Web Client ID (for backend verification)
+## 3. Add Web Client ID to Backend (required)
 
-Your backend verifies the idToken using Firebase Admin. For reliable idToken, add the Web OAuth client ID:
+The token's `aud` is the Web OAuth client ID. Add it to **backend** `.env`:
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com) → select **marry-queen** project
-2. **APIs & Services** → **Credentials**
-3. Under **OAuth 2.0 Client IDs**:
-   - If you see **Web client** – copy its Client ID
-   - If not: **Create Credentials** → **OAuth client ID** → **Web application** → Create
-4. Add to your `.env` file:
-   ```
-   GOOGLE_WEB_CLIENT_ID=229108556395-xxxxxx.apps.googleusercontent.com
-   ```
+```
+GOOGLE_WEB_CLIENT_ID=229108556395-h62rnber6r8mlcmsri605k93v4fce1a5.apps.googleusercontent.com
+```
+
+Get it from [Google Cloud Console](https://console.cloud.google.com) → **marry-queen** → APIs & Services → Credentials → OAuth 2.0 Client IDs → Web client
 
 ## 4. Backend: Firebase Admin SDK (required for 500 → fix)
 

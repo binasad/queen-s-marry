@@ -1,36 +1,40 @@
 # Backend Deployment Guide
 
-## Automatic Deployment
+## Deployment Flow (AWS EC2)
 
-Deployment runs automatically:
-- **On push** to `main` when `backend/**` files change
-- **Every 6 hours** (recovers from EC2 reboot)
-- **Manually** via GitHub Actions → Backend CI/CD → Run workflow
+1. **GitHub Actions** builds Docker image and pushes to Docker Hub
+2. **SSH to EC2** pulls the image and runs it with env from `ENV_FILE` secret
+3. **Docker run** uses `--env-file` so all vars from `.env` go to the container
 
-## Firebase Push Notifications Setup
+## GitHub Secrets Required
 
-To enable push notifications, add the Firebase Admin SDK JSON to GitHub Secrets:
+| Secret | Purpose |
+|--------|---------|
+| `ENV_FILE` | **Full content** of backend `.env` – DB, JWT, S3, SMTP, `GOOGLE_WEB_CLIENT_ID`, etc. |
+| `FIREBASE_ADMIN_SDK_JSON` | Firebase service account JSON (for push notifications) |
+| `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY` | SSH to EC2 |
+| `DOCKER_HUB_USERNAME`, `DOCKER_HUB_TOKEN` | Docker Hub registry |
 
-### Step 1: Get Firebase Service Account Key
+## When to Update ENV_FILE
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Select your project
-3. Click **Project settings** (gear icon) → **Service accounts**
-4. Click **Generate new private key**
-5. Download the JSON file
+After adding or changing `.env` vars locally, update the `ENV_FILE` secret:
 
-### Step 2: Add to GitHub Secrets
+1. Copy the full contents of `backend/.env` (including new vars)
+2. GitHub → **Settings** → **Secrets and variables** → **Actions**
+3. Edit `ENV_FILE` → Paste new content → **Update secret**
+4. Redeploy (Actions → Backend CI/CD → Run workflow)
 
-1. Open your repo on GitHub → **Settings** → **Secrets and variables** → **Actions**
-2. Click **New repository secret**
-3. **Name:** `FIREBASE_ADMIN_SDK_JSON`
-4. **Value:** Paste the **entire** JSON content (minify to one line - remove newlines)
+## Google Sign-In (GOOGLE_WEB_CLIENT_ID)
 
-Example of minified JSON:
-```json
-{"type":"service_account","project_id":"your-project","private_key_id":"...","private_key":"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n","client_email":"...","client_id":"...","auth_uri":"...","token_uri":"...","auth_provider_x509_cert_url":"...","client_x509_cert_url":"..."}
+Add to your local `.env` and include it in `ENV_FILE`:
+
+```
+GOOGLE_WEB_CLIENT_ID=229108556395-h62rnber6r8mlcmsri605k93v4fce1a5.apps.googleusercontent.com
 ```
 
-### Step 3: Redeploy
+Get it from: [Google Cloud Console](https://console.cloud.google.com) → marry-queen → APIs & Services → Credentials → OAuth 2.0 Web client.
 
-Trigger deployment (Actions → Run workflow) or push a change to backend. The next deploy will include Firebase and push notifications will work.
+## Firebase Push Notifications
+
+1. [Firebase Console](https://console.firebase.google.com/) → Project settings → Service accounts → Generate new private key
+2. Add GitHub Secret `FIREBASE_ADMIN_SDK_JSON` with the full JSON (minify to one line)
