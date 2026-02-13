@@ -265,7 +265,7 @@ class _AdminAppointmentsListScreenState
               });
 
               // ✅ Add Notification
-              NotificationManager.addNotification(
+              NotificationManager.instance.addNotification(
                 "Your appointment for '${appointment.serviceName}' on ${appointment.date} at ${appointment.time} has been ${action == "approve" ? "approved ✅" : "cancelled ❌"}",
               );
 

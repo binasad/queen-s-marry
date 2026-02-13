@@ -65,7 +65,11 @@ async function sendToToken(token, { title, body, data = {} }) {
         priority: 'high',
         notification: {
           channelId: 'default',
-          priority: 'high',
+          priority: 'max',
+          defaultSound: true,
+          defaultVibrateTimings: true,
+          visibility: 'public',
+          notificationCount: 1,
         },
       },
       apns: {
