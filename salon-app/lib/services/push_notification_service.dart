@@ -1,12 +1,22 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'api_service.dart';
+import 'storage_service.dart';
 
 class PushNotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final ApiService _api = ApiService();
+  final StorageService _storage = const StorageService();
 
   Future<void> initialize() async {
+    // Gatekeeper: Never init for guest users (privacy, cost, predictability)
+    final isGuest = await _storage.isGuest();
+    if (isGuest) {
+      print('PushNotificationService: Skipping – Guest user detected.');
+      await clearToken();
+      return;
+    }
+
     // 1. Request Permission (Required for iOS)
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
@@ -41,5 +51,19 @@ class PushNotificationService {
         // Show a local snackbar or dialog here
       }
     });
+  }
+
+  /// Clear FCM token from backend (e.g. when guest detected or on logout)
+  Future<void> clearToken() async {
+    try {
+      await _api.post(
+        '/notifications/clear-token',
+        {},
+        requiresAuth: true,
+      );
+      print('PushNotificationService: Token cleared from backend.');
+    } catch (e) {
+      // Ignore – user may not be logged in
+    }
   }
 }

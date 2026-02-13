@@ -46,7 +46,22 @@ const auth = async (req, res, next) => {
     // Verify token
     const decoded = verifyAccessToken(token);
 
-    // Get user from database
+    // Guest tokens: session-only, no database lookup (privacy-first)
+    if (decoded.isGuest === true && decoded.sessionId) {
+      req.user = {
+        id: null,
+        sessionId: decoded.sessionId,
+        isGuest: true,
+        roleName: 'Guest',
+        email: null,
+        roleId: null,
+        permissions: [],
+        email_verified: true,
+      };
+      return next();
+    }
+
+    // Regular users: get from database
     const result = await query(
       `SELECT
          u.id,
@@ -125,6 +140,21 @@ const optionalAuth = async (req, res, next) => {
     }
 
     const decoded = verifyAccessToken(token);
+
+    if (decoded.isGuest === true && decoded.sessionId) {
+      req.user = {
+        id: null,
+        sessionId: decoded.sessionId,
+        isGuest: true,
+        roleName: 'Guest',
+        email: null,
+        roleId: null,
+        permissions: [],
+        email_verified: true,
+      };
+      return next();
+    }
+
     const result = await query(
       `SELECT
          u.id,
