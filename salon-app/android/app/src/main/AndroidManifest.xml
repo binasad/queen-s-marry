@@ -3,6 +3,8 @@
 
     <!-- Needed for internet access -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Required for push notifications on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Optional: show user location on map -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
