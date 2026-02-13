@@ -170,7 +170,7 @@ class AuthController {
       }
 
       let decodedToken;
-      const webClientId = process.env.GOOGLE_WEB_CLIENT_ID?.trim();
+      const webClientId = env.googleWebClientId || process.env.GOOGLE_WEB_CLIENT_ID?.trim();
 
       // Token has aud=Web client ID when Flutter uses serverClientId. Use google-auth-library.
       if (webClientId) {
