@@ -72,7 +72,7 @@ const corsOptions = {
     
     // Production: check explicit whitelist
     if (allowedOrigins.includes(origin)) {
-      console.log('✅ Allowing origin (whitelist):', origin);
+      console.log('✅ Alllowwing origin (whitelist):', origin);
       return callback(null, true);
     }
     
