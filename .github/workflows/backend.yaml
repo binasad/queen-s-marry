@@ -52,7 +52,9 @@ jobs:
             # Build docker run args - add firebase env only if secret is set
             ENV_ARGS="--env-file /home/ubuntu/Aztrosys/backend/.env"
             if [ -n "$FIREBASE_ADMIN_SDK_JSON" ]; then
-              printf 'FIREBASE_ADMIN_SDK_JSON=%s\n' "$FIREBASE_ADMIN_SDK_JSON" > /home/ubuntu/Aztrosys/backend/firebase.env
+              # Minify JSON to single line (Docker env file does not allow newlines in values)
+              FIREBASE_JSON_ONELINE=$(echo "$FIREBASE_ADMIN_SDK_JSON" | tr -d '\n\r')
+              printf 'FIREBASE_ADMIN_SDK_JSON=%s\n' "$FIREBASE_JSON_ONELINE" > /home/ubuntu/Aztrosys/backend/firebase.env
               ENV_ARGS="$ENV_ARGS --env-file /home/ubuntu/Aztrosys/backend/firebase.env"
             fi
             
