@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
 import 'push_notification_service.dart';
@@ -295,6 +296,13 @@ class AuthService {
       return user;
     } catch (e) {
       print('AuthService: Google login error: $e');
+      // Extract backend message from DioException when available
+      if (e is DioException && e.response?.data is Map) {
+        final msg = e.response!.data['message']?.toString();
+        if (msg != null && msg.isNotEmpty) {
+          throw Exception(msg);
+        }
+      }
       rethrow;
     }
   }

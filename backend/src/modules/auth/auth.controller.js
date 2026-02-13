@@ -15,13 +15,29 @@ function getFirebaseAdmin() {
   try {
     const admin = require('firebase-admin');
     if (admin.apps.length === 0) {
-      const credPath = path.join(process.cwd(), 'firebase-admin-sdk.json');
-      if (fs.existsSync(credPath)) {
-        const serviceAccount = require(credPath);
+      let serviceAccount = null;
+      // 1. Try env var (Docker, GitHub Actions, etc.)
+      const envJson = process.env.FIREBASE_ADMIN_SDK_JSON || process.env.FIREBASE_CREDENTIALS_JSON;
+      if (envJson) {
+        try {
+          serviceAccount = JSON.parse(envJson);
+        } catch (_) {
+          console.error('Firebase Admin: Invalid FIREBASE_ADMIN_SDK_JSON JSON');
+          return null;
+        }
+      }
+      // 2. Fall back to file
+      if (!serviceAccount) {
+        const credPath = path.join(process.cwd(), 'firebase-admin-sdk.json');
+        if (fs.existsSync(credPath)) {
+          serviceAccount = require(credPath);
+        }
+      }
+      if (serviceAccount) {
         admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
       }
     }
-    return admin;
+    return admin.apps.length > 0 ? admin : null;
   } catch (err) {
     console.error('Firebase Admin init error:', err.message);
     return null;
@@ -154,13 +170,25 @@ class AuthController {
 
       const admin = getFirebaseAdmin();
       if (!admin) {
+        console.error('Google login: Firebase Admin not initialized. Add firebase-admin-sdk.json or FIREBASE_ADMIN_SDK_JSON env.');
         return res.status(503).json({
           success: false,
           message: 'Google sign-in is not configured. Contact support.',
         });
       }
 
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      let decodedToken;
+      try {
+        decodedToken = await admin.auth().verifyIdToken(idToken);
+      } catch (fbErr) {
+        console.error('Google login: verifyIdToken failed:', fbErr.code || fbErr.message, fbErr.message);
+        const msg = fbErr.code === 'auth/id-token-expired'
+          ? 'Google sign-in expired. Please try again.'
+          : fbErr.code === 'auth/argument-error'
+            ? 'Invalid Google token. Ensure SHA-1 is added to Firebase.'
+            : 'Google token verification failed.';
+        return res.status(401).json({ success: false, message: msg });
+      }
       const { uid, email, name, picture } = decodedToken;
 
       if (!email) {
@@ -220,11 +248,13 @@ class AuthController {
         },
       });
     } catch (error) {
-      console.error('Google login error:', error);
-      res.status(500).json({
-        success: false,
-        message: error.code === 'auth/id-token-expired' ? 'Google sign-in expired. Please try again.' : 'Google sign-in failed. Please try again.',
-      });
+      console.error('Google login error:', error?.code || error?.message, error?.stack);
+      const msg = error?.code === 'auth/id-token-expired'
+        ? 'Google sign-in expired. Please try again.'
+        : env.isDevelopment && error?.message
+          ? `Google login failed: ${error.message}`
+          : 'Google sign-in failed. Please try again.';
+      res.status(500).json({ success: false, message: msg });
     }
   }
 

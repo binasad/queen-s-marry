@@ -12,7 +12,20 @@
           "package_name": "com.example.salon"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "229108556395-sbpdfsq3bgv83tp8gibf0lmnh1p87ov4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.salon",
+            "certificate_hash": "7eed1018b1bf0dc4ae7c4f7b4f382b211fe030b0"
+          }
+        },
+        {
+          "client_id": "229108556395-h62rnber6r8mlcmsri605k93v4fce1a5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAp8SdDDjQlEvypq9icf_vnwYUrkhkQBVA"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "229108556395-h62rnber6r8mlcmsri605k93v4fce1a5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

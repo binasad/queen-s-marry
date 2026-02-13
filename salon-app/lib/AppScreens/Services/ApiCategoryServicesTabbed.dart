@@ -328,21 +328,24 @@ class _ApiCategoryServicesTabbedScreenState
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _brandColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'PKR $price',
-                                  style: const TextStyle(
-                                    color: _brandColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _brandColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'PKR $price',
+                                    style: const TextStyle(
+                                      color: _brandColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ),
@@ -353,12 +356,15 @@ class _ApiCategoryServicesTabbedScreenState
                                 color: Colors.black26,
                               ),
                               const SizedBox(width: 4),
-                              Text(
-                                '$duration min',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black26,
-                                  fontWeight: FontWeight.w600,
+                              Flexible(
+                                child: Text(
+                                  '$duration min',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black26,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

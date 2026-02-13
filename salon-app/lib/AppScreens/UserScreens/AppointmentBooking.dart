@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart'; // Added for CupertinoActivityIndicator
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:flutter_stripe/flutter_stripe.dart' show StripeException;
-import 'package:intl/intl.dart';
 import '../../services/appointment_service.dart';
 import '../../services/user_service.dart';
 import '../../services/api_service.dart';
-import '../../utils/guest_guard.dart';
 
 class AppColors {
   static const Color primaryPink = Color(0xFFE91E63);
@@ -98,37 +95,30 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     }
   }
 
-  /// CRITICAL FIX: Converts "8:00 am" to "08:00" to satisfy backend HH:MM validator
-  /// CRITICAL: Forces "11:00 am" -> "11:00" and "2:00 pm" -> "14:00"
+  /// Converts "8:00 am" -> "08:00", "2:00 pm" -> "14:00" for backend HH:MM validator
   String _convertTo24Hour(String time12h) {
-    try {
-      // 1. Clean the string
-      final input = time12h.toLowerCase().trim();
-
-      // 2. Use DateFormat to parse h:mm a (e.g. 1:00 pm)
-      final DateFormat format12 = DateFormat('h:mm a');
-
-      // 3. Use DateFormat HH:mm to output 24hr (e.g. 13:00)
-      final DateFormat format24 = DateFormat('HH:mm');
-
-      final DateTime dateTime = format12.parse(input);
-      return format24.format(dateTime);
-    } catch (e) {
-      debugPrint('❌ Time Conversion Error: $e');
-      // Manual fallback if intl fails
-      return _manualTimeFix(time12h);
+    final t = time12h.trim().toLowerCase();
+    // Use robust regex-based parsing (avoids intl DateFormat locale/parse issues)
+    if (t.contains('am') || t.contains('pm')) {
+      return _parseAmPm(time12h);
     }
+    // Already 24h or unknown - return as-is if looks like HH:mm
+    final match = RegExp(r'^(\d{1,2}):(\d{2})').firstMatch(time12h.trim());
+    if (match != null) return '${match.group(1)!.padLeft(2, '0')}:${match.group(2)!}';
+    return time12h;
   }
 
-  String _manualTimeFix(String time) {
-    // Basic fallback for common slots if DateFormat fails
-    if (time.contains('am')) return time.replaceAll(' am', '').padLeft(5, '0');
-    if (time.contains('pm')) {
-      int hour = int.parse(time.split(':')[0]);
-      if (hour != 12) hour += 12;
-      return "$hour:${time.split(':')[1].replaceAll(' pm', '')}";
-    }
-    return time;
+  String _parseAmPm(String time) {
+    final t = time.toLowerCase();
+    final isPm = t.contains('pm');
+    final hhmm = time.replaceAll(RegExp(r'\s*[ap]m\s*', caseSensitive: false), '');
+    final parts = hhmm.split(':');
+    final hStr = parts[0].trim();
+    final mStr = parts.length > 1 ? parts[1].trim() : '00';
+    int hour = int.tryParse(hStr) ?? 12;
+    if (isPm && hour != 12) hour += 12;
+    if (!isPm && hour == 12) hour = 0;
+    return '${hour.toString().padLeft(2, '0')}:${mStr.padLeft(2, '0')}';
   }
 
   /// Amount to charge: offer-discounted when booking with offer, otherwise service price

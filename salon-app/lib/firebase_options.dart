@@ -54,8 +54,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCuZHbiZlBfJmqFFHUkkIcipOS0WhmAfVM',
-    appId: '1:229108556395:android:YOUR_ANDROID_APP_ID',
+    apiKey: 'AIzaSyAp8SdDDjQlEvypq9icf_vnwYUrkhkQBVA',
+    appId: '1:229108556395:android:1e5c5a833c01184043c72e',
     messagingSenderId: '229108556395',
     projectId: 'marry-queen',
     databaseURL: 'https://marry-queen-default-rtdb.firebaseio.com',
