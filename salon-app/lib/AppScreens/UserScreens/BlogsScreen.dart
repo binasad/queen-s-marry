@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../widgets/cached_image.dart';
 import '../../services/blog_service.dart';
 
@@ -11,6 +12,7 @@ class BlogsScreen extends StatefulWidget {
 }
 
 class _BlogsScreenState extends State<BlogsScreen> {
+  static const Color brandPink = Color(0xFFFF0068);
   final BlogService _blogService = BlogService();
   bool _loading = true;
   List<Blog> _blogs = [];
@@ -23,6 +25,7 @@ class _BlogsScreenState extends State<BlogsScreen> {
   }
 
   Future<void> _loadBlogs() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -38,7 +41,9 @@ class _BlogsScreenState extends State<BlogsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString().split('\n').first;
+          _error = e.toString().contains('SocketException')
+              ? "No internet connection"
+              : "We couldn't reach the stories right now";
           _loading = false;
         });
       }
@@ -48,91 +53,94 @@ class _BlogsScreenState extends State<BlogsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Blogs",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFFF6CBF), Color(0xFFFFC371)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: RefreshIndicator(
+        color: brandPink,
+        onRefresh: _loadBlogs,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Premium Header
+            SliverAppBar(
+              expandedHeight: 120,
+              floating: true,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: const Color(0xFFF8F9FD).withOpacity(0.9),
+              flexibleSpace: const FlexibleSpaceBar(
+                centerTitle: false,
+                titlePadding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                title: Text(
+                  "Latest Stories",
+                  style: TextStyle(
+                    color: Color(0xFF1A1A1A),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 24,
+                    letterSpacing: -0.8,
+                  ),
+                ),
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded, color: Colors.black54),
+                  onPressed: _loading ? null : _loadBlogs,
+                ),
+              ],
             ),
-          ),
+
+            // Main Content Logic
+            if (_loading)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator(color: brandPink)),
+              )
+            else if (_error != null)
+              SliverFillRemaining(child: _buildErrorState())
+            else if (_blogs.isEmpty)
+              SliverFillRemaining(child: _buildEmptyState())
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _BlogCard(blog: _blogs[index]),
+                    childCount: _blogs.length,
+                  ),
+                ),
+              ),
+          ],
         ),
-        elevation: 0,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loading ? null : _loadBlogs,
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.cloud_off_rounded, size: 60, color: Colors.red[200]),
+          const SizedBox(height: 16),
+          Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600])),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _loadBlogs,
+            style: ElevatedButton.styleFrom(backgroundColor: brandPink),
+            child: const Text("Retry", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
-      body: Stack(
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Opacity(
-            opacity: 0.99,
-            child: Image.asset(
-              'assets/background.png',
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-            ),
-          ),
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 9, sigmaY: 9),
-            child: Container(color: Colors.white.withOpacity(0.1)),
-          ),
-          RefreshIndicator(
-            onRefresh: _loadBlogs,
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
-                              const SizedBox(height: 16),
-                              Text(
-                                _error!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: Colors.black87),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: _loadBlogs,
-                                child: const Text("Retry"),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : _blogs.isEmpty
-                        ? const Center(
-                            child: Text(
-                              "No blogs yet.\nCheck back soon!",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black54,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: _blogs.length,
-                            itemBuilder: (context, index) {
-                              return _BlogCard(blog: _blogs[index], onRefresh: _loadBlogs);
-                            },
-                          ),
-          ),
+          Icon(Icons.auto_awesome_rounded, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text("No stories today", style: TextStyle(color: Colors.grey[500], fontSize: 16)),
         ],
       ),
     );
@@ -141,165 +149,126 @@ class _BlogsScreenState extends State<BlogsScreen> {
 
 class _BlogCard extends StatelessWidget {
   final Blog blog;
-  final VoidCallback onRefresh;
+  const _BlogCard({required this.blog});
 
-  const _BlogCard({required this.blog, required this.onRefresh});
+  void _share(String title, String content) {
+    Share.share("Check out this story: $title\n\n$content");
+  }
 
-  String _formatDate(String? isoDate) {
-    if (isoDate == null || isoDate.isEmpty) return '';
-    try {
-      final dt = DateTime.parse(isoDate);
-      return "${dt.day}/${dt.month}/${dt.year}";
-    } catch (_) {
-      return isoDate;
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => _showFullBlog(context),
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image with Hero Transition
+            Hero(
+              tag: 'blog-img-${blog.id}',
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                child: CachedImageWidget(
+                  imageUrl: blog.imageUrl ?? '',
+                  height: 220,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "EDITORIAL",
+                        style: TextStyle(
+                          color: Color(0xFFFF0068),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => _share(blog.title, blog.content),
+                        icon: const Icon(Icons.ios_share, size: 18, color: Colors.grey),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                  Text(
+                    blog.title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    blog.content,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.black.withOpacity(0.5),
+                      height: 1.5,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showFullBlog(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
+        initialChildSize: 0.9,
         maxChildSize: 0.95,
-        expand: false,
-        builder: (_, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              if (blog.imageUrl != null && blog.imageUrl!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: CachedImageWidget(
-                      imageUrl: blog.imageUrl!,
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              Text(
-                blog.title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              if (blog.createdAt != null && blog.createdAt!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  _formatDate(blog.createdAt),
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                ),
-              ],
-              const SizedBox(height: 16),
-              Text(
-                blog.content,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                  height: 1.6,
-                ),
-              ),
-            ],
+        minChildSize: 0.6,
+        builder: (_, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 4,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => _showFullBlog(context),
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-          if (blog.imageUrl != null && blog.imageUrl!.isNotEmpty)
-            CachedImageWidget(
-              imageUrl: blog.imageUrl!,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          Padding(
-            padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  blog.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                if (blog.createdAt != null && blog.createdAt!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatDate(blog.createdAt),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Text(
-                  blog.content,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    height: 1.5,
-                  ),
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      "Tap to read more",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.pink.shade400,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+                const SizedBox(height: 24),
+                Text(blog.title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 24),
+                Text(blog.content, style: TextStyle(fontSize: 16, height: 1.8, color: Colors.black.withOpacity(0.7))),
               ],
             ),
           ),
-        ],
         ),
       ),
     );

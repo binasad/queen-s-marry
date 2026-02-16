@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../services/auth_service.dart';
@@ -13,16 +14,18 @@ class ChangePasswordScreen extends StatefulWidget {
 }
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+  static const Color brandPink = Color(0xFFFF0068);
+  static const Color brandPeach = Color(0xFFFFC371);
+
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  
   bool _isLoading = false;
   bool _isSendingOtp = false;
   bool _otpSent = false;
   String? _userEmail;
 
-  // Password visibility toggles
   bool _showNewPassword = false;
   bool _showConfirmPassword = false;
 
@@ -34,15 +37,34 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   Future<void> _loadUserEmail() async {
     try {
+      // 1. Fetch the profile data from your UserService
       final profileData = await UserService().getProfile();
+      
+      // 2. Extract the user object safely
       final user = profileData['user'] as Map<String, dynamic>?;
+
       if (mounted && user != null) {
         setState(() {
+          // 3. Extract email and handle potential nulls
+          // We use .toString() to ensure type safety
           _userEmail = user['email']?.toString();
+          
+          // Debugging log (Optional, remove for production)
+          print('ChangePassword: User email loaded: $_userEmail');
         });
       }
     } catch (e) {
-      print('Error loading user email: $e');
+      // 4. Empathy-based error handling
+      debugPrint('Error loading user email for password change: $e');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Could not verify your email. Please try again later."),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 
@@ -167,330 +189,194 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 
   @override
-  void dispose() {
-    _otpController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
-        title: Text(
-          "Change Password",
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text("Security", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black)),
+        centerTitle: true,
+        backgroundColor: Colors.white,
         elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFFFF6CBF), // pink
-                Color(0xFFFFC371), // peach
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children: [
+            // Branded Top Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
+              ),
+              child: Lottie.asset(
+                'assets/Password.json',
+                height: 200,
+              ),
             ),
-          ),
+            
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 500),
+                child: _otpSent ? _buildVerificationStep() : _buildRequestStep(),
+              ),
+            ),
+          ],
         ),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFFFF6CBF), // pink
-              Color(0xFFFFC371), // peach
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.topRight,
-          ),
-          // borderRadius: BorderRadius.only(
-          //   topLeft: Radius.circular(60),
-          //   topRight: Radius.circular(60),
-          // ),
+    );
+  }
+
+  Widget _buildRequestStep() {
+    return Column(
+      key: const ValueKey(1),
+      children: [
+        const Text(
+          "Verification Required",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5),
         ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(60),
-              topRight: Radius.circular(60),
-            ),
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
-            child: Column(
-              children: [
-                Lottie.asset(
-                  'assets/Password.json',
-                  width: MediaQuery.of(context).size.width * 0.7,
-                ),
-                SizedBox(height: 30),
-                if (!_otpSent) ...[
-                  // Step 1: Send OTP
-                  Text(
-                    "We'll send a verification code to your email to change your password",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[700], fontSize: 14),
-                  ),
-                  if (_userEmail != null) ...[
-                    SizedBox(height: 10),
-                    Text(
-                      _userEmail!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                  SizedBox(height: 30),
-                  _isSendingOtp
-                      ? const CircularProgressIndicator()
-                      : Container(
-                          height: 50,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 6,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: _sendOtp,
-                            child: Ink(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFFD6C57),
-                                    Color(0xFFFE9554),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: Container(
-                                alignment: Alignment.center,
-                                constraints: const BoxConstraints(
-                                  minWidth: 120,
-                                  minHeight: 50,
-                                ),
-                                child: const Text(
-                                  "Send Verification Code",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                ] else ...[
-                  // Step 2: Enter OTP and new password
-                  Text(
-                    "Enter the 6-digit code sent to your email",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[700], fontSize: 14),
-                  ),
-                  SizedBox(height: 20),
-                  TextField(
-                    controller: _otpController,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 8,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: "Verification Code",
-                      hintText: "000000",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.blue,
-                          width: 2,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0),
-                        borderSide: const BorderSide(
-                          color: Colors.grey,
-                          width: 1,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.withOpacity(0.5),
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  TextButton(
-                    onPressed: _isSendingOtp ? null : _sendOtp,
-                    child: Text(
-                      _isSendingOtp ? "Sending..." : "Resend Code",
-                      style: TextStyle(color: Colors.blue),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: !_showNewPassword,
-                    decoration: InputDecoration(
-                      labelText: "New Password",
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _showNewPassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _showNewPassword = !_showNewPassword;
-                          });
-                        },
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.blue,
-                          width: 2,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0),
-                        borderSide: const BorderSide(
-                          color: Colors.grey,
-                          width: 1,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.withOpacity(0.5),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _confirmPasswordController,
-                    obscureText: !_showConfirmPassword,
-                    decoration: InputDecoration(
-                      labelText: "Confirm New Password",
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _showConfirmPassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _showConfirmPassword = !_showConfirmPassword;
-                          });
-                        },
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.blue,
-                          width: 2,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0),
-                        borderSide: const BorderSide(
-                          color: Colors.grey,
-                          width: 1,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.withOpacity(0.5),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  _isLoading
-                      ? const CircularProgressIndicator()
-                      : Container(
-                          height: 50,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 6,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: _changePassword,
-                            child: Ink(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFFD6C57),
-                                    Color(0xFFFE9554),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: Container(
-                                alignment: Alignment.center,
-                                constraints: const BoxConstraints(
-                                  minWidth: 120,
-                                  minHeight: 50,
-                                ),
-                                child: const Text(
-                                  "Change Password",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                ],
-              ],
-            ),
-          ),
+        const SizedBox(height: 12),
+        Text(
+          "We'll send a 6-digit verification code to:",
+          style: TextStyle(color: Colors.grey[600], fontSize: 14),
         ),
+        if (_userEmail != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _userEmail!,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: brandPink),
+          ),
+        ],
+        const SizedBox(height: 40),
+        _buildActionButton(
+          label: "Send Code",
+          isLoading: _isSendingOtp,
+          onPressed: _sendOtp,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerificationStep() {
+    return Column(
+      key: const ValueKey(2),
+      children: [
+        const Text(
+          "Set New Password",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+        ),
+        const SizedBox(height: 32),
+        
+        // Custom Styled Inputs
+        _buildInputField(
+          controller: _otpController,
+          label: "Verification Code",
+          icon: Icons.vpn_key_outlined,
+          isOtp: true,
+        ),
+        const SizedBox(height: 16),
+        _buildInputField(
+          controller: _passwordController,
+          label: "New Password",
+          icon: Icons.lock_outline_rounded,
+          isPassword: true,
+          obscure: !_showNewPassword,
+          onToggle: () => setState(() => _showNewPassword = !_showNewPassword),
+        ),
+        const SizedBox(height: 16),
+        _buildInputField(
+          controller: _confirmPasswordController,
+          label: "Confirm Password",
+          icon: Icons.lock_reset_rounded,
+          isPassword: true,
+          obscure: !_showConfirmPassword,
+          onToggle: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
+        ),
+        
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed: _isSendingOtp ? null : _sendOtp,
+          child: const Text("Didn't receive code? Resend", style: TextStyle(color: brandPink, fontWeight: FontWeight.bold)),
+        ),
+        
+        const SizedBox(height: 32),
+        _buildActionButton(
+          label: "Update Password",
+          isLoading: _isLoading,
+          onPressed: _changePassword,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+    bool isOtp = false,
+    bool obscure = false,
+    VoidCallback? onToggle,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        keyboardType: isOtp ? TextInputType.number : TextInputType.text,
+        maxLength: isOtp ? 6 : null,
+        textAlign: isOtp ? TextAlign.center : TextAlign.start,
+        style: TextStyle(
+          letterSpacing: isOtp ? 8 : 0,
+          fontWeight: isOtp ? FontWeight.bold : FontWeight.normal,
+          fontSize: isOtp ? 20 : 15,
+        ),
+        decoration: InputDecoration(
+          counterText: "",
+          labelText: label,
+          labelStyle: TextStyle(color: Colors.grey[500], fontSize: 14, letterSpacing: 0),
+          prefixIcon: Icon(icon, color: brandPink, size: 20),
+          suffixIcon: isPassword 
+            ? IconButton(icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, size: 20), onPressed: onToggle)
+            : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({required String label, required bool isLoading, required VoidCallback onPressed}) {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: brandPink.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: brandPink,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 0,
+        ),
+        child: isLoading 
+          ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+          : Text(label, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ),
     );
   }

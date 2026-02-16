@@ -88,10 +88,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       Text(widget.course["title"], style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1)),
                       const SizedBox(height: 12),
                       _buildInfoBadges(),
-                      const SizedBox(height: 32),
-                      const Text("Reviews", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 12),
-                      _buildReviewsSection(),
+        
                       const SizedBox(height: 32),
                       const Text("Curriculum", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 16),
@@ -115,34 +112,49 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     );
   }
 
-  Widget _buildInfoBadges() {
-    return Row(
+Widget _buildInfoBadges() {
+    return Wrap(
+      spacing: 8, // Horizontal space between badges
+      runSpacing: 8, // Vertical space between lines
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         _badge(Icons.timer_outlined, widget.course["duration"]),
-        const SizedBox(width: 12),
         _badge(Icons.payments_outlined, "PKR ${widget.course["price"]}"),
-        if (_avgRating > 0) ...[
-          const SizedBox(width: 12),
-          _badge(Icons.star, "${_avgRating} ★"),
-        ],
-        if (widget.course["_offer_title"] != null) ...[
-          const SizedBox(width: 12),
+        if (_avgRating > 0) 
+          _badge(Icons.star, "${_avgRating.toStringAsFixed(1)} ★"),
+        if (widget.course["_offer_title"] != null)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: brandPink.withOpacity(0.2),
+              // Gradient for a more "Premium" offer look
+              gradient: LinearGradient(
+                colors: [brandPink, brandPink.withOpacity(0.8)],
+              ),
               borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: brandPink.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                )
+              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.local_offer, size: 14, color: brandPink),
+                const Icon(Icons.local_offer, size: 14, color: Colors.white),
                 const SizedBox(width: 6),
-                Text("${widget.course["_offer_title"]}", style: const TextStyle(color: brandPink, fontWeight: FontWeight.bold, fontSize: 12)),
+                Text(
+                  "${widget.course["_offer_title"]}",
+                  style: const TextStyle(
+                    color: Colors.white, 
+                    fontWeight: FontWeight.bold, 
+                    fontSize: 12
+                  ),
+                ),
               ],
             ),
           ),
-        ],
       ],
     );
   }
@@ -150,18 +162,36 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   Widget _badge(IconData icon, dynamic label) {
     final labelStr = label?.toString() ?? '';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: brandPink.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: brandPink),
-          const SizedBox(width: 6),
-          Text(labelStr, style: const TextStyle(color: brandPink, fontWeight: FontWeight.bold, fontSize: 13)),
+          const SizedBox(width: 8),
+          Text(
+            labelStr,
+            style: const TextStyle(
+              color: Color(0xFF1A1A1A), 
+              fontWeight: FontWeight.w700, 
+              fontSize: 13
+            ),
+          ),
         ],
       ),
     );
   }
-
   void _showCourseReviewDialog() {
     GuestGuard.canPerformAction(context, actionDescription: 'leave a course review').then((canProceed) {
       if (!canProceed || !mounted) return;
@@ -265,15 +295,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.rate_review_outlined, size: 40, color: Colors.grey[400]),
-                const SizedBox(width: 16),
-                Expanded(child: Text("No reviews yet", style: TextStyle(fontSize: 16, color: Colors.grey[600]))),
-                TextButton.icon(
-                  icon: const Icon(Icons.add_comment, size: 18),
-                  label: const Text('Leave Review'),
-                  onPressed: _showCourseReviewDialog,
-                  style: TextButton.styleFrom(foregroundColor: brandPink),
-                ),
+                
               ],
             ),
           ),

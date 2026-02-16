@@ -79,8 +79,8 @@ class _ApiCategoryServicesTabbedScreenState
       for (var service in items) {
         final tags = service['tags'] as List<dynamic>? ?? [];
         if (tags.isEmpty) {
-          uniqueTags.add('All');
-          grouped.putIfAbsent('All', () => []).add(service);
+          uniqueTags.add('General');
+          grouped.putIfAbsent('General', () => []).add(service);
         } else {
           for (var tag in tags) {
             final tagStr = tag.toString().trim();
@@ -92,12 +92,7 @@ class _ApiCategoryServicesTabbedScreenState
         }
       }
 
-      final sortedTabs = uniqueTags.toList()
-        ..sort((a, b) {
-          if (a == 'All') return -1;
-          if (b == 'All') return 1;
-          return a.compareTo(b);
-        });
+      final sortedTabs = uniqueTags.toList()..sort();
 
       if (!mounted) return;
 
@@ -155,6 +150,7 @@ class _ApiCategoryServicesTabbedScreenState
                   child: TabBar(
                     controller: _tabController,
                     isScrollable: true,
+                    tabAlignment: TabAlignment.center,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     indicatorSize: TabBarIndicatorSize.label,
                     indicatorColor: _brandColor,

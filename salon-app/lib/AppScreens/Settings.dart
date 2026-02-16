@@ -1,39 +1,50 @@
 import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart' as provider_package;
+
 import 'ChangePassword.dart';
+
 import 'Contact.dart';
+
 import 'FAQs.dart';
+
 import 'PersonalInfo.dart';
+
 import 'ShareWithFriends.dart';
+
 import 'UserScreens/AppointmentList.dart';
+
 import 'UserScreens/MyReviewsScreen.dart';
+
 import 'about.dart';
+
 import 'introSlider.dart';
+
 import '../services/user_service.dart';
+
 import '../services/auth_service.dart';
+
 import '../services/api_service.dart';
+
 import '../providers/auth_provider.dart';
+
 import '../utils/error_handler.dart';
+
 import '../utils/guest_guard.dart';
 
 class SettingsScreen extends StatefulWidget {
-  // final String userName;
-  // final String userEmail, profile;
-
-  const SettingsScreen({
-    Key? key,
-    // required this.userName,
-    // required this.userEmail,
-    // required this.profile,
-  }) : super(key: key);
+  const SettingsScreen({Key? key}) : super(key: key);
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  static const Color brandPink = Color(0xFFFF0068);
   String? role;
   String name = "", email = "", profile = "";
   bool _isLoading = true;
@@ -44,39 +55,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     loadUserData();
   }
 
+  // --- Logic Handlers ---
+
   Future<void> loadUserData() async {
     try {
-      print('Settings: Loading user data...');
       final data = await UserService().getProfile();
-      print('Settings: Raw data received: $data');
       final user = data['user'] as Map<String, dynamic>?;
-      print('Settings: User object: $user');
 
       if (mounted) {
         setState(() {
           name = user?['name']?.toString() ?? 'User';
           email = user?['email']?.toString() ?? '';
           profile = user?['profile_image_url']?.toString() ?? '';
-          // Optional: derive role name if needed
           final roleObj = user?['role'] as Map<String, dynamic>?;
           role = roleObj?['name']?.toString() ?? 'user';
           _isLoading = false;
-
-          print('Settings: Set name=$name, email=$email, profile=$profile');
         });
       }
     } catch (e) {
-      print('Error loading user data: $e');
-      print('Error type: ${e.runtimeType}');
-      if (e is ApiException) {
-        print('API Error - Status: ${e.statusCode}, Message: ${e.message}');
-      }
       if (mounted) {
         setState(() {
           role = 'user';
-          name = 'User';
-          email = '';
-          profile = '';
+          name = 'Guest User';
           _isLoading = false;
         });
       }
@@ -93,7 +93,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => OnboardingScreen()),
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
         (route) => false,
       );
     } catch (e) {
@@ -103,377 +103,190 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  // --- UI Components ---
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8F9FD),
+        body: Center(child: CircularProgressIndicator(color: brandPink)),
+      );
     }
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Opacity(
-            opacity: 0.99,
-            child: Image.asset(
-              'assets/background.png',
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // Elegant Header Section
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 2))],
+              ),
+              child: Column(
+                children: [
+                  _buildAvatar(),
+                  const SizedBox(height: 16),
+                  Text(name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+                  if (email.isNotEmpty)
+                    Text(email, style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+                  const SizedBox(height: 20),
+                  _buildEditButton(),
+                ],
+              ),
             ),
           ),
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 9, sigmaY: 9),
-            child: Container(color: Colors.white.withOpacity(0.1)),
-          ),
-          Container(
-            child: ListView(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.green[200],
-                        child: profile.isNotEmpty
-                            ? ClipOval(
-                                child: Image.network(
-                                  profile,
-                                  fit: BoxFit.cover,
-                                  width: 90,
-                                  height: 90,
-                                  loadingBuilder:
-                                      (context, child, loadingProgress) {
-                                        if (loadingProgress == null)
-                                          return child;
-                                        return Center(
-                                          child: CircularProgressIndicator(),
-                                        );
-                                      },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Icon(
-                                      Icons.person,
-                                      size: 50,
-                                      color: Colors.white,
-                                    );
-                                  },
-                                ),
-                              )
-                            : Icon(Icons.person, size: 50, color: Colors.white),
-                      ),
-                      SizedBox(height: 20),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            name,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            email,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      Container(
-                        height: 40,
-                        width: 120,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFFFD6C57), Color(0xFFFE9554)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(
-                            30,
-                          ), // adjust the radius as needed
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 6,
-                              offset: Offset(0, 3), // optional shadow
-                            ),
-                          ],
-                        ),
 
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => UserPersonalInfo(),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            "Edit Profile",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+          // Settings List
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildSectionLabel("ACTIVITY"),
+                _buildGroup([
+                  _SettingsTile(
+                    icon: CupertinoIcons.calendar,
+                    title: "My Appointments",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AppointmentsListScreen())),
                   ),
-                ),
-                SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 20),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(
-                        16,
-                      ), // adjust the radius as needed
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3), // optional shadow
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        ProfileTile(
-                          icon: CupertinoIcons.calendar,
-                          title: "My Appointments",
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AppointmentsListScreen(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        ProfileTile(
-                          icon: CupertinoIcons.lock,
-                          title: "Change Password",
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const ChangePasswordScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                  _SettingsTile(
+                    icon: Icons.rate_review_outlined,
+                    title: "My Reviews",
+                    onTap: GuestGuard.guardAction(
+                      context,
+                      () async => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReviewsScreen())),
+                      actionDescription: 'view reviews',
+                    ) ?? () {},
                   ),
-                ),
+                ]),
 
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(
-                        16,
-                      ), // adjust the radius as needed
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3), // optional shadow
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // ProfileTile(
-                        //   icon: Icons.rate_review,
-                        //   title: "My Reviews",
-                        //   onTap: () {
-                        //     // Navigate to reviews
-                        //   },
-                        // ),
-                        ProfileTile(
-                          icon: Icons.rate_review_outlined,
-                          title: "My Reviews",
-                          onTap: GuestGuard.guardAction(
-                            context,
-                            () async {
-                              if (!context.mounted) return;
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const MyReviewsScreen(),
-                                ),
-                              );
-                            },
-                            actionDescription: 'view and leave reviews',
-                          ) ?? () {},
-                        ),
-                        // ProfileTile(
-                        //   icon: CupertinoIcons.settings,
-                        //   title: "Settings",
-                        //   onTap: () {
-                        //     Navigator.push(
-                        //       context, MaterialPageRoute(
-                        //       builder: (_) => SettingsScreen(),),
-                        //     );
-                        //     },
-                        // ),
-                      ],
-                    ),
+                const SizedBox(height: 24),
+                _buildSectionLabel("PREFERENCES"),
+                _buildGroup([
+                  _SettingsTile(
+                    icon: CupertinoIcons.lock,
+                    title: "Security & Password",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen())),
                   ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 20, right: 20),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(
-                        16,
-                      ), // adjust the radius as needed
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3), // optional shadow
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        ProfileTile(
-                          icon: CupertinoIcons.share,
-                          title: "Share With",
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ShareWithFriends(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        ProfileTile(
-                          icon: Icons.support_agent,
-                          title: "Help & Support",
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const ContactSalonScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                  _SettingsTile(
+                    icon: CupertinoIcons.share,
+                    title: "Share with Friends",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ShareWithFriends())),
                   ),
-                ),
+                ]),
 
-                Padding(
-                  padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(
-                        16,
-                      ), // adjust the radius as needed
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3), // optional shadow
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        ProfileTile(
-                          icon: Icons.help_outline,
-                          title: "FAQ's",
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const FAQScreen(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        ProfileTile(
-                          icon: Icons.info_outline,
-                          title: "About Us!",
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => AboutScreen()),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                const SizedBox(height: 24),
+                _buildSectionLabel("SUPPORT"),
+                _buildGroup([
+                
+                _buildGroup([
+                  _SettingsTile(
+                    icon: Icons.support_agent,
+                    title: "Help & Support",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactSalonScreen())),
                   ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(
-                        16,
-                      ), // adjust the radius as needed
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3), // optional shadow
-                        ),
-                      ],
-                    ),
-                    child: ProfileTile(
-                      icon: Icons.logout,
-                      title: "Logout",
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            backgroundColor: Colors.white,
-                            title: Text("Logout"),
-                            content: Text("Are you sure you want to logout?"),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text("Cancel"),
-                              ),
-                              ElevatedButton(
-                                onPressed: () async {
-                                  Navigator.pop(context); // Close dialog first
-                                  await _handleLogout();
-                                },
-                                child: Text("Logout"),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      color: Colors.red,
-                    ),
+                  _SettingsTile(
+                    icon: Icons.help_outline,
+                    title: "FAQ's",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FAQScreen())),
                   ),
-                ),
-              ],
+                  // Added the About Us tile back here
+                  _SettingsTile(
+                    icon: Icons.info_outline,
+                    title: "About Us",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AboutScreen())),
+                  ),
+                ]),
+                ]),
+
+                const SizedBox(height: 40),
+                _buildLogoutTile(),
+                const SizedBox(height: 20),
+                Center(child: Text("App Version 1.0.4", style: TextStyle(color: Colors.grey[400], fontSize: 12))),
+              ]),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatar() {
+    return Container(
+      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: brandPink.withOpacity(0.1), width: 4)),
+      child: CircleAvatar(
+        radius: 50,
+        backgroundColor: Colors.grey[200],
+        backgroundImage: profile.isNotEmpty ? NetworkImage(profile) : null,
+        child: profile.isEmpty ? const Icon(Icons.person, size: 50, color: Colors.grey) : null,
+      ),
+    );
+  }
+
+  Widget _buildEditButton() {
+    return InkWell(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => UserPersonalInfo())),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(color: brandPink, borderRadius: BorderRadius.circular(20)),
+        child: const Text("Edit Profile", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 8),
+      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[400], letterSpacing: 1.1)),
+    );
+  }
+
+  Widget _buildGroup(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildLogoutTile() {
+    return InkWell(
+      onTap: () => _showLogoutConfirm(),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(color: Colors.red.withOpacity(0.05), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.red.withOpacity(0.1))),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.logout_rounded, color: Colors.red, size: 20),
+            SizedBox(width: 10),
+            Text("Logout Session", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 15)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutConfirm() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Logout"),
+        content: const Text("Are you sure you want to end your session?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel", style: TextStyle(color: Colors.grey))),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _handleLogout();
+            },
+            child: const Text("Logout", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -481,27 +294,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-// Reusable Tile Widget remains the same
-class ProfileTile extends StatelessWidget {
+class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  final Color? color;
 
-  const ProfileTile({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    this.color,
-  });
+  const _SettingsTile({required this.icon, required this.title, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: color ?? Colors.pink),
-      title: Text(title, style: TextStyle(color: color ?? Colors.black)),
-      trailing: Icon(Icons.arrow_forward_ios, size: 16),
       onTap: onTap,
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: const Color(0xFFFF0068).withOpacity(0.06), borderRadius: BorderRadius.circular(10)),
+        child: Icon(icon, color: const Color(0xFFFF0068), size: 18),
+      ),
+      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF2D2D2D))),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.black26),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
     );
   }
 }
