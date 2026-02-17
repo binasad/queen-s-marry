@@ -10,6 +10,8 @@ const rateLimit = require('express-rate-limit');
 const env = require('./config/env');
 const { pool } = require('./config/db');
 
+const API_VERSION = env.apiVersion;
+
 // Import routes
 const authRoutes = require('./modules/auth/auth.routes');
 const usersRoutes = require('./modules/users/users.routes');
@@ -91,7 +93,7 @@ app.use(compression()); // Compress responses
 
 // Stripe webhook - MUST be before express.json() (needs raw body for signature verification)
 const paymentsController = require('./modules/payments/payments.controller');
-app.post(`/api/${env.apiVersion}/payments/webhook`, express.raw({ type: 'application/json' }), paymentsController.handleWebhook);
+app.post(`/api/${API_VERSION}/payments/webhook`, express.raw({ type: 'application/json' }), paymentsController.handleWebhook);
 
 app.use(express.json({ limit: '10mb' })); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
@@ -131,7 +133,7 @@ app.get('/health', (req, res) => {
     apiVersion: env.apiVersion,
   });
 });
-app.get(`/api/${env.apiVersion}/health`, (req, res) => {
+app.get(`/api/${API_VERSION}/health`, (req, res) => {
   console.log('🏥 API v1 health check requested');
   res.json({
     success: true,
@@ -162,11 +164,9 @@ const uploadsDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
-app.use(`/api/${env.apiVersion}/uploads`, express.static(uploadsDir));
+app.use(`/api/${API_VERSION}/uploads`, express.static(uploadsDir));
 
 // API Routes
-const API_VERSION = env.apiVersion;
-
 // API root endpoint - shows available routes
 app.get(`/api/${API_VERSION}`, (req, res) => {
   res.json({
