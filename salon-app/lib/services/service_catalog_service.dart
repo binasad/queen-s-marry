@@ -69,31 +69,37 @@ class ServiceCatalogService {
     int limit = 200,
     bool forceRefresh = false,
   }) async {
-    // Clear cache if force refresh is requested
-    if (forceRefresh) {
-      await CacheService.clearServices();
-      print('🗑️ Services cache cleared for force refresh');
-    }
-
-    // Only use cache if no filters are applied (cache stores all services)
     final hasFilters =
-        categoryId != null ||
         minPrice != null ||
         maxPrice != null ||
         (search != null && search.isNotEmpty);
 
+    // Category-only filter: use per-category cache
+    if (categoryId != null && !hasFilters && page == 1) {
+      if (forceRefresh) {
+        await CacheService.clearServicesByCategory(categoryId);
+      } else {
+        final cached = CacheService.getServicesByCategory(categoryId);
+        if (cached != null && cached.isNotEmpty) {
+          _fetchAndCacheServicesByCategory(categoryId, limit);
+          return cached;
+        }
+      }
+    }
+
+    // No filters: use global services cache
+    if (forceRefresh) {
+      await CacheService.clearServices();
+    }
     if (!forceRefresh && !hasFilters && page == 1) {
       final cachedServices = CacheService.getServices();
       if (cachedServices != null && cachedServices.isNotEmpty) {
-        print('📦 Loading services from cache');
-        // Still fetch in background to update cache
         _fetchAndCacheServices();
         return cachedServices;
       }
     }
 
     // Fetch from API
-    print('🌐 Loading services from API (forceRefresh: $forceRefresh)');
     var endpoint = '/services?page=$page&limit=$limit&isActive=true';
     if (categoryId != null) endpoint += '&categoryId=$categoryId';
     if (minPrice != null) endpoint += '&minPrice=$minPrice';
@@ -111,12 +117,35 @@ class ServiceCatalogService {
       services = List<dynamic>.from(data);
     }
 
-    // Save to cache only if no filters (first page, all services)
-    if (services.isNotEmpty && !hasFilters && page == 1) {
-      await CacheService.saveServices(services);
+    // Save to cache
+    if (services.isNotEmpty && page == 1) {
+      if (categoryId != null && !hasFilters) {
+        await CacheService.saveServicesByCategory(categoryId, services);
+      } else if (!hasFilters) {
+        await CacheService.saveServices(services);
+      }
     }
 
     return services;
+  }
+
+  Future<void> _fetchAndCacheServicesByCategory(String categoryId, int limit) async {
+    try {
+      final response = await _api.get(
+        '/services?page=1&limit=$limit&isActive=true&categoryId=$categoryId',
+        requiresAuth: false,
+      );
+      final data = response['data'];
+      List<dynamic> services = const [];
+      if (data is Map && data['services'] is List) {
+        services = List<dynamic>.from(data['services'] as List);
+      } else if (data is List) {
+        services = List<dynamic>.from(data);
+      }
+      if (services.isNotEmpty) {
+        await CacheService.saveServicesByCategory(categoryId, services);
+      }
+    } catch (_) {}
   }
 
   /// Fetch services in background and update cache
@@ -158,17 +187,48 @@ class ServiceCatalogService {
     return const {};
   }
 
-  Future<List<dynamic>> getExperts({String? serviceId}) async {
+  /// Get experts - cache-first when no serviceId filter
+  Future<List<dynamic>> getExperts({String? serviceId, bool forceRefresh = false}) async {
+    if (serviceId == null && !forceRefresh) {
+      final cached = CacheService.getExperts();
+      if (cached != null && cached.isNotEmpty) {
+        _fetchAndCacheExperts();
+        return cached;
+      }
+    } else if (forceRefresh) {
+      await CacheService.clearExperts();
+    }
+
     var endpoint = '/experts';
     if (serviceId != null) endpoint += '?serviceId=$serviceId';
 
     final response = await _api.get(endpoint, requiresAuth: false);
     final data = response['data'];
-    if (data is List) return List<dynamic>.from(data);
-    if (data is Map && data['experts'] is List) {
-      return List<dynamic>.from(data['experts'] as List);
+    List<dynamic> experts = const [];
+    if (data is List) {
+      experts = List<dynamic>.from(data);
+    } else if (data is Map && data['experts'] is List) {
+      experts = List<dynamic>.from(data['experts'] as List);
     }
-    return const [];
+
+    if (experts.isNotEmpty && serviceId == null) {
+      await CacheService.saveExperts(experts);
+    }
+    return experts;
+  }
+
+  Future<void> _fetchAndCacheExperts() async {
+    try {
+      final response = await _api.get('/experts', requiresAuth: false);
+      final data = response['data'];
+      List<dynamic> experts = const [];
+      if (data is List) {
+        experts = List<dynamic>.from(data);
+      } else if (data is Map && data['experts'] is List) {
+        experts = List<dynamic>.from(data['experts'] as List);
+      }
+      if (experts.isNotEmpty) await CacheService.saveExperts(experts);
+    } catch (_) {}
   }
 
   Future<Map<String, dynamic>> createService({

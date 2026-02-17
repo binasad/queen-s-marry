@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 
 /// Max decoded size for memory - limits RAM usage (typical phone ~1080p)
 const int _kDefaultMemCacheWidth = 400;
@@ -10,8 +11,22 @@ int _safeToInt(double? v, int fallback) {
   return v.toInt();
 }
 
+/// Lightweight image placeholder - renders instantly (no spinner delay)
+Widget _imagePlaceholder({double? width, double? height}) {
+  return Shimmer.fromColors(
+    baseColor: Colors.grey[300]!,
+    highlightColor: Colors.grey[100]!,
+    child: Container(
+      width: width,
+      height: height,
+      color: Colors.white,
+    ),
+  );
+}
+
 /// Cached network image with placeholder and error handling.
 /// Uses memCacheWidth/Height to reduce decoded image memory ~4x.
+/// Fast placeholder (shimmer) + short fadeIn for snappier feel.
 class CachedImageWidget extends StatelessWidget {
   final String imageUrl;
   final String? placeholderAsset;
@@ -49,17 +64,9 @@ class CachedImageWidget extends StatelessWidget {
             memCacheHeight: mh > 0 ? mh : null,
             maxWidthDiskCache: mw > 0 ? (mw * 2) : null,
             maxHeightDiskCache: mh > 0 ? (mh * 2) : null,
-            placeholder: (context, url) => Container(
-              width: width,
-              height: height,
-              color: Colors.grey[200],
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.pink[300]!),
-                ),
-              ),
-            ),
+            fadeInDuration: const Duration(milliseconds: 200),
+            fadeOutDuration: const Duration(milliseconds: 100),
+            placeholder: (context, url) => _imagePlaceholder(width: width, height: height),
             errorWidget: (context, url, error) => _buildPlaceholder(),
           )
         : _buildPlaceholder();
@@ -126,7 +133,8 @@ class CachedCircleImage extends StatelessWidget {
                 fit: BoxFit.cover,
                 memCacheWidth: size,
                 memCacheHeight: size,
-                placeholder: (context, url) => _buildPlaceholder(),
+                fadeInDuration: const Duration(milliseconds: 200),
+                placeholder: (context, url) => _imagePlaceholder(width: radius * 2, height: radius * 2),
                 errorWidget: (context, url, error) => _buildPlaceholder(),
               ),
             )

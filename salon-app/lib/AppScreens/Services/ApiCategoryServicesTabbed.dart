@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'dart:async';
 import '../../services/service_catalog_service.dart';
 import '../../widgets/cached_image.dart';
+import '../../widgets/skeleton_loader.dart';
 import '../../services/websocket_service.dart';
 import 'servicesdetails.dart';
 
@@ -180,7 +181,7 @@ class _ApiCategoryServicesTabbedScreenState
               ),
       ),
       body: _loading
-          ? const Center(child: CupertinoActivityIndicator(radius: 15))
+          ? const CardSkeletonLoader(itemCount: 6)
           : _error != null
           ? _buildErrorState()
           : _tabs.isEmpty

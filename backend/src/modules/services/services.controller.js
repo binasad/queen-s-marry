@@ -63,58 +63,77 @@ class ServicesController {
     }
   }
 
-  // Get all services
+  // Get all services (with pagination)
   async getAllServices(req, res) {
     try {
-      const { categoryId, minPrice, maxPrice, search, isActive } = req.query;
+      const { categoryId, minPrice, maxPrice, search, isActive, page = 1, limit = 50 } = req.query;
+      const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 500);
+      const offset = (Math.max(parseInt(page, 10) || 1, 1) - 1) * safeLimit;
 
-      let queryText = `
-        SELECT s.*, s.category_id, c.name as category_name 
-        FROM services s
-        LEFT JOIN service_categories c ON s.category_id = c.id
-        WHERE 1=1
-      `;
+      let whereClause = 'WHERE 1=1';
       const queryParams = [];
       let paramCounter = 1;
 
-      // Filter by active status if specified (for mobile app), otherwise show all (for admin)
       if (isActive !== undefined) {
-        queryText += ` AND s.is_active = $${paramCounter}`;
+        whereClause += ` AND s.is_active = $${paramCounter}`;
         queryParams.push(isActive === 'true' || isActive === true);
         paramCounter++;
       }
 
       if (categoryId) {
-        queryText += ` AND s.category_id = $${paramCounter}`;
+        whereClause += ` AND s.category_id = $${paramCounter}`;
         queryParams.push(categoryId);
         paramCounter++;
       }
 
       if (minPrice) {
-        queryText += ` AND s.price >= $${paramCounter}`;
+        whereClause += ` AND s.price >= $${paramCounter}`;
         queryParams.push(minPrice);
         paramCounter++;
       }
 
       if (maxPrice) {
-        queryText += ` AND s.price <= $${paramCounter}`;
+        whereClause += ` AND s.price <= $${paramCounter}`;
         queryParams.push(maxPrice);
         paramCounter++;
       }
 
       if (search) {
-        queryText += ` AND (s.name ILIKE $${paramCounter} OR s.description ILIKE $${paramCounter})`;
+        whereClause += ` AND (s.name ILIKE $${paramCounter} OR s.description ILIKE $${paramCounter})`;
         queryParams.push(`%${search}%`);
         paramCounter++;
       }
 
-      queryText += ' ORDER BY s.name ASC';
-
-      const result = await query(queryText, queryParams);
+      // Run count and data queries in parallel for faster response
+      const dataParams = [...queryParams, safeLimit, offset];
+      const [countResult, result] = await Promise.all([
+        query(
+          `SELECT COUNT(*) FROM services s LEFT JOIN service_categories c ON s.category_id = c.id ${whereClause}`,
+          queryParams
+        ),
+        query(
+          `SELECT s.*, s.category_id, c.name as category_name 
+           FROM services s
+           LEFT JOIN service_categories c ON s.category_id = c.id
+           ${whereClause}
+           ORDER BY s.name ASC
+           LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`,
+          dataParams
+        ),
+      ]);
+      const total = parseInt(countResult.rows[0].count, 10);
 
       res.json({
         success: true,
-        data: { services: result.rows },
+        data: {
+          services: result.rows,
+          pagination: {
+            page: parseInt(page, 10) || 1,
+            limit: safeLimit,
+            total,
+            pages: Math.ceil(total / safeLimit),
+          },
+        },
       });
     } catch (error) {
       console.error('Get services error:', error);

@@ -1,11 +1,22 @@
 import 'api_service.dart';
+import 'cache_service.dart';
 
 class OfferService {
   final ApiService _api = ApiService();
 
   /// Get all active offers (public endpoint)
-  /// Returns offers that are active and within their date range
-  Future<List<dynamic>> getOffers({bool? isActive}) async {
+  /// Cache-first: returns cached data instantly, then refreshes in background
+  Future<List<dynamic>> getOffers({bool? isActive, bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      final cached = CacheService.getOffers();
+      if (cached != null && cached.isNotEmpty) {
+        _fetchAndCacheOffers(isActive);
+        return cached;
+      }
+    } else {
+      await CacheService.clearOffers();
+    }
+
     try {
       var endpoint = '/offers';
       if (isActive != null) {
@@ -16,20 +27,38 @@ class OfferService {
       
       // Backend format: { success: true, data: { offers: [...] } }
       final data = response['data'];
+      List<dynamic> offers = [];
       if (data is Map && data['offers'] is List) {
-        return List<dynamic>.from(data['offers'] as List);
+        offers = List<dynamic>.from(data['offers'] as List);
+      } else if (data is List) {
+        offers = List<dynamic>.from(data);
+      }
+
+      if (offers.isNotEmpty) {
+        await CacheService.saveOffers(offers);
       }
       
-      // Fallback if API returns a flat list
-      if (data is List) {
-        return List<dynamic>.from(data);
-      }
-      
-      return [];
+      return offers;
     } catch (e) {
       print('Error fetching offers: $e');
       rethrow;
     }
+  }
+
+  Future<void> _fetchAndCacheOffers(bool? isActive) async {
+    try {
+      var endpoint = '/offers';
+      if (isActive != null) endpoint += '?isActive=$isActive';
+      final response = await _api.get(endpoint, requiresAuth: false);
+      final data = response['data'];
+      List<dynamic> offers = [];
+      if (data is Map && data['offers'] is List) {
+        offers = List<dynamic>.from(data['offers'] as List);
+      } else if (data is List) {
+        offers = List<dynamic>.from(data);
+      }
+      if (offers.isNotEmpty) await CacheService.saveOffers(offers);
+    } catch (_) {}
   }
 
   /// Get offer by ID

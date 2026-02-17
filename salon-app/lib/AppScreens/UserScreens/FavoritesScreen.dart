@@ -6,6 +6,7 @@ import '../../services/favorites_service.dart';
 import '../../providers/favorites_provider.dart';
 import '../../utils/haptic_feedback.dart';
 import '../../widgets/cached_image.dart';
+import '../../widgets/skeleton_loader.dart';
 import '../Services/servicesdetails.dart';
 import 'Course Screens/CourseDetails.dart';
 
@@ -82,7 +83,10 @@ class FavoritesScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CupertinoActivityIndicator(radius: 15)),
+        loading: () => const Padding(
+          padding: EdgeInsets.all(20),
+          child: CardSkeletonLoader(itemCount: 4),
+        ),
         error: (err, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

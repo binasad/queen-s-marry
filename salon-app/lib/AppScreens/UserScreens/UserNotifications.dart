@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../Manager/NotificationManager.dart';
+import '../../widgets/skeleton_loader.dart';
 import '../../services/notification_service.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -170,8 +171,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             listenable: NotificationManager.instance,
             builder: (context, _) {
               if (_loading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
+                return const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: CardSkeletonLoader(itemCount: 5),
                 );
               }
               if (_error != null) {

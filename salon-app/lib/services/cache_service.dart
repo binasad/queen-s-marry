@@ -7,12 +7,20 @@ class CacheService {
   static const String _servicesBoxName = 'services_cache';
   static const String _categoriesBoxName = 'categories_cache';
   static const String _coursesBoxName = 'courses_cache';
+  static const String _offersBoxName = 'offers_cache';
+  static const String _expertsBoxName = 'experts_cache';
+  static const String _blogsBoxName = 'blogs_cache';
+  static const String _servicesByCatBoxName = 'services_by_category_cache';
   static const String _cacheTimestampKey = 'cache_timestamp';
   static const int _cacheExpiryHours = 24; // Cache expires after 24 hours
 
   static Box? _servicesBox;
   static Box? _categoriesBox;
   static Box? _coursesBox;
+  static Box? _offersBox;
+  static Box? _expertsBox;
+  static Box? _blogsBox;
+  static Box? _servicesByCatBox;
 
   /// Initialize Hive and open boxes
   static Future<void> init() async {
@@ -21,6 +29,10 @@ class CacheService {
     _servicesBox = await Hive.openBox(_servicesBoxName);
     _categoriesBox = await Hive.openBox(_categoriesBoxName);
     _coursesBox = await Hive.openBox(_coursesBoxName);
+    _offersBox = await Hive.openBox(_offersBoxName);
+    _expertsBox = await Hive.openBox(_expertsBoxName);
+    _blogsBox = await Hive.openBox(_blogsBoxName);
+    _servicesByCatBox = await Hive.openBox(_servicesByCatBoxName);
   }
 
   /// Check if cache is valid (not expired)
@@ -93,11 +105,92 @@ class CacheService {
     return coursesJson.map((c) => jsonDecode(c as String)).toList();
   }
 
+  /// Save blogs to cache
+  static Future<void> saveBlogs(List<dynamic> blogs) async {
+    if (_blogsBox == null) await init();
+    final blogsJson = blogs.map((b) => jsonEncode(b)).toList();
+    await _blogsBox!.put('blogs', blogsJson);
+    await _blogsBox!.put(_cacheTimestampKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  /// Get blogs from cache
+  static List<dynamic>? getBlogs() {
+    if (_blogsBox == null) return null;
+    if (!_isCacheValid(_blogsBox!)) return null;
+    final blogsJson = _blogsBox!.get('blogs') as List?;
+    if (blogsJson == null) return null;
+    return blogsJson.map((b) => jsonDecode(b as String)).toList();
+  }
+
+  /// Save services by category (keyed by categoryId)
+  static Future<void> saveServicesByCategory(String categoryId, List<dynamic> services) async {
+    if (_servicesByCatBox == null) await init();
+    final key = 'cat_$categoryId';
+    final data = {'data': services.map((s) => jsonEncode(s)).toList(), 'ts': DateTime.now().millisecondsSinceEpoch};
+    await _servicesByCatBox!.put(key, jsonEncode(data));
+  }
+
+  /// Get services by category (valid for 24h)
+  static List<dynamic>? getServicesByCategory(String categoryId) {
+    if (_servicesByCatBox == null) return null;
+    final key = 'cat_$categoryId';
+    final raw = _servicesByCatBox!.get(key);
+    if (raw == null) return null;
+    try {
+      final map = jsonDecode(raw as String) as Map;
+      final ts = map['ts'] as int?;
+      if (ts == null) return null;
+      final cacheTime = DateTime.fromMillisecondsSinceEpoch(ts);
+      if (DateTime.now().difference(cacheTime).inHours >= _cacheExpiryHours) return null;
+      final data = map['data'] as List?;
+      if (data == null) return null;
+      return data.map((s) => jsonDecode(s as String)).toList();
+    } catch (_) { return null; }
+  }
+
   /// Clear all cache
   static Future<void> clearAll() async {
     await _servicesBox?.clear();
     await _categoriesBox?.clear();
     await _coursesBox?.clear();
+    await _offersBox?.clear();
+    await _expertsBox?.clear();
+    await _blogsBox?.clear();
+    await _servicesByCatBox?.clear();
+  }
+
+  /// Save offers to cache
+  static Future<void> saveOffers(List<dynamic> offers) async {
+    if (_offersBox == null) await init();
+    final offersJson = offers.map((o) => jsonEncode(o)).toList();
+    await _offersBox!.put('offers', offersJson);
+    await _offersBox!.put(_cacheTimestampKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  /// Get offers from cache
+  static List<dynamic>? getOffers() {
+    if (_offersBox == null) return null;
+    if (!_isCacheValid(_offersBox!)) return null;
+    final offersJson = _offersBox!.get('offers') as List?;
+    if (offersJson == null) return null;
+    return offersJson.map((o) => jsonDecode(o as String)).toList();
+  }
+
+  /// Save experts to cache
+  static Future<void> saveExperts(List<dynamic> experts) async {
+    if (_expertsBox == null) await init();
+    final expertsJson = experts.map((e) => jsonEncode(e)).toList();
+    await _expertsBox!.put('experts', expertsJson);
+    await _expertsBox!.put(_cacheTimestampKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  /// Get experts from cache
+  static List<dynamic>? getExperts() {
+    if (_expertsBox == null) return null;
+    if (!_isCacheValid(_expertsBox!)) return null;
+    final expertsJson = _expertsBox!.get('experts') as List?;
+    if (expertsJson == null) return null;
+    return expertsJson.map((e) => jsonDecode(e as String)).toList();
   }
 
   /// Clear specific cache
@@ -113,10 +206,34 @@ class CacheService {
     await _coursesBox?.clear();
   }
 
+  static Future<void> clearOffers() async {
+    await _offersBox?.clear();
+  }
+
+  static Future<void> clearExperts() async {
+    await _expertsBox?.clear();
+  }
+
+  static Future<void> clearBlogs() async {
+    await _blogsBox?.clear();
+  }
+
+  static Future<void> clearServicesByCategory(String? categoryId) async {
+    if (categoryId != null) {
+      await _servicesByCatBox?.delete('cat_$categoryId');
+    } else {
+      await _servicesByCatBox?.clear();
+    }
+  }
+
   /// Force refresh cache (clear and mark as invalid)
   static Future<void> invalidateCache() async {
     await _servicesBox?.delete(_cacheTimestampKey);
     await _categoriesBox?.delete(_cacheTimestampKey);
     await _coursesBox?.delete(_cacheTimestampKey);
+    await _offersBox?.delete(_cacheTimestampKey);
+    await _expertsBox?.delete(_cacheTimestampKey);
+    await _blogsBox?.delete(_cacheTimestampKey);
+    await _servicesByCatBox?.clear();
   }
 }

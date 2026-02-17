@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../widgets/skeleton_loader.dart';
 
 import '../../services/appointment_service.dart';
 import '../../services/websocket_service.dart';
@@ -332,7 +333,10 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
       body: _isGuest
           ? _buildGuestGuardUI()
           : _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Padding(
+              padding: EdgeInsets.all(20),
+              child: CardSkeletonLoader(itemCount: 4),
+            )
           : _error != null
           ? Center(
               child: Padding(

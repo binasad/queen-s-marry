@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../widgets/cached_image.dart';
+import '../../widgets/skeleton_loader.dart';
 import '../../services/blog_service.dart';
 
 class BlogsScreen extends StatefulWidget {
@@ -24,14 +25,14 @@ class _BlogsScreenState extends State<BlogsScreen> {
     _loadBlogs();
   }
 
-  Future<void> _loadBlogs() async {
+  Future<void> _loadBlogs({bool forceRefresh = false}) async {
     if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final blogs = await _blogService.getBlogs();
+      final blogs = await _blogService.getBlogs(forceRefresh: forceRefresh);
       if (mounted) {
         setState(() {
           _blogs = blogs;
@@ -56,7 +57,7 @@ class _BlogsScreenState extends State<BlogsScreen> {
       backgroundColor: const Color(0xFFF8F9FD),
       body: RefreshIndicator(
         color: brandPink,
-        onRefresh: _loadBlogs,
+        onRefresh: () => _loadBlogs(forceRefresh: true),
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
@@ -83,7 +84,7 @@ class _BlogsScreenState extends State<BlogsScreen> {
               actions: [
                 IconButton(
                   icon: const Icon(Icons.refresh_rounded, color: Colors.black54),
-                  onPressed: _loading ? null : _loadBlogs,
+                  onPressed: _loading ? null : () => _loadBlogs(forceRefresh: true),
                 ),
               ],
             ),
@@ -91,7 +92,10 @@ class _BlogsScreenState extends State<BlogsScreen> {
             // Main Content Logic
             if (_loading)
               const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator(color: brandPink)),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: CardSkeletonLoader(itemCount: 4),
+                ),
               )
             else if (_error != null)
               SliverFillRemaining(child: _buildErrorState())
@@ -124,7 +128,7 @@ class _BlogsScreenState extends State<BlogsScreen> {
           Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600])),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: _loadBlogs,
+            onPressed: () => _loadBlogs(forceRefresh: true),
             style: ElevatedButton.styleFrom(backgroundColor: brandPink),
             child: const Text("Retry", style: TextStyle(color: Colors.white)),
           ),

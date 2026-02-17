@@ -18,6 +18,7 @@ import '../../widgets/offline_banner.dart';
 import '../../utils/debouncer.dart';
 import '../../utils/haptic_feedback.dart';
 import '../../widgets/cached_image.dart';
+import '../../widgets/skeleton_loader.dart';
 import '../Services/userServices.dart';
 import '../Services/ApiCategoryServicesTabbed.dart';
 import '../Services/servicesdetails.dart';
@@ -125,7 +126,10 @@ class _UserHomeState extends ConsumerState<UserHome>
 
   /// Refresh all data (can be called on pull-to-refresh)
   Future<void> refreshData() async {
-    await Future.wait([loadOffers(), loadExperts()]);
+    await Future.wait([
+      loadOffers(forceRefresh: true),
+      loadExperts(forceRefresh: true),
+    ]);
     if (!mounted) return;
     ref.read(servicesProvider.notifier).loadCategories(forceRefresh: true);
   }
@@ -138,11 +142,11 @@ class _UserHomeState extends ConsumerState<UserHome>
   }
 
   // API loading logic
-  Future<void> loadOffers() async {
+  Future<void> loadOffers({bool forceRefresh = false}) async {
     if (mounted) setState(() => _offersLoading = true);
     try {
-      debugPrint('📦 Loading offers from API...');
-      final offers = await _offerService.getOffers(isActive: true);
+      debugPrint('📦 Loading offers${forceRefresh ? ' (refresh)' : ''}...');
+      final offers = await _offerService.getOffers(isActive: true, forceRefresh: forceRefresh);
       debugPrint('📦 Loaded ${offers.length} offers from API');
       if (mounted) {
         final formattedOffers = offers.map((offer) {
@@ -199,11 +203,11 @@ class _UserHomeState extends ConsumerState<UserHome>
   }
 
   /// Load experts from API
-  Future<void> loadExperts() async {
+  Future<void> loadExperts({bool forceRefresh = false}) async {
     if (mounted) setState(() => _expertsLoading = true);
     try {
-      debugPrint('👨‍💼 Loading experts from API...');
-      final experts = await _catalogService.getExperts();
+      debugPrint('👨‍💼 Loading experts${forceRefresh ? ' (refresh)' : ''}...');
+      final experts = await _catalogService.getExperts(forceRefresh: forceRefresh);
       debugPrint('👨‍💼 Loaded ${experts.length} experts from API');
       if (mounted) {
         final formattedExperts = experts.map((expert) {
@@ -507,11 +511,10 @@ class _UserHomeState extends ConsumerState<UserHome>
   Widget _buildOffersList() {
     if (_offersLoading) {
       return SliverToBoxAdapter(
-        child: SizedBox(
-          height: 180,
-          child: Center(
-            child: CircularProgressIndicator(color: Color(0xFFE91E63)),
-          ),
+        child: HorizontalListSkeletonLoader(
+          itemCount: 4,
+          itemHeight: 180,
+          itemWidth: 280,
         ),
       );
     }
@@ -682,13 +685,6 @@ class _UserHomeState extends ConsumerState<UserHome>
     String? courseId,
     VoidCallback? onTap,
   }) {
-    ImageProvider backgroundImage;
-    if (imagePath.startsWith('http')) {
-      backgroundImage = NetworkImage(imagePath);
-    } else {
-      backgroundImage = AssetImage(imagePath);
-    }
-
     final hasLink =
         (serviceId != null && serviceId.isNotEmpty) ||
         (courseId != null && courseId.isNotEmpty);
@@ -711,18 +707,22 @@ class _UserHomeState extends ConsumerState<UserHome>
           child: Stack(
             children: [
               Positioned.fill(
-                child: Image(
-                  image: backgroundImage,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: const Color(0xFFE91E63).withOpacity(0.1),
-                    child: const Icon(
-                      Icons.image,
-                      size: 40,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
+                child: imagePath.startsWith('http')
+                    ? CachedImageWidget(
+                        imageUrl: imagePath,
+                        fit: BoxFit.cover,
+                        memCacheWidth: 560,
+                        memCacheHeight: 360,
+                        placeholderAsset: null,
+                      )
+                    : Image.asset(
+                        imagePath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: const Color(0xFFE91E63).withOpacity(0.1),
+                          child: const Icon(Icons.image, size: 40, color: Colors.grey),
+                        ),
+                      ),
               ),
               Positioned.fill(
                 child: Container(
@@ -962,11 +962,10 @@ class _UserHomeState extends ConsumerState<UserHome>
   Widget _buildExpertsList() {
     if (_expertsLoading) {
       return SliverToBoxAdapter(
-        child: SizedBox(
-          height: 180,
-          child: Center(
-            child: CircularProgressIndicator(color: Color(0xFF00BFA5)),
-          ),
+        child: HorizontalListSkeletonLoader(
+          itemCount: 5,
+          itemHeight: 200,
+          itemWidth: 160,
         ),
       );
     }
@@ -1023,13 +1022,6 @@ class _UserHomeState extends ConsumerState<UserHome>
     String imagePath, {
     String rating = '4.9',
   }) {
-    ImageProvider backgroundImage;
-    if (imagePath.startsWith('http')) {
-      backgroundImage = NetworkImage(imagePath);
-    } else {
-      backgroundImage = AssetImage(imagePath);
-    }
-
     return Container(
       width: 160,
       decoration: BoxDecoration(
@@ -1047,14 +1039,23 @@ class _UserHomeState extends ConsumerState<UserHome>
         child: Stack(
           children: [
             Positioned.fill(
-              child: Image(
-                image: backgroundImage,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.person, size: 50, color: Colors.grey),
-                ),
-              ),
+              child: imagePath.startsWith('http')
+                  ? CachedImageWidget(
+                      imageUrl: imagePath,
+                      fit: BoxFit.cover,
+                      width: 160,
+                      height: 200,
+                      memCacheWidth: 320,
+                      memCacheHeight: 400,
+                    )
+                  : Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.person, size: 50, color: Colors.grey),
+                      ),
+                    ),
             ),
             Positioned.fill(
               child: Container(
