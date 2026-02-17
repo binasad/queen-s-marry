@@ -12,6 +12,7 @@ class WebSocketService {
   public onCourseCreated?: (data: any) => void;
   public onCourseUpdated?: (data: any) => void;
   public onCourseDeleted?: (data: any) => void;
+  public onCourseApplicationCreated?: (data: any) => void;
 
   // Offer event callbacks
   public onOfferCreated?: (data: any) => void;
@@ -99,6 +100,13 @@ class WebSocketService {
       console.log('📚 Course deleted via WebSocket:', data);
       if (this.onCourseDeleted) {
         this.onCourseDeleted(data);
+      }
+    });
+
+    this.socket.on('course-application-created', (data) => {
+      console.log('📝 Course application created via WebSocket:', data);
+      if (this.onCourseApplicationCreated) {
+        this.onCourseApplicationCreated(data);
       }
     });
 

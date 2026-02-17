@@ -73,6 +73,12 @@ export default function CoursesPage() {
       toast.success('Course deleted!!!');
     };
 
+    wsService.onCourseApplicationCreated = () => {
+      setShowApplications(true);
+      loadApplications();
+      toast.success('New course application received!');
+    };
+
     // Connect WebSocket
     wsService.connect();
   };
@@ -207,12 +213,13 @@ export default function CoursesPage() {
               {showApplications && (
                 <div className="bg-white rounded-lg shadow mb-8 overflow-hidden">
                   <h2 className="text-lg font-semibold p-4 border-b">Course Applications</h2>
-                  <div className="overflow-x-auto max-h-80 overflow-y-auto">
-                    <table className="w-full">
+                  <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                    <table className="w-full min-w-[700px]">
                       <thead className="bg-gray-50 sticky top-0">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Name</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Contact</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Email</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Phone</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Course</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Applied</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">Offer</th>
@@ -221,18 +228,17 @@ export default function CoursesPage() {
                       <tbody>
                         {applications.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No applications yet</td>
+                            <td colSpan={6} className="px-4 py-8 text-center text-gray-500">No applications yet</td>
                           </tr>
                         ) : (
                           applications.map((app) => (
                             <tr key={app.id} className="border-b hover:bg-gray-50">
-                              <td className="px-4 py-3 text-sm">{app.customer_name || '—'}</td>
-                              <td className="px-4 py-3 text-sm">
-                                {app.customer_phone || app.customer_email || '—'}
-                              </td>
+                              <td className="px-4 py-3 text-sm font-medium">{app.customer_name || '—'}</td>
+                              <td className="px-4 py-3 text-sm">{app.customer_email || '—'}</td>
+                              <td className="px-4 py-3 text-sm">{app.customer_phone || '—'}</td>
                               <td className="px-4 py-3 text-sm">{app.course_title || '—'}</td>
                               <td className="px-4 py-3 text-sm text-gray-600">
-                                {new Date(app.applied_at).toLocaleDateString()}
+                                {app.applied_at ? new Date(app.applied_at).toLocaleDateString() : '—'}
                               </td>
                               <td className="px-4 py-3">
                                 {app.offer_title ? (

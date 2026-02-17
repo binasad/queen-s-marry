@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/appointment_service.dart';
 import '../../services/websocket_service.dart';
+import '../../utils/guest_guard.dart';
 
 class AppointmentsListScreen extends StatefulWidget {
   final VoidCallback? onRefresh;
@@ -17,12 +18,28 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
   List<dynamic> _appointments = [];
   bool _loading = true;
   String? _error;
+  bool _isGuest = false;
 
   @override
   void initState() {
     super.initState();
-    _loadAppointments();
+    _checkGuestAndLoad();
     _setupWebSocket();
+  }
+
+  Future<void> _checkGuestAndLoad() async {
+    final isGuestUser = await GuestGuard.isGuest();
+    if (mounted) {
+      setState(() {
+        _isGuest = isGuestUser;
+        if (isGuestUser) {
+          _loading = false;
+        }
+      });
+      if (!isGuestUser) {
+        await _loadAppointments();
+      }
+    }
   }
 
   @override
@@ -111,6 +128,12 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
     String appointmentId,
     String serviceName,
   ) async {
+    final canProceed = await GuestGuard.canPerformAction(
+      context,
+      actionDescription: 'cancel appointments',
+    );
+    if (!canProceed) return;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -164,6 +187,12 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
     String appointmentId,
     String serviceName,
   ) async {
+    final canProceed = await GuestGuard.canPerformAction(
+      context,
+      actionDescription: 'delete appointments',
+    );
+    if (!canProceed) return;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -211,6 +240,71 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
     }
   }
 
+  Widget _buildGuestGuardUI() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.person_add,
+                  size: 64,
+                  color: const Color(0xFFE91E63),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Create Account to View Appointments',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'To view, manage, and cancel your appointments, you need to create an account.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () async {
+                    await GuestGuard.showSignupPrompt(
+                      context,
+                      actionDescription: 'view and manage your appointments',
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE91E63),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Sign Up',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'confirmed':
@@ -235,7 +329,9 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: _loading
+      body: _isGuest
+          ? _buildGuestGuardUI()
+          : _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
           ? Center(
@@ -313,6 +409,11 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
                       ),
                     ),
                     confirmDismiss: (direction) async {
+                      final canProceed = await GuestGuard.canPerformAction(
+                        context,
+                        actionDescription: 'delete appointments',
+                      );
+                      if (!canProceed) return false;
                       return await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(

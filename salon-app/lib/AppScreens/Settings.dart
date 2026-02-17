@@ -8,6 +8,7 @@ import 'FAQs.dart';
 import 'PersonalInfo.dart';
 import 'ShareWithFriends.dart';
 import 'UserScreens/AppointmentList.dart';
+import 'UserScreens/FavoritesScreen.dart';
 import 'UserScreens/MyReviewsScreen.dart';
 import 'about.dart';
 import 'introSlider.dart';
@@ -247,11 +248,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ProfileTile(
                           icon: CupertinoIcons.calendar,
                           title: "My Appointments",
+                          onTap: GuestGuard.guardAction(
+                            context,
+                            () async {
+                              if (!context.mounted) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AppointmentsListScreen(),
+                                ),
+                              );
+                            },
+                            actionDescription: 'view and manage your appointments',
+                          ) ?? () {},
+                        ),
+
+                        ProfileTile(
+                          icon: Icons.favorite_outline,
+                          title: "My Favorites",
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => AppointmentsListScreen(),
+                                builder: (_) => const FavoritesScreen(),
                               ),
                             );
                           },

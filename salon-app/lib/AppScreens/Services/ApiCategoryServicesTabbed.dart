@@ -79,8 +79,8 @@ class _ApiCategoryServicesTabbedScreenState
       for (var service in items) {
         final tags = service['tags'] as List<dynamic>? ?? [];
         if (tags.isEmpty) {
-          uniqueTags.add('All');
-          grouped.putIfAbsent('All', () => []).add(service);
+          uniqueTags.add('Services');
+          grouped.putIfAbsent('Services', () => []).add(service);
         } else {
           for (var tag in tags) {
             final tagStr = tag.toString().trim();
@@ -94,8 +94,8 @@ class _ApiCategoryServicesTabbedScreenState
 
       final sortedTabs = uniqueTags.toList()
         ..sort((a, b) {
-          if (a == 'All') return -1;
-          if (b == 'All') return 1;
+          if (a == 'Services') return -1;
+          if (b == 'Services') return 1;
           return a.compareTo(b);
         });
 
@@ -130,6 +130,7 @@ class _ApiCategoryServicesTabbedScreenState
         elevation: 0,
         centerTitle: true,
         backgroundColor: _bgColor,
+        leadingWidth: 48,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new,
@@ -138,6 +139,7 @@ class _ApiCategoryServicesTabbedScreenState
           ),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: const [SizedBox(width: 48)],
         title: Text(
           widget.title,
           style: const TextStyle(
@@ -151,10 +153,13 @@ class _ApiCategoryServicesTabbedScreenState
             ? null
             : PreferredSize(
                 preferredSize: const Size.fromHeight(50),
-                child: Center(
+                child: Container(
+                  width: double.infinity,
+                  alignment: Alignment.center,
                   child: TabBar(
                     controller: _tabController,
                     isScrollable: true,
+                    tabAlignment: TabAlignment.center,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     indicatorSize: TabBarIndicatorSize.label,
                     indicatorColor: _brandColor,

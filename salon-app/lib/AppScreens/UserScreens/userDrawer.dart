@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider_package;
 import 'package:salon/AppScreens/UserScreens/Course%20Screens/CoursesScreen.dart';
 import 'package:salon/AppScreens/UserScreens/UserNotifications.dart';
+import 'package:salon/AppScreens/UserScreens/FavoritesScreen.dart';
 import '../../services/auth_service.dart';
 import '../../providers/auth_provider.dart';
 import 'Course Screens/CourseAppliedList.dart';
@@ -81,6 +82,23 @@ class UserDrawer extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => UserPersonalInfo(),
+                      ),
+                    );
+                  },
+                ),
+
+                ListTile(
+                  leading: const Icon(Icons.favorite_outline, color: Colors.pink),
+                  title: const Text(
+                    "My Favorites",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const FavoritesScreen(),
                       ),
                     );
                   },

@@ -1,29 +1,63 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'CourseApplyScreen.dart';
 import '../../../services/review_service.dart';
+import '../../../services/favorites_service.dart';
+import '../../../providers/favorites_provider.dart';
 import '../../../utils/guest_guard.dart';
+import '../../../utils/haptic_feedback.dart';
 
-class CourseDetailScreen extends StatefulWidget {
+class CourseDetailScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> course;
 
   const CourseDetailScreen({super.key, required this.course});
 
   @override
-  State<CourseDetailScreen> createState() => _CourseDetailScreenState();
+  ConsumerState<CourseDetailScreen> createState() => _CourseDetailScreenState();
 }
 
-class _CourseDetailScreenState extends State<CourseDetailScreen> {
+class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
   static const Color brandPink = Color(0xFFFF0068);
   final ReviewService _reviewService = ReviewService();
+  final FavoritesService _favoritesService = FavoritesService();
   List<Map<String, dynamic>> _reviews = [];
   double _avgRating = 0;
   bool _loadingReviews = true;
+  bool _isFavorite = false;
+  bool _loadingFavorite = false;
 
   @override
   void initState() {
     super.initState();
     _loadReviews();
+    _loadFavoriteStatus();
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    final courseId = widget.course['id']?.toString();
+    if (courseId == null || courseId.isEmpty) return;
+    final isFav = await _favoritesService.isCourseFavorite(courseId);
+    if (mounted) setState(() => _isFavorite = isFav);
+  }
+
+  Future<void> _toggleFavorite() async {
+    final courseId = widget.course['id']?.toString();
+    if (courseId == null || courseId.isEmpty || _loadingFavorite) return;
+    setState(() => _loadingFavorite = true);
+    HapticHelper.lightImpact();
+    try {
+      final newState = await _favoritesService.toggleCourseFavorite(courseId);
+      if (mounted) {
+        setState(() {
+          _isFavorite = newState;
+          _loadingFavorite = false;
+        });
+        ref.invalidate(favoritesListProvider);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingFavorite = false);
+    }
   }
 
   Future<void> _loadReviews() async {
@@ -108,6 +142,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ),
           // Floating Glass Back Button
           _buildGlassBackButton(context),
+          // Floating Favorite Button
+          _buildFavoriteButton(context),
           // Floating Action Button
           _buildApplyBottomBar(context),
         ],
@@ -368,6 +404,36 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           child: CircleAvatar(
             backgroundColor: Colors.white.withOpacity(0.3),
             child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18), onPressed: () => Navigator.pop(context)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFavoriteButton(BuildContext context) {
+    return Positioned(
+      top: 50,
+      right: 20,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(50),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: CircleAvatar(
+            backgroundColor: Colors.white.withOpacity(0.3),
+            child: IconButton(
+              icon: _loadingFavorite
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Icon(
+                      _isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: _isFavorite ? Colors.red : Colors.white,
+                      size: 24,
+                    ),
+              onPressed: _loadingFavorite ? null : _toggleFavorite,
+            ),
           ),
         ),
       ),

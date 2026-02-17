@@ -80,11 +80,21 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  hive_generator: ^2.0.1
   build_runner: ^2.4.13
+  hive_generator: ^2.0.1
   riverpod_generator: ^2.6.2
+  # Removed temporarily: riverpod_generator and hive_generator cause analyzer/source_gen conflicts.
+  # Add compatible versions back after resolving codegen toolchain.
   custom_lint: ^0.7.0
   riverpod_lint: ^2.6.0
+
+dependency_overrides:
+  # Allow any 1.x `source_gen` to satisfy `hive_generator` (which is incompatible
+  # with source_gen 2.x). This range lets pub select a compatible 1.x release.
+  source_gen: '>=1.0.0 <2.0.0'
+  # analyzer >=7.3.0 no longer depends on _macros (removed from Dart SDK).
+  # Required for riverpod_generator/hive_generator compatibility.
+  analyzer: '>=7.3.0'
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

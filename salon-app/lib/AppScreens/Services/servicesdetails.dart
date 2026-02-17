@@ -2,11 +2,15 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../UserScreens/AppointmentBooking.dart';
 import '../../services/service_catalog_service.dart';
 import '../../services/review_service.dart';
+import '../../services/favorites_service.dart';
+import '../../providers/favorites_provider.dart';
+import '../../utils/haptic_feedback.dart';
 
-class ServiceDetailedScreen extends StatefulWidget {
+class ServiceDetailedScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> service;
   final List<Map<String, dynamic>>? allServices;
 
@@ -14,23 +18,53 @@ class ServiceDetailedScreen extends StatefulWidget {
       : super(key: key);
 
   @override
-  State<ServiceDetailedScreen> createState() => _ServiceDetailedScreenState();
+  ConsumerState<ServiceDetailedScreen> createState() => _ServiceDetailedScreenState();
 }
 
-class _ServiceDetailedScreenState extends State<ServiceDetailedScreen> {
+class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
   final ServiceCatalogService _catalog = ServiceCatalogService();
   final ReviewService _reviewService = ReviewService();
+  final FavoritesService _favoritesService = FavoritesService();
   List<Map<String, dynamic>> _relatedServices = [];
   List<Map<String, dynamic>> _reviews = [];
   double _avgRating = 0;
   bool _loadingRelated = true;
   bool _loadingReviews = true;
+  bool _isFavorite = false;
+  bool _loadingFavorite = false;
 
   @override
   void initState() {
     super.initState();
     _loadRelatedServices();
     _loadReviews();
+    _loadFavoriteStatus();
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    final serviceId = widget.service['id']?.toString();
+    if (serviceId == null || serviceId.isEmpty) return;
+    final isFav = await _favoritesService.isServiceFavorite(serviceId);
+    if (mounted) setState(() => _isFavorite = isFav);
+  }
+
+  Future<void> _toggleFavorite() async {
+    final serviceId = widget.service['id']?.toString();
+    if (serviceId == null || serviceId.isEmpty || _loadingFavorite) return;
+    setState(() => _loadingFavorite = true);
+    HapticHelper.lightImpact();
+    try {
+      final newState = await _favoritesService.toggleServiceFavorite(serviceId);
+      if (mounted) {
+        setState(() {
+          _isFavorite = newState;
+          _loadingFavorite = false;
+        });
+        ref.invalidate(favoritesListProvider);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingFavorite = false);
+    }
   }
 
   Future<void> _loadReviews() async {
@@ -123,6 +157,28 @@ class _ServiceDetailedScreenState extends State<ServiceDetailedScreen> {
           ),
         ),
       ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: CircleAvatar(
+            backgroundColor: Colors.white.withOpacity(0.9),
+            child: IconButton(
+              icon: _loadingFavorite
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(
+                      _isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: _isFavorite ? const Color(0xFFFF6CBF) : Colors.black54,
+                      size: 24,
+                    ),
+              onPressed: _loadingFavorite ? null : _toggleFavorite,
+            ),
+          ),
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -256,43 +312,49 @@ class _ServiceDetailedScreenState extends State<ServiceDetailedScreen> {
       bottom: 30,
       left: 20,
       right: 20,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(35),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            height: 80,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.85),
-              borderRadius: BorderRadius.circular(35),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF6CBF).withOpacity(0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Price", style: TextStyle(color: Colors.white60, fontSize: 12)),
-                        Text("${widget.service['price']} PKR", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFFFF6CBF).withOpacity(0.95),
+                    const Color(0xFFFF8E9E).withOpacity(0.95),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                 ),
-                Expanded(
-                  flex: 5,
-                  child: _SwipeToBookButton(
-                    onCompleted: () {
-                      HapticFeedback.heavyImpact();
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => AppointmentBookingScreen(service: widget.service)));
-                    },
-                  ),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.4),
+                  width: 1,
                 ),
-              ],
+              ),
+              child: _SwipeToBookButton(
+                onCompleted: () {
+                  HapticFeedback.heavyImpact();
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => AppointmentBookingScreen(service: widget.service)));
+                },
+              ),
             ),
           ),
         ),
@@ -363,42 +425,57 @@ class _SwipeToBookButton extends StatefulWidget {
 
 class _SwipeToBookButtonState extends State<_SwipeToBookButton> {
   double _dragValue = 0.0;
-  final double _buttonSize = 60.0;
+  static const double _thumbSize = 52.0;
+  static const double _trackHeight = 56.0;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      double maxWidth = constraints.maxWidth;
-      double slideRange = maxWidth - _buttonSize - 10;
+      final maxWidth = constraints.maxWidth;
+      final slideRange = maxWidth - _thumbSize - 16;
 
-      return Container(
-        height: 60,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(30),
-        ),
+      return SizedBox(
+        height: _trackHeight,
         child: Stack(
+          alignment: Alignment.centerLeft,
           children: [
-            const Center(
-              child: Text(
-                "Slide to Book",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+            // Track background
+            Container(
+              width: double.infinity,
+              height: _trackHeight,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.25),
+                borderRadius: BorderRadius.circular(_trackHeight / 2),
               ),
             ),
-            Positioned(
-              left: _dragValue * slideRange + 5,
-              top: 5,
+            // Center label
+            Center(
+              child: Text(
+                "Slide to Book",
+                style: TextStyle(
+                  color: Colors.white.withOpacity(_dragValue > 0.5 ? 0.0 : 1.0),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            // Sliding thumb
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              left: 8 + _dragValue * slideRange,
               child: GestureDetector(
                 onHorizontalDragUpdate: (details) {
                   setState(() {
                     _dragValue = (_dragValue + details.delta.dx / slideRange).clamp(0.0, 1.0);
                   });
                 },
-                onHorizontalDragEnd: (details) {
+                onHorizontalDragEnd: (_) {
                   if (_dragValue > 0.8) {
                     setState(() => _dragValue = 1.0);
                     widget.onCompleted();
-                    Future.delayed(const Duration(milliseconds: 500), () {
+                    Future.delayed(const Duration(milliseconds: 400), () {
                       if (mounted) setState(() => _dragValue = 0.0);
                     });
                   } else {
@@ -406,14 +483,29 @@ class _SwipeToBookButtonState extends State<_SwipeToBookButton> {
                   }
                 },
                 child: Container(
-                  width: _buttonSize,
-                  height: 50,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF6CBF),
+                  width: _thumbSize,
+                  height: _thumbSize,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
                     shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: Color(0xFFFF6CBF),
+                    size: 20,
+                  ),
                 ),
               ),
             ),

@@ -101,7 +101,7 @@ class CourseService {
         if (customerEmail != null && customerEmail.isNotEmpty) 'customerEmail': customerEmail,
         if (offerId != null && offerId.isNotEmpty) 'offerId': offerId,
       },
-      requiresAuth: true,
+      requiresAuth: false,
     );
     final data = response['data'];
     if (data is Map && data['application'] != null) {
