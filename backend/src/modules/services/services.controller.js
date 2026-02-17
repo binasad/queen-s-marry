@@ -303,9 +303,10 @@ class ServicesController {
           WHERE e.is_active = TRUE AND es.service_id = $1
         `;
         queryParams.push(serviceId);
+        queryText += ' ORDER BY e.rating DESC, e.name ASC';
+      } else {
+        queryText += ' ORDER BY experts.rating DESC, experts.name ASC';
       }
-
-      queryText += ' ORDER BY e.rating DESC, e.name ASC';
 
       const result = await query(queryText, queryParams);
 

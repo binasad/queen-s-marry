@@ -105,12 +105,13 @@ class _MakeUpServicesState extends State<MakeUpServices> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "MakeUp Services",
+          "Makeup Artistry",
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
+        centerTitle: true,
         backgroundColor: Colors.white,
         actions: [
           PopupMenuButton<String>(

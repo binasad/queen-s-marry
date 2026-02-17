@@ -1,145 +1,154 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ShareWithFriends extends StatelessWidget {
   const ShareWithFriends({super.key});
 
-  // Invite code (could later be fetched from user data instead of hardcoding)
+  static const Color brandPink = Color(0xFFFF0068);
   final String inviteCode = "SALON123";
 
   void _shareInvite(BuildContext context) {
     final String message =
-        "Hey! Join this amazing salon app and get exclusive offers. Use my invite code: $inviteCode\nDownload here: https://play.google.com/store/apps/details?id=com.example.salon";
+        "✨ Join this amazing salon app and get exclusive offers!\n\nUse my invite code: $inviteCode\n\nDownload here: https://play.google.com/store/apps/details?id=com.example.salon";
     Share.share(message, subject: "Salon App Invite");
+  }
+
+  void _copyToClipboard(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: inviteCode));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text("Invite code copied to clipboard!"),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        backgroundColor: brandPink,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
-        title: Text("Invite a Friend",
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text("Invite Friends", 
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFFFF6CBF), // pink
-                Color(0xFFFFC371), // peach
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFFFF6CBF), // pink
-              Color(0xFFFFC371), // peach
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.topRight,
+      body: Stack(
+        children: [
+          // Decorative background element
+          Positioned(
+            top: -50,
+            right: -50,
+            child: CircleAvatar(radius: 100, backgroundColor: brandPink.withOpacity(0.05)),
           ),
-          // borderRadius: BorderRadius.only(
-          //   topLeft: Radius.circular(60),
-          //   topRight: Radius.circular(60),
-          // ),
-        ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(60),
-              topRight: Radius.circular(60),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
+          
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
               children: [
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
+                
+                // Premium Illustration Card
                 Container(
-                  margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(32),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(32),
                     child: Image.asset(
                       "assets/ShareWithFriends.jpg",
-                      height: 200,
+                      height: 220,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
-                const SizedBox(height: 30),
+                
+                const SizedBox(height: 40),
                 const Text(
                   "Share the Love!",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -0.5),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
+                Text(
+                  "Invite your friends to the salon. They get a discount, and you earn loyalty rewards!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 15, color: Colors.grey[600], height: 1.5),
+                ),
+                
+                const SizedBox(height: 40),
+                
+                // Invite Code Box with Copy Feature
                 const Text(
-                  "Invite your friends and they’ll get exclusive discounts.\nYou’ll earn rewards when they join!",
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                  textAlign: TextAlign.center,
+                  "YOUR REFERRAL CODE",
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Colors.grey),
                 ),
-                const SizedBox(height: 30),
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
-                  decoration: BoxDecoration(
-                    color: Colors.pink.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.pink, width: 1),
-                  ),
-                  child: Text(
-                    inviteCode,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.pink,
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () => _copyToClipboard(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: brandPink.withOpacity(0.1)),
+                      boxShadow: [
+                        BoxShadow(color: brandPink.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5)),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          inviteCode,
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: brandPink, letterSpacing: 2),
+                        ),
+                        const SizedBox(width: 16),
+                        const Icon(Icons.copy_rounded, color: brandPink, size: 20),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 30),
-                ElevatedButton.icon(
-                  onPressed: () => _shareInvite(context),
-                  icon: const Icon(Icons.share, color: Colors.white),
-                  label: const Text(
-                    "Share Invite",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pink,
-                    padding:
-                    const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                ),
+                
                 const Spacer(),
-                const Text(
-                  "Invite more, earn more!",
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                
+                // Primary Action Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _shareInvite(context),
+                    icon: const Icon(Icons.ios_share, color: Colors.white),
+                    label: const Text(
+                      "Share with Friends",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: brandPink,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      elevation: 8,
+                      shadowColor: brandPink.withOpacity(0.4),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 20),
+                
+                const SizedBox(height: 40),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

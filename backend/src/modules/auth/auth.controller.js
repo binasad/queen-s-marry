@@ -15,13 +15,29 @@ function getFirebaseAdmin() {
   try {
     const admin = require('firebase-admin');
     if (admin.apps.length === 0) {
-      const credPath = path.join(process.cwd(), 'firebase-admin-sdk.json');
-      if (fs.existsSync(credPath)) {
-        const serviceAccount = require(credPath);
+      let serviceAccount = null;
+      // 1. Try env var (Docker, GitHub Actions, etc.)
+      const envJson = process.env.FIREBASE_ADMIN_SDK_JSON || process.env.FIREBASE_CREDENTIALS_JSON;
+      if (envJson) {
+        try {
+          serviceAccount = JSON.parse(envJson);
+        } catch (_) {
+          console.error('Firebase Admin: Invalid FIREBASE_ADMIN_SDK_JSON JSON');
+          return null;
+        }
+      }
+      // 2. Fall back to file
+      if (!serviceAccount) {
+        const credPath = path.join(process.cwd(), 'firebase-admin-sdk.json');
+        if (fs.existsSync(credPath)) {
+          serviceAccount = require(credPath);
+        }
+      }
+      if (serviceAccount) {
         admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
       }
     }
-    return admin;
+    return admin.apps.length > 0 ? admin : null;
   } catch (err) {
     console.error('Firebase Admin init error:', err.message);
     return null;
@@ -100,49 +116,34 @@ class AuthController {
       res.status(500).json({ success: false, message: 'Failed to verify email.' });
     }
   }
-  // Guest login - creates a minimal guest user with Guest role and returns tokens
+  // Guest login - session-only, no database storage (privacy-first)
   async guestLogin(req, res) {
     try {
       console.log('👤 Guest login request received');
 
-      // Use Guest role (not Customer - guests appear only under Guest in admin)
-      const roleId = await getRoleIdByName('Guest');
-      const guestId = crypto.randomUUID();
-      const guestEmail = `guest_${guestId}@salon.guest`;
-      
-      // Use a simple hash for guest password (not bcrypt) since guests don't login with password
-      // This speeds up guest login significantly
-      const guestPasswordPlaceholder = crypto.createHash('sha256').update(guestId).digest('hex');
+      const sessionId = crypto.randomUUID();
+      const tokens = generateTokens({ sessionId, isGuest: true });
 
-      await query(
-        `INSERT INTO users (id, name, email, password_hash, role_id, email_verified, is_guest)
-         VALUES ($1, $2, $3, $4, $5, TRUE, TRUE)
-         RETURNING id`,
-        [guestId, 'Guest', guestEmail, guestPasswordPlaceholder, roleId]
-      );
+      const syntheticUser = {
+        id: sessionId,
+        name: 'Guest',
+        email: null,
+        isGuest: true,
+        role: {
+          id: null,
+          name: 'Guest',
+          permissions: [],
+        },
+        profileImage: null,
+      };
 
-      // Generate tokens with isGuest flag embedded
-      const tokens = generateTokens({ id: guestId, isGuest: true });
-      const userWithRole = await getUserWithRole(guestId);
-
-      console.log('✅ Guest login successful, ID:', guestId);
+      console.log('✅ Guest login successful (session-only, no DB):', sessionId);
 
       res.json({
         success: true,
         message: 'Guest login successful',
         data: {
-          user: {
-            id: userWithRole.id,
-            name: userWithRole.name,
-            email: userWithRole.email,
-            isGuest: true,
-            role: {
-              id: userWithRole.role_id,
-              name: userWithRole.role_name,
-              permissions: userWithRole.permissions,
-            },
-            profileImage: userWithRole.profile_image_url,
-          },
+          user: syntheticUser,
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
         },
@@ -157,6 +158,7 @@ class AuthController {
   }
 
   // Google Sign-In - verify idToken and create/find user
+  // Supports two token types: Firebase (aud=projectId) or Google OAuth (aud=Web client ID)
   async googleLogin(req, res) {
     try {
       const { idToken } = req.body;
@@ -167,15 +169,55 @@ class AuthController {
         });
       }
 
-      const admin = getFirebaseAdmin();
-      if (!admin) {
-        return res.status(503).json({
-          success: false,
-          message: 'Google sign-in is not configured. Contact support.',
-        });
+      let decodedToken;
+      const webClientId = env.googleWebClientId || process.env.GOOGLE_WEB_CLIENT_ID?.trim();
+
+      // Token has aud=Web client ID when Flutter uses serverClientId. Use google-auth-library.
+      if (webClientId) {
+        try {
+          const { OAuth2Client } = require('google-auth-library');
+          const client = new OAuth2Client(webClientId);
+          const ticket = await client.verifyIdToken({ idToken, audience: webClientId });
+          const payload = ticket.getPayload();
+          decodedToken = {
+            uid: payload.sub,
+            email: payload.email,
+            name: payload.name || payload.email?.split('@')[0],
+            picture: payload.picture,
+          };
+        } catch (gaErr) {
+          console.error('Google login: OAuth2 verifyIdToken failed:', gaErr.message);
+          return res.status(401).json({
+            success: false,
+            message: 'Google token verification failed. Add GOOGLE_WEB_CLIENT_ID to backend .env (Web OAuth client ID from Firebase).',
+          });
+        }
+      } else {
+        // Fallback: Firebase Admin (expects aud=project ID)
+        const admin = getFirebaseAdmin();
+        if (!admin) {
+          console.error('Google login: Need GOOGLE_WEB_CLIENT_ID in .env for Google Sign-In with serverClientId.');
+          return res.status(503).json({
+            success: false,
+            message: 'Google sign-in not configured. Add GOOGLE_WEB_CLIENT_ID to backend .env.',
+          });
+        }
+        try {
+          decodedToken = await admin.auth().verifyIdToken(idToken);
+        } catch (fbErr) {
+          if (fbErr.code === 'auth/argument-error' && fbErr.message?.includes('audience')) {
+            console.error('Google login: Token has Web client aud. Add GOOGLE_WEB_CLIENT_ID to backend .env.');
+            return res.status(503).json({
+              success: false,
+              message: 'Add GOOGLE_WEB_CLIENT_ID to backend .env (Web OAuth client ID from Firebase/Google Cloud).',
+            });
+          }
+          console.error('Google login: verifyIdToken failed:', fbErr.code || fbErr.message);
+          const msg = fbErr.code === 'auth/id-token-expired' ? 'Google sign-in expired. Please try again.' : 'Google token verification failed.';
+          return res.status(401).json({ success: false, message: msg });
+        }
       }
 
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
       const { uid, email, name, picture } = decodedToken;
 
       if (!email) {
@@ -235,11 +277,13 @@ class AuthController {
         },
       });
     } catch (error) {
-      console.error('Google login error:', error);
-      res.status(500).json({
-        success: false,
-        message: error.code === 'auth/id-token-expired' ? 'Google sign-in expired. Please try again.' : 'Google sign-in failed. Please try again.',
-      });
+      console.error('Google login error:', error?.code || error?.message, error?.stack);
+      const msg = error?.code === 'auth/id-token-expired'
+        ? 'Google sign-in expired. Please try again.'
+        : env.isDevelopment && error?.message
+          ? `Google login failed: ${error.message}`
+          : 'Google sign-in failed. Please try again.';
+      res.status(500).json({ success: false, message: msg });
     }
   }
 
@@ -936,6 +980,27 @@ class AuthController {
       }
 
       const decoded = verifyRefreshToken(refreshToken);
+
+      if (decoded.isGuest === true && decoded.sessionId) {
+        const tokens = generateTokens({ sessionId: decoded.sessionId, isGuest: true });
+        res.json({
+          success: true,
+          message: 'Token refreshed',
+          data: {
+            user: {
+              id: decoded.sessionId,
+              name: 'Guest',
+              email: null,
+              isGuest: true,
+              role: { id: null, name: 'Guest', permissions: [] },
+              profileImage: null,
+            },
+            ...tokens,
+          },
+        });
+        return;
+      }
+
       const userResult = await query('SELECT id FROM users WHERE id = $1', [decoded.id]);
 
       if (userResult.rows.length === 0) {

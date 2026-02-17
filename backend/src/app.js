@@ -72,7 +72,7 @@ const corsOptions = {
     
     // Production: check explicit whitelist
     if (allowedOrigins.includes(origin)) {
-      console.log('✅ Allowing origin (whitelist):', origin);
+      console.log('✅ Alllowwing origin (whitelist):', origin);
       return callback(null, true);
     }
     
@@ -218,6 +218,12 @@ app.use(`/api/${API_VERSION}`, coursesRoutes);
 app.use(`/api/${API_VERSION}`, expertsRoutes);
 app.use(`/api/${API_VERSION}`, supportRoutes);
 app.use(`/api/${API_VERSION}`, notificationsRoutes);
+
+// Test push – direct route (admin only) to ensure it's registered
+const notificationsController = require('./modules/notifications/notifications.controller');
+const { auth } = require('./middlewares/auth.middleware');
+const { hasRole } = require('./middlewares/role.middleware');
+app.post(`/api/${API_VERSION}/notifications/test/:userId`, auth, hasRole(['Admin', 'Owner']), (req, res) => notificationsController.testPush(req, res));
 
 app.use(`/api/${API_VERSION}/payments`, paymentRoutes);
 app.use(`/api/${API_VERSION}`, offersRoutes);

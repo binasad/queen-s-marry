@@ -23,6 +23,7 @@ import '../Services/ApiCategoryServicesTabbed.dart';
 import '../Services/servicesdetails.dart';
 import 'AppointmentBooking.dart';
 import 'Course Screens/CourseDetails.dart';
+import 'UserNotifications.dart';
 import '../../services/course_service.dart';
 import '../googleMap.dart';
 import '../../services/api_service.dart';
@@ -320,7 +321,7 @@ class _UserHomeState extends ConsumerState<UserHome>
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9FB),
-      drawer: UserDrawer(userName: name, userEmail: email),
+      drawer: UserDrawer(userName: name, userEmail: email, profileImageUrl: profile),
       body: SlideTransition(
         position: _slideAnimation,
         child: FadeTransition(
@@ -407,9 +408,15 @@ class _UserHomeState extends ConsumerState<UserHome>
                 ],
               ),
             ),
-            const Icon(
-              Icons.notifications_none_rounded,
-              color: Color(0xFF2D2D3A),
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+              ),
+              child: const Icon(
+                Icons.notifications_none_rounded,
+                color: Color(0xFF2D2D3A),
+              ),
             ),
           ],
         ),

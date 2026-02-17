@@ -11,6 +11,7 @@ android {
     compileSdk = 36
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -22,7 +23,7 @@ android {
     defaultConfig {
         applicationId = "com.example.salon"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
     }
@@ -39,6 +40,7 @@ flutter {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
      // Import the Firebase BoM
   implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
 

@@ -48,6 +48,9 @@ const env = {
     from: process.env.EMAIL_FROM || process.env.SMTP_FROM || 'noreply@salon.com',
   },
 
+  // Google Sign-In (Web OAuth client ID for idToken verification)
+  googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID?.trim() || '',
+
   // URLs
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   adminWebUrl: process.env.ADMIN_WEB_URL || 'http://localhost:3001',

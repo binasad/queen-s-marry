@@ -1,11 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:salon/AppScreens/signup.dart';
 import '../utils/route_animations.dart';
 import '../services/auth_service.dart';
+import '../services/push_notification_service.dart';
 import '../services/storage_service.dart';
 import '../providers/auth_provider.dart' as app_auth;
 import 'UserScreens/userTabbar.dart';
@@ -28,7 +30,14 @@ class _LoginOptionState extends State<LoginOption> {
     if (_isSigningIn) return;
     setState(() => _isSigningIn = true);
     try {
-      final googleUser = await GoogleSignIn().signIn();
+      // serverClientId = Web OAuth client ID from Firebase/Google Cloud.
+      // Required for backend idToken verification. Get it from:
+      // Google Cloud Console > APIs & Credentials > OAuth 2.0 Client IDs > Web client
+      final serverClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+      final googleSignIn = GoogleSignIn(
+        serverClientId: serverClientId?.isNotEmpty == true ? serverClientId : null,
+      );
+      final googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
         setState(() => _isSigningIn = false);
         return;
@@ -45,9 +54,16 @@ class _LoginOptionState extends State<LoginOption> {
       if (!mounted) return;
       final authProvider = context.read<app_auth.AuthProvider>();
       authProvider.setUser(user);
+      PushNotificationService().initialize();
       _navigateToHome();
-    } catch (e) {
-      _showError('Google login failed: ${e.toString().replaceAll('Exception: ', '')}');
+    } catch (e, st) {
+      debugPrint('Google Sign-In error: $e');
+      debugPrint('Stack: $st');
+      final msg = e.toString()
+          .replaceAll('Exception: ', '')
+          .replaceAll('PlatformException(', '')
+          .replaceAll(RegExp(r', null, null\)?$'), '');
+      _showError('Google login failed: $msg');
     } finally {
       if (mounted) setState(() => _isSigningIn = false);
     }
@@ -86,11 +102,14 @@ class _LoginOptionState extends State<LoginOption> {
 
     setState(() => _isSigningIn = true);
     try {
-      // Use backend guest login instead of Firebase anonymous auth
+      // Use backend guest login instead of Firebase anonymous auth (no DB storage)
       final user = await _authService.guestLogin();
 
       // Save guest status locally
       await _storage.setGuestStatus(true);
+
+      final authProvider = context.read<app_auth.AuthProvider>();
+      authProvider.setUser(user);
 
       print('Guest login successful: ${user['name']}');
       _navigateToHome();
