@@ -186,6 +186,7 @@ class _BlogCard extends StatelessWidget {
                   height: 220,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  placeholderAsset: 'assets/logo.png',
                 ),
               ),
             ),

@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:lottie/lottie.dart';
-import '../../services/appointment_service.dart';
 import '../../services/user_service.dart';
 import '../../services/api_service.dart';
 
@@ -39,7 +38,6 @@ class AppointmentBookingScreen extends StatefulWidget {
 }
 
 class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
-  final AppointmentService _appointmentService = AppointmentService();
   final UserService _userService = UserService();
   final ApiService _api = ApiService();
 
@@ -134,9 +132,17 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       final double price = _getChargeAmount();
       final int amountInCents = (price * 100).round().clamp(100, 999999999);
 
+      // Create PaymentIntent with booking metadata - webhook will create appointment on success
       final paymentIntentResponse = await _api.post('/payments/create-intent', {
         'amount': amountInCents,
         'currency': 'pkr',
+        'serviceId': widget.service['id'].toString(),
+        'appointmentDate': dateStr,
+        'appointmentTime': timeStr,
+        'customerName': _userName ?? 'Customer',
+        'customerEmail': _userEmail ?? '',
+        'customerPhone': _userPhone ?? '',
+        if (widget.offerId != null && widget.offerId!.isNotEmpty) 'offerId': widget.offerId,
       });
 
       final clientSecret = paymentIntentResponse['clientSecret'];
@@ -151,20 +157,8 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
 
       await Stripe.instance.presentPaymentSheet();
 
-      debugPrint(
-        '✅ Payment Successful. Sending to Backend: Date: $dateStr, Time: $timeStr',
-      );
-
-      await _appointmentService.createAppointment(
-        serviceId: widget.service['id'].toString(),
-        appointmentDate: dateStr,
-        appointmentTime: timeStr,
-        customerName: _userName ?? 'Customer',
-        customerPhone: _userPhone ?? '',
-        customerEmail: _userEmail ?? '',
-        payNow: true,
-        offerId: widget.offerId,
-      );
+      // Payment verified by Stripe - webhook will create appointment server-side
+      debugPrint('✅ Payment Successful. Webhook will create appointment.');
 
       if (mounted) _showSuccessDialog();
     } catch (e) {

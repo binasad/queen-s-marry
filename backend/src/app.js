@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
+const favoritesRoutes = require('./modules/favorites/favorites.routes');
 const rateLimit = require('express-rate-limit');
 const env = require('./config/env');
 const { pool } = require('./config/db');
@@ -72,7 +73,7 @@ const corsOptions = {
     
     // Production: check explicit whitelist
     if (allowedOrigins.includes(origin)) {
-      console.log('✅ Alllowwing origin (whitelist):', origin);
+      console.log('✅ Allowing origin (whitelist):', origin);
       return callback(null, true);
     }
     
@@ -84,8 +85,14 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 app.use(cors(corsOptions));
+app.use(`/api/${API_VERSION}`, favoritesRoutes);
 app.options('*', cors(corsOptions));
 app.use(compression()); // Compress responses
+
+// Stripe webhook - MUST be before express.json() (needs raw body for signature verification)
+const paymentsController = require('./modules/payments/payments.controller');
+app.post(`/api/${env.apiVersion}/payments/webhook`, express.raw({ type: 'application/json' }), paymentsController.handleWebhook);
+
 app.use(express.json({ limit: '10mb' })); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
 
@@ -218,12 +225,6 @@ app.use(`/api/${API_VERSION}`, coursesRoutes);
 app.use(`/api/${API_VERSION}`, expertsRoutes);
 app.use(`/api/${API_VERSION}`, supportRoutes);
 app.use(`/api/${API_VERSION}`, notificationsRoutes);
-
-// Test push – direct route (admin only) to ensure it's registered
-const notificationsController = require('./modules/notifications/notifications.controller');
-const { auth } = require('./middlewares/auth.middleware');
-const { hasRole } = require('./middlewares/role.middleware');
-app.post(`/api/${API_VERSION}/notifications/test/:userId`, auth, hasRole(['Admin', 'Owner']), (req, res) => notificationsController.testPush(req, res));
 
 app.use(`/api/${API_VERSION}/payments`, paymentRoutes);
 app.use(`/api/${API_VERSION}`, offersRoutes);
