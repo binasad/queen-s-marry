@@ -10,6 +10,8 @@ class WebSocketService {
 
   late IO.Socket socket;
   bool _isConnected = false;
+  static const int _maxRetries = 5;
+  int _retryCount = 0;
 
   // Stream controllers for broadcasting events to multiple listeners
   final _offersUpdatedController =
@@ -59,10 +61,16 @@ class WebSocketService {
 
   void _initializeSocket() {
     // Use the backend URL from dotenv (without /api/v1)
-    final backendUrl = (dotenv.env['API_BASE_URL'] ?? '').replaceAll(
+    var backendUrl = (dotenv.env['API_BASE_URL'] ?? '').replaceAll(
       '/api/v1',
       '',
-    );
+    ).trim();
+    // socket_io_client bug: URLs without explicit port produce :0. Always add port.
+    final hostPart = backendUrl.replaceFirst(RegExp(r'^https?://'), '');
+    if (!RegExp(r':\d+').hasMatch(hostPart)) {
+      final defaultPort = backendUrl.startsWith('https') ? 443 : 80;
+      backendUrl = '$backendUrl:$defaultPort';
+    }
 
     debugPrint('🔌 WebSocket: Connecting to $backendUrl');
 
@@ -88,9 +96,9 @@ class WebSocketService {
     socket.onDisconnect((_) {
       debugPrint('🔌 Disconnected from WebSocket server');
       _isConnected = false;
-      // Attempt to reconnect after a delay
+      _retryCount = 0; // Reset on disconnect (user may have lost network)
       Future.delayed(const Duration(seconds: 5), () {
-        if (!_isConnected) {
+        if (!_isConnected && _retryCount < _maxRetries) {
           debugPrint('🔄 Attempting to reconnect...');
           connect();
         }
@@ -103,10 +111,15 @@ class WebSocketService {
         '🔌 Attempted URL: ${(dotenv.env['API_BASE_URL'] ?? '').replaceAll('/api/v1', '')}',
       );
       _isConnected = false;
-      // Attempt to reconnect after a delay
-      Future.delayed(const Duration(seconds: 10), () {
+      _retryCount++;
+      if (_retryCount >= _maxRetries) {
+        debugPrint('🔌 WebSocket: Stopping after $_maxRetries failed attempts. Check API_BASE_URL and server.');
+        return;
+      }
+      final delay = Duration(seconds: 5 * _retryCount); // 5, 10, 15, 20, 25 sec backoff
+      Future.delayed(delay, () {
         if (!_isConnected) {
-          debugPrint('🔄 Retrying WebSocket connection...');
+          debugPrint('🔄 Retrying WebSocket connection... (attempt $_retryCount/$_maxRetries)');
           connect();
         }
       });
