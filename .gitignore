@@ -50,6 +50,7 @@ yarn-error.log*
 
 # Environment files (keep .env.example files)
 .env
+.claude/
 .env.local
 .env.*.local
 !.env.example
