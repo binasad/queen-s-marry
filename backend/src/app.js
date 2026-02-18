@@ -116,9 +116,14 @@ app.use(morgan(env.isDevelopment ? 'dev' : 'combined')); // Logging
 const limiter = rateLimit({
   windowMs: env.rateLimit.windowMs,
   max: env.rateLimit.maxRequests,
-  message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      message: 'Too many requests from this IP. Please wait a few minutes and try again.',
+    });
+  },
 });
 app.use('/api/', limiter);
 

@@ -2,9 +2,12 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider;
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/favorites_provider.dart';
+import '../services/favorites_service.dart';
 import '../services/push_notification_service.dart';
 import 'OwnerScreens/OwnerTabbar.dart';
 import 'UserScreens/userTabbar.dart';
@@ -81,6 +84,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Initialize push notifications (Gatekeeper inside excludes guests)
         PushNotificationService().initialize();
+
+        // Invalidate favorites so logged-in user fetches from API
+        ProviderScope.containerOf(context).invalidate(favoritesListProvider);
+        FavoritesService().migrateGuestFavoritesToApi();
 
         Navigator.pushAndRemoveUntil(
           context,

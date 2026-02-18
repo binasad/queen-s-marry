@@ -10,8 +10,8 @@ import 'AppScreens/UserScreens/userTabbar.dart';
 import 'AppScreens/introSlider.dart';
 import 'providers/auth_provider.dart';
 import 'services/cache_service.dart';
+import 'services/image_preload_service.dart';
 import 'services/push_notification_service.dart';
-import 'services/user_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 
@@ -25,29 +25,32 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    }
-  } on FirebaseException catch (e) {
-    if (e.code != 'duplicate-app') rethrow;
-  }
-
   // Limit image cache to reduce memory (default is 1000 images, 100MB)
   PaintingBinding.instance.imageCache.maximumSize = 150;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 80 << 20; // 80 MB
 
-  // Load environment variables
+  // Load env (fast) – defer heavy init to after first frame
   await dotenv.load();
 
-  // Register FCM background handler for notifications when app is closed
+  // Register FCM background handler (handler inits Firebase when notification arrives)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   Stripe.publishableKey =
       'pk_test_51SGV17AdeL5kUQJvRdfCLGn4Dr8lBebNrq7dBFIn7nU7FKVTtflPI3E5haM3nsN2abws9UGoVJ0qlbUyjwQ6rEpa00TnRdVGad';
 
-  // Initialize Hive cache
-  await CacheService.init();
+  // Defer ALL heavy work so first frame shows immediately
+  Future(() async {
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      }
+    } on FirebaseException catch (e) {
+      if (e.code != 'duplicate-app') rethrow;
+    }
+    await CacheService.init();
+    await Future.delayed(const Duration(milliseconds: 2000));
+    ImagePreloadService.preloadImagesInBackground();
+  });
 
   runApp(
     // Wrap with ProviderScope for Riverpod
@@ -97,22 +100,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
     await authProvider.checkLoginStatus();
     if (!authProvider.isLoggedIn) return null;
 
-    try {
-      final profile = await UserService().getProfile();
-      // Initialize push notifications and save FCM token to backend
-      PushNotificationService().initialize();
-      return profile;
-    } catch (e) {
-      print('Error loading profile: $e');
-      // Even if profile fails, user is still logged in
-      // Return a default profile so home screen shows
-      return {
-        'id': authProvider.user?['id'] ?? '',
-        'name': authProvider.user?['name'] ?? 'User',
-        'email': authProvider.user?['email'] ?? '',
-        'role': authProvider.user?['role'] ?? 'user',
-      };
-    }
+    // Build profile from AuthProvider (already set from cache/guest/fetch)
+    final user = authProvider.user;
+    if (user == null) return null;
+
+    // Defer push notifications to background – don't block home screen
+    Future(() => PushNotificationService().initialize());
+
+    return {'user': user};
   }
 
   @override
@@ -120,8 +115,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
     return FutureBuilder<Map<String, dynamic>?>(
       future: _bootstrapFuture,
       builder: (context, snapshot) {
+        // Show intro immediately while auth checks – no spinner delay
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const OnboardingScreen();
         }
 
         final profile = snapshot.data;

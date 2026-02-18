@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../widgets/cached_image.dart';
 import 'package:provider/provider.dart' as provider_package;
 import '../services/user_service.dart';
 import '../services/auth_service.dart';
@@ -308,26 +309,12 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
                                   height: 90,
                                 )
                               : profile.isNotEmpty
-                                  ? Image.network(
-                                      profile,
-                                      fit: BoxFit.cover,
-                                      width: 90,
-                                      height: 90,
-                                      loadingBuilder: (context, child, progress) {
-                                        if (progress == null) return child;
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value: progress.expectedTotalBytes != null
-                                                ? progress.cumulativeBytesLoaded / (progress.expectedTotalBytes ?? 1)
-                                                : null,
-                                          ),
-                                        );
-                                      },
-                                      errorBuilder: (_, __, ___) => Image.asset(
-                                        "assets/profile.jpg",
-                                        fit: BoxFit.cover,
+                                  ? ClipOval(
+                                      child: CachedImageWidget(
+                                        imageUrl: profile,
                                         width: 90,
                                         height: 90,
+                                        fit: BoxFit.cover,
                                       ),
                                     )
                                   : Image.asset(

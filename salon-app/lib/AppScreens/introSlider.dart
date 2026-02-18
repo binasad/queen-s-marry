@@ -14,6 +14,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   double _scrollOffset = 0.0;
   int _currentPage = 0;
+  bool _precached = false;
 
   @override
   void initState() {
@@ -23,6 +24,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _scrollOffset = _pageController.page ?? 0.0;
       });
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_precached) {
+      _precached = true;
+      precacheImage(const AssetImage('assets/bride.png'), context);
+    }
   }
 
   @override

@@ -17,8 +17,8 @@ import '../../providers/services_provider.dart';
 import '../../widgets/offline_banner.dart';
 import '../../utils/debouncer.dart';
 import '../../utils/haptic_feedback.dart';
-import '../../widgets/cached_image.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../widgets/cached_image.dart';
 import '../Services/userServices.dart';
 import '../Services/ApiCategoryServicesTabbed.dart';
 import '../Services/servicesdetails.dart';
@@ -386,12 +386,12 @@ class _UserHomeState extends ConsumerState<UserHome>
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundImage: profile.isNotEmpty
-                  ? NetworkImage(profile)
-                  : const AssetImage('assets/profile.jpg') as ImageProvider,
-            ),
+            profile.isNotEmpty
+                ? CachedCircleImage(imageUrl: profile, radius: 24)
+                : CircleAvatar(
+                    radius: 24,
+                    backgroundImage: const AssetImage('assets/profile.jpg'),
+                  ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(

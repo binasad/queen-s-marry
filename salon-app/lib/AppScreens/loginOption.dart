@@ -1,15 +1,18 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:salon/AppScreens/signup.dart';
 import '../utils/route_animations.dart';
 import '../services/auth_service.dart';
+import '../services/api_service.dart';
 import '../services/push_notification_service.dart';
-import '../services/storage_service.dart';
 import '../providers/auth_provider.dart' as app_auth;
+import '../providers/favorites_provider.dart';
+import '../services/favorites_service.dart';
 import 'UserScreens/userTabbar.dart';
 import 'login.dart';
 
@@ -23,7 +26,6 @@ class LoginOption extends StatefulWidget {
 class _LoginOptionState extends State<LoginOption> {
   bool _isSigningIn = false;
   final AuthService _authService = AuthService();
-  final StorageService _storage = const StorageService();
 
   // --- Auth Methods ---
   Future<void> _signInWithGoogle(BuildContext context) async {
@@ -55,14 +57,23 @@ class _LoginOptionState extends State<LoginOption> {
       final authProvider = context.read<app_auth.AuthProvider>();
       authProvider.setUser(user);
       PushNotificationService().initialize();
+      _migrateGuestFavoritesAndInvalidate(context);
       _navigateToHome();
     } catch (e, st) {
       debugPrint('Google Sign-In error: $e');
       debugPrint('Stack: $st');
-      final msg = e.toString()
-          .replaceAll('Exception: ', '')
-          .replaceAll('PlatformException(', '')
-          .replaceAll(RegExp(r', null, null\)?$'), '');
+      String msg;
+      if (e is ApiException) {
+        msg = e.statusCode == 429
+            ? 'Too many login attempts. Please wait a few minutes and try again.'
+            : e.message;
+      } else {
+        msg = e.toString()
+            .replaceAll('Exception: ', '')
+            .replaceAll('PlatformException(', '')
+            .replaceAll('ApiException(429): ', '')
+            .replaceAll(RegExp(r', null, null\)?$'), '');
+      }
       _showError('Google login failed: $msg');
     } finally {
       if (mounted) setState(() => _isSigningIn = false);
@@ -100,32 +111,36 @@ class _LoginOptionState extends State<LoginOption> {
 
     if (confirmed != true) return;
 
-    setState(() => _isSigningIn = true);
+    // Guest login is instant (no API) – skip loading overlay for smooth transition
     try {
-      // Use backend guest login instead of Firebase anonymous auth (no DB storage)
       final user = await _authService.guestLogin();
 
-      // Save guest status locally
-      await _storage.setGuestStatus(true);
-
+      if (!mounted) return;
       final authProvider = context.read<app_auth.AuthProvider>();
       authProvider.setUser(user);
 
-      print('Guest login successful: ${user['name']}');
       _navigateToHome();
     } catch (e) {
-      _showError(
-        'Guest login failed: ${e.toString().replaceAll('Exception: ', '')}',
-      );
-    } finally {
-      if (mounted) setState(() => _isSigningIn = false);
+      if (mounted) {
+        _showError(
+          'Guest login failed: ${e.toString().replaceAll('Exception: ', '')}',
+        );
+      }
     }
   }
 
-  void _navigateToHome() => Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => BottomTabBar()),
-  );
+  void _navigateToHome() {
+    Navigator.pushReplacement(
+      context,
+      fadeSlideUpRoute(BottomTabBar()),
+    );
+  }
+
+  /// Migrate guest favorites to API and invalidate so logged-in user sees fresh data
+  void _migrateGuestFavoritesAndInvalidate(BuildContext context) {
+    ProviderScope.containerOf(context).invalidate(favoritesListProvider);
+    FavoritesService().migrateGuestFavoritesToApi();
+  }
 
   void _showError(String msg) {
     if (!mounted) return;

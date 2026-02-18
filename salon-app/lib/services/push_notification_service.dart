@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../Manager/NotificationManager.dart';
+import '../firebase_options.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
 
@@ -25,6 +27,11 @@ class PushNotificationService {
   );
 
   Future<void> initialize() async {
+    // Ensure Firebase is ready (deferred from main for faster startup)
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    }
+
     // Initialize local notifications for foreground display
     await _initLocalNotifications();
 

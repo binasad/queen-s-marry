@@ -12,8 +12,11 @@ import '../../services/service_catalog_service.dart';
 
 import '../../services/review_service.dart';
 import '../../services/favorites_service.dart';
+import '../../services/api_service.dart';
 import '../../providers/favorites_provider.dart';
+import '../../utils/guest_guard.dart';
 import '../../utils/haptic_feedback.dart';
+import '../../widgets/cached_image.dart';
 
 class ServiceDetailedScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> service;
@@ -76,7 +79,10 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
     setState(() => _loadingFavorite = true);
     HapticHelper.lightImpact();
     try {
-      final newState = await _favoritesService.toggleServiceFavorite(serviceId);
+      final newState = await _favoritesService.toggleServiceFavorite(
+        serviceId,
+        serviceData: Map<String, dynamic>.from(widget.service),
+      );
       if (mounted) {
         setState(() {
           _isFavorite = newState;
@@ -84,12 +90,25 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
         });
         ref.invalidate(favoritesListProvider);
       }
-    } catch (_) {
-      if (mounted) setState(() => _loadingFavorite = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingFavorite = false);
+        final handled = await GuestGuard.handleApiError(
+          context,
+          e,
+          actionDescription: 'save favorites',
+        );
+        if (!handled && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e is ApiException ? e.message : 'Could not update favorite'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
-
-
 
   Future<void> _loadReviews() async {
 
@@ -131,14 +150,11 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
 
 
 
-  ImageProvider _getImage(Map<String, dynamic> s) {
-
+  Widget _buildServiceImage(Map<String, dynamic> s, {double? width, double? height}) {
     final url = s['image_url']?.toString() ?? s['image']?.toString() ?? '';
-
-    if (url.isEmpty) return const AssetImage('assets/FeatherCutting.png');
-
-    return url.startsWith('http') ? NetworkImage(url) : AssetImage(url) as ImageProvider;
-
+    if (url.isEmpty) return Image.asset('assets/FeatherCutting.png', width: width, height: height, fit: BoxFit.cover);
+    if (url.startsWith('http')) return CachedImageWidget(imageUrl: url, width: width, height: height, fit: BoxFit.cover);
+    return Image.asset(url, width: width, height: height, fit: BoxFit.cover);
   }
 
 
@@ -300,7 +316,7 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
 
           children: [
 
-            Image(image: _getImage(widget.service), fit: BoxFit.cover),
+            _buildServiceImage(widget.service),
 
             const DecoratedBox(
 
@@ -650,7 +666,7 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
 
                     borderRadius: BorderRadius.circular(20),
 
-                    child: Image(image: _getImage(item), height: 130, width: 150, fit: BoxFit.cover),
+                    child: _buildServiceImage(item, height: 130, width: 150),
 
                   ),
 

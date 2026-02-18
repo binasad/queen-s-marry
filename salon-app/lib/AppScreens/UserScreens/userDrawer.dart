@@ -7,6 +7,7 @@ import 'package:salon/AppScreens/UserScreens/UserNotifications.dart';
 import 'package:salon/AppScreens/UserScreens/FavoritesScreen.dart';
 import '../../services/auth_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/cached_image.dart';
 import 'Course Screens/CourseAppliedList.dart';
 import '../ChangePassword.dart';
 import '../PersonalInfo.dart';
@@ -49,18 +50,9 @@ class UserDrawer extends StatelessWidget {
                             backgroundColor: Colors.pink,
                             child: profileImageUrl.isNotEmpty
                                 ? ClipOval(
-                                    child: Image.network(
-                                      profileImageUrl,
-                                      width: 70,
-                                      height: 70,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Text(
-                                        userName.isNotEmpty ? userName[0] : '?',
-                                        style: TextStyle(
-                                          fontSize: 28,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+                                    child: CachedCircleImage(
+                                      imageUrl: profileImageUrl,
+                                      radius: 35,
                                     ),
                                   )
                                 : Text(

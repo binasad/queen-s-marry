@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'CourseApplyScreen.dart';
 import '../../../services/review_service.dart';
+import '../../../widgets/cached_image.dart';
 import '../../../services/favorites_service.dart';
+import '../../../services/api_service.dart';
 import '../../../providers/favorites_provider.dart';
 import '../../../utils/guest_guard.dart';
 import '../../../utils/haptic_feedback.dart';
@@ -47,7 +49,19 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
     setState(() => _loadingFavorite = true);
     HapticHelper.lightImpact();
     try {
-      final newState = await _favoritesService.toggleCourseFavorite(courseId);
+      final courseData = {
+        'id': courseId,
+        'title': widget.course['title']?.toString() ?? '',
+        'duration': widget.course['duration']?.toString() ?? '',
+        'price': widget.course['price']?.toString() ?? '0',
+        'image': widget.course['image']?.toString() ?? widget.course['image_url']?.toString() ?? '',
+        'image_url': widget.course['image_url']?.toString() ?? widget.course['image']?.toString() ?? '',
+        'description': widget.course['description']?.toString() ?? '',
+      };
+      final newState = await _favoritesService.toggleCourseFavorite(
+        courseId,
+        courseData: courseData,
+      );
       if (mounted) {
         setState(() {
           _isFavorite = newState;
@@ -55,8 +69,23 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
         });
         ref.invalidate(favoritesListProvider);
       }
-    } catch (_) {
-      if (mounted) setState(() => _loadingFavorite = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingFavorite = false);
+        final handled = await GuestGuard.handleApiError(
+          context,
+          e,
+          actionDescription: 'save favorites',
+        );
+        if (!handled && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e is ApiException ? e.message : 'Could not update favorite'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -95,23 +124,35 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
                 Container(
                   height: 350,
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: widget.course['image'].toString().startsWith('http') 
-                        ? NetworkImage(widget.course['image'])
-                        : AssetImage(widget.course['image']) as ImageProvider,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.black26, Colors.transparent, const Color(0xFFFBFBFD)],
-                        stops: const [0.0, 0.4, 1.0],
+                  decoration: const BoxDecoration(),
+                  clipBehavior: Clip.hardEdge,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      widget.course['image'].toString().startsWith('http')
+                          ? CachedImageWidget(
+                              imageUrl: widget.course['image'],
+                              width: double.infinity,
+                              height: 350,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.asset(
+                              widget.course['image'],
+                              width: double.infinity,
+                              height: 350,
+                              fit: BoxFit.cover,
+                            ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.black26, Colors.transparent, const Color(0xFFFBFBFD)],
+                            stops: const [0.0, 0.4, 1.0],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
                 Padding(

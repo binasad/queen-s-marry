@@ -34,6 +34,8 @@ import '../utils/error_handler.dart';
 
 import '../utils/guest_guard.dart';
 
+import '../widgets/cached_image.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
 
@@ -56,6 +58,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // --- Logic Handlers ---
 
   Future<void> loadUserData() async {
+    // First try AuthProvider (cached data - instant, no API call)
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.user != null) {
+      final userData = authProvider.user!;
+      if (mounted) {
+        setState(() {
+          name = userData['name']?.toString() ?? 'User';
+          email = userData['email']?.toString() ?? '';
+          profile = userData['profile_image_url']?.toString() ??
+              userData['profileImage']?.toString() ??
+              '';
+          final roleObj = userData['role'] as Map<String, dynamic>?;
+          role = roleObj?['name']?.toString() ?? 'user';
+          _isLoading = false;
+        });
+      }
+      // Refresh in background to get latest data
+      _refreshProfileInBackground();
+      return;
+    }
+
+    // No cached user - fetch from API
     try {
       final data = await UserService().getProfile();
       final user = data['user'] as Map<String, dynamic>?;
@@ -78,6 +102,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  /// Fetches profile from API in background and updates UI (no blocking)
+  Future<void> _refreshProfileInBackground() async {
+    try {
+      final data = await UserService().getProfile();
+      final user = data['user'] as Map<String, dynamic>?;
+      if (user != null && mounted) {
+        setState(() {
+          name = user['name']?.toString() ?? name;
+          email = user['email']?.toString() ?? email;
+          profile = user['profile_image_url']?.toString() ?? profile;
+          final roleObj = user['role'] as Map<String, dynamic>?;
+          role = roleObj?['name']?.toString() ?? role;
+        });
+      }
+    } catch (_) {
+      // Ignore - we already have cached data
     }
   }
 
@@ -226,12 +269,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildAvatar() {
     return Container(
       decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: brandPink.withOpacity(0.1), width: 4)),
-      child: CircleAvatar(
-        radius: 50,
-        backgroundColor: Colors.grey[200],
-        backgroundImage: profile.isNotEmpty ? NetworkImage(profile) : null,
-        child: profile.isEmpty ? const Icon(Icons.person, size: 50, color: Colors.grey) : null,
-      ),
+      child: profile.isNotEmpty
+          ? CachedCircleImage(imageUrl: profile, radius: 50)
+          : CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.grey[200],
+              child: const Icon(Icons.person, size: 50, color: Colors.grey),
+            ),
     );
   }
 

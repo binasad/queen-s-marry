@@ -22,17 +22,25 @@ class CacheService {
   static Box? _blogsBox;
   static Box? _servicesByCatBox;
 
-  /// Initialize Hive and open boxes
+  /// Initialize Hive and open boxes (parallel for faster startup)
   static Future<void> init() async {
     await Hive.initFlutter();
-    
-    _servicesBox = await Hive.openBox(_servicesBoxName);
-    _categoriesBox = await Hive.openBox(_categoriesBoxName);
-    _coursesBox = await Hive.openBox(_coursesBoxName);
-    _offersBox = await Hive.openBox(_offersBoxName);
-    _expertsBox = await Hive.openBox(_expertsBoxName);
-    _blogsBox = await Hive.openBox(_blogsBoxName);
-    _servicesByCatBox = await Hive.openBox(_servicesByCatBoxName);
+    final boxes = await Future.wait([
+      Hive.openBox(_servicesBoxName),
+      Hive.openBox(_categoriesBoxName),
+      Hive.openBox(_coursesBoxName),
+      Hive.openBox(_offersBoxName),
+      Hive.openBox(_expertsBoxName),
+      Hive.openBox(_blogsBoxName),
+      Hive.openBox(_servicesByCatBoxName),
+    ]);
+    _servicesBox = boxes[0];
+    _categoriesBox = boxes[1];
+    _coursesBox = boxes[2];
+    _offersBox = boxes[3];
+    _expertsBox = boxes[4];
+    _blogsBox = boxes[5];
+    _servicesByCatBox = boxes[6];
   }
 
   /// Check if cache is valid (not expired)

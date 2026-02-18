@@ -158,7 +158,17 @@ class ApiService {
           : {'data': response.data};
     }
     final data = response.data;
-    final message = data is Map ? (data['message']?.toString() ?? 'Unknown error') : 'Unknown error';
+    String message;
+    if (data is String && data.isNotEmpty) {
+      message = data; // express-rate-limit sends plain text
+    } else if (data is Map) {
+      message = data['message']?.toString() ?? data['error']?.toString() ?? 'Unknown error';
+    } else {
+      message = 'Unknown error';
+    }
+    if (response.statusCode == 429) {
+      message = 'Too many attempts. Please wait a few minutes and try again.';
+    }
     final code = data is Map ? data['code']?.toString() : null;
     final isGuestRestricted = response.statusCode == 403 &&
         (code == 'GUEST_RESTRICTED' ||

@@ -10,51 +10,26 @@ class AuthService {
   /// Roles allowed to access the mobile app
   static const List<String> _allowedMobileRoles = ['Customer', 'User', 'Guest', 'Admin', 'Owner'];
 
-  /// Guest login - session-only, no database storage (privacy-first)
-  /// Returns synthetic user data with isGuest flag
+  /// Guest login - local only, no backend call (works offline, avoids rate limits)
+  /// Creates synthetic user, uses local storage for favorites. Session-only.
   Future<Map<String, dynamic>> guestLogin() async {
-    try {
-      print('AuthService: Starting guest login');
-      final response = await _api.post('/auth/guest', {}, requiresAuth: false);
+    print('AuthService: Guest login (local)');
+    await _api.clearTokens();
+    await _storage.setGuestStatus(true);
 
-      print('AuthService: Guest login response received');
-      print('Response keys: ${response.keys}');
-
-      if (!response.containsKey('data')) {
-        print('ERROR: Response does not have "data" key!');
-        throw Exception('Invalid guest login response: missing data key');
-      }
-
-      final data = response['data'] as Map<String, dynamic>;
-      final accessToken = data['accessToken'] as String?;
-      final refreshToken = data['refreshToken'] as String?;
-
-      if (accessToken != null && refreshToken != null) {
-        await _api.saveTokens(accessToken, refreshToken);
-        // Save guest status
-        await _storage.setGuestStatus(true);
-        print('Guest tokens saved successfullly');
-      } else {
-        throw Exception('Invalid guest login response: missing tokens');
-      }
-
-      // Add isGuest flag to user data
-      final user = data['user'] as Map<String, dynamic>;
-      user['isGuest'] = true;
-
-      return user;
-    } catch (e) {
-      print('AuthService: Guest login error: $e');
-      rethrow;
-    }
+    final user = {
+      'id': 'guest_${DateTime.now().millisecondsSinceEpoch}',
+      'name': 'Guest',
+      'email': '',
+      'profile_image_url': null,
+      'isGuest': true,
+      'role': {'name': 'Guest'},
+    };
+    return user;
   }
 
-  /// Check if current user is a guest
+  /// Check if current user is a guest (local or backend guest)
   Future<bool> isGuestUser() async {
-    final token = await _api.getAccessToken();
-    if (token == null) return false;
-
-    // Check stored guest status
     return await _storage.isGuest();
   }
 
@@ -126,6 +101,7 @@ class AuthService {
 
       if (accessToken != null && refreshToken != null) {
         await _api.saveTokens(accessToken, refreshToken);
+        await _storage.setGuestStatus(false); // Clear guest so favorites use API
         print('Tokens saved successfully');
 
         // Verify tokens were saved
@@ -250,7 +226,8 @@ class AuthService {
       // Ignore – user may already be logged out
     }
     await _api.clearTokens();
-    await _storage.setGuestStatus(false); // Clear guest status on logout
+    await _storage.setGuestStatus(false);
+    await _storage.clearCachedProfile();
   }
 
   Future<bool> isLoggedIn() async {

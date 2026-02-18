@@ -34,3 +34,26 @@ Route<T> slideFromRightRoute<T>(Widget page) {
     },
   );
 }
+
+/// Smooth fade + slide up – for login/guest → home.
+Route<T> fadeSlideUpRoute<T>(Widget page) {
+  return PageRouteBuilder<T>(
+    transitionDuration: const Duration(milliseconds: 450),
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      const curve = Curves.easeOutCubic;
+      final fade = Tween<double>(begin: 0, end: 1).chain(CurveTween(curve: curve));
+      final slide = Tween<Offset>(
+        begin: const Offset(0, 0.08),
+        end: Offset.zero,
+      ).chain(CurveTween(curve: curve));
+      return FadeTransition(
+        opacity: animation.drive(fade),
+        child: SlideTransition(
+          position: animation.drive(slide),
+          child: child,
+        ),
+      );
+    },
+  );
+}
