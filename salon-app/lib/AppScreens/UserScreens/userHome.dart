@@ -82,6 +82,10 @@ class _UserHomeState extends ConsumerState<UserHome>
   bool _expertsLoading = true;
   bool _userLoading = true;
 
+  // Offer card slider
+  late PageController _offerPageController;
+  int _currentOfferPage = 0;
+
   @override
   void initState() {
     super.initState();
@@ -105,6 +109,17 @@ class _UserHomeState extends ConsumerState<UserHome>
         );
 
     _entranceController.forward();
+
+    _offerPageController = PageController(
+      viewportFraction: 0.88,
+      initialPage: 0,
+    );
+    _offerPageController.addListener(() {
+      final page = _offerPageController.page?.round() ?? 0;
+      if (mounted && page != _currentOfferPage) {
+        setState(() => _currentOfferPage = page);
+      }
+    });
 
     _searchDebouncer = Debouncer(delay: const Duration(milliseconds: 500));
 
@@ -138,6 +153,7 @@ class _UserHomeState extends ConsumerState<UserHome>
   void dispose() {
     _entranceController.dispose();
     _searchController.dispose();
+    _offerPageController.dispose();
     super.dispose();
   }
 
@@ -173,6 +189,7 @@ class _UserHomeState extends ConsumerState<UserHome>
         setState(() {
           filteredOffers = formattedOffers;
           _offersLoading = false;
+          _currentOfferPage = 0;
         });
       }
     } catch (e) {
@@ -513,7 +530,7 @@ class _UserHomeState extends ConsumerState<UserHome>
       return SliverToBoxAdapter(
         child: HorizontalListSkeletonLoader(
           itemCount: 4,
-          itemHeight: 180,
+          itemHeight: 200,
           itemWidth: 280,
         ),
       );
@@ -522,7 +539,7 @@ class _UserHomeState extends ConsumerState<UserHome>
     if (filteredOffers.isEmpty) {
       return SliverToBoxAdapter(
         child: Container(
-          height: 180,
+          height: 200,
           margin: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -550,31 +567,57 @@ class _UserHomeState extends ConsumerState<UserHome>
     }
 
     return SliverToBoxAdapter(
-      child: SizedBox(
-        height: 180,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: filteredOffers.length,
-          itemBuilder: (context, index) {
-            final offer = filteredOffers[index];
-            return Padding(
-              padding: EdgeInsets.only(
-                right: index < filteredOffers.length - 1 ? 16 : 0,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 200,
+            child: PageView.builder(
+              controller: _offerPageController,
+              physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
+              itemCount: filteredOffers.length,
+              itemBuilder: (context, index) {
+                final offer = filteredOffers[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => _buildOfferCard(
+                      offer['title'] ?? '',
+                      offer['discount'] ?? '',
+                      offer['image'] ?? 'assets/bgbg.png',
+                      duration: offer['duration'] ?? 'Limited',
+                      serviceId: offer['service_id']?.toString(),
+                      courseId: offer['course_id']?.toString(),
+                      onTap: () => _onOfferTap(offer),
+                      cardWidth: constraints.maxWidth,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          if (filteredOffers.length > 1) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                filteredOffers.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: _currentOfferPage == index ? 20 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _currentOfferPage == index
+                        ? const Color(0xFFE91E63)
+                        : const Color(0xFFE91E63).withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
               ),
-              child: _buildOfferCard(
-                offer['title'] ?? '',
-                offer['discount'] ?? '',
-                offer['image'] ?? 'assets/bgbg.png',
-                duration: offer['duration'] ?? 'Limited',
-                serviceId: offer['service_id']?.toString(),
-                courseId: offer['course_id']?.toString(),
-                onTap: () => _onOfferTap(offer),
-              ),
-            );
-          },
-        ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -684,6 +727,7 @@ class _UserHomeState extends ConsumerState<UserHome>
     String? serviceId,
     String? courseId,
     VoidCallback? onTap,
+    double? cardWidth,
   }) {
     final hasLink =
         (serviceId != null && serviceId.isNotEmpty) ||
@@ -691,7 +735,7 @@ class _UserHomeState extends ConsumerState<UserHome>
     return GestureDetector(
       onTap: hasLink ? onTap : null,
       child: Container(
-        width: 280,
+        width: cardWidth ?? 280,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           boxShadow: [

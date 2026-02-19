@@ -146,6 +146,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       });
 
       final clientSecret = paymentIntentResponse['clientSecret'];
+      final paymentIntentId = paymentIntentResponse['paymentIntentId'];
 
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
@@ -157,8 +158,18 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
 
       await Stripe.instance.presentPaymentSheet();
 
-      // Payment verified by Stripe - webhook will create appointment server-side
-      debugPrint('✅ Payment Successful. Webhook will create appointment.');
+      // Payment verified by Stripe - create appointment (fallback if webhook hasn't)
+      debugPrint('✅ Payment Successful. Creating appointment...');
+      if (paymentIntentId != null && paymentIntentId.toString().isNotEmpty) {
+        try {
+          await _api.post('/payments/confirm-appointment', {
+            'paymentIntentId': paymentIntentId,
+          });
+          debugPrint('✅ Appointment created.');
+        } catch (e) {
+          debugPrint('⚠️ confirm-appointment: $e (webhook may have created it)');
+        }
+      }
 
       if (mounted) _showSuccessDialog();
     } catch (e) {

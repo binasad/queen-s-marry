@@ -122,12 +122,19 @@ app.use((req, res, next) => {
 
 app.use(morgan(env.isDevelopment ? 'dev' : 'combined')); // Logging
 
-// Rate limiting
+// Rate limiting (skip for admin web)
 const limiter = rateLimit({
   windowMs: env.rateLimit.windowMs,
   max: env.rateLimit.maxRequests,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    const origin = req.headers.origin || '';
+    const isAdmin = origin === env.adminWebUrl ||
+      origin.endsWith('.vercel.app') ||
+      (env.isDevelopment && (origin.startsWith('http://localhost:3001') || origin.startsWith('http://127.0.0.1:3001')));
+    return isAdmin;
+  },
   handler: (req, res) => {
     res.status(429).json({
       success: false,

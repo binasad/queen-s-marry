@@ -2,6 +2,8 @@
 
 A comprehensive salon booking system with a Flutter mobile app (user-only), Node.js backend, PostgreSQL database, and Next.js admin web panel.
 
+📄 **[Technical Decisions & Problem-Solving](docs/TECHNICAL_DECISIONS.md)** – Why we chose Stripe webhooks, EC2 vs Lambda, S3, PostgreSQL, and more.
+
 ## Project Structure
 
 ```

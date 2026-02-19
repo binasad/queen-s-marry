@@ -4,9 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 
-// Session key to track if this is a fresh page load (refresh) vs navigation
-const SESSION_KEY = 'app_session_active';
-
 interface AuthGuardProps {
   children: React.ReactNode;
   requiredPermission?: string | string[];
@@ -24,34 +21,6 @@ export default function AuthGuard({
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    // Check if this is a page refresh (session was active but page reloaded)
-    const checkForRefresh = () => {
-      const sessionActive = sessionStorage.getItem(SESSION_KEY);
-      const wasNavigationType = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      
-      // If session was active AND this is a reload (not initial load or navigation)
-      if (sessionActive && wasNavigationType?.type === 'reload') {
-        // Clear auth and redirect to login
-        console.log('Page refresh detected - logging out for security');
-        localStorage.removeItem('token');
-        localStorage.removeItem('auth-storage');
-        sessionStorage.removeItem(SESSION_KEY);
-        logout();
-        router.replace('/login');
-        setIsLoading(false);
-        return true;
-      }
-      
-      // Mark session as active for future refresh detection
-      sessionStorage.setItem(SESSION_KEY, 'true');
-      return false;
-    };
-
-    // Check for refresh first
-    if (checkForRefresh()) {
-      return;
-    }
-
     // Check authentication status
     const checkAuth = () => {
       // Also check localStorage directly for token (handles hydration issues)
