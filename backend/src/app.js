@@ -93,6 +93,16 @@ app.use(compression()); // Compress responses
 
 // Stripe webhook - MUST be before express.json() (needs raw body for signature verification)
 const paymentsController = require('./modules/payments/payments.controller');
+app.get(`/api/${API_VERSION}/payments/webhook`, (req, res) => {
+  const baseUrl = (req.protocol || 'https') + '://' + (req.get('host') || 'YOUR_SERVER');
+  res.json({
+    ok: true,
+    message: 'Stripe webhook endpoint. Configure in Stripe Dashboard:',
+    webhookUrl: `${baseUrl}/api/${API_VERSION}/payments/webhook`,
+    event: 'payment_intent.succeeded',
+    secret: process.env.STRIPE_WEBHOOK_SECRET ? 'configured' : 'MISSING',
+  });
+});
 app.post(`/api/${API_VERSION}/payments/webhook`, express.raw({ type: 'application/json' }), paymentsController.handleWebhook);
 
 app.use(express.json({ limit: '10mb' })); // Parse JSON bodies

@@ -23,8 +23,9 @@ WHERE payment_intent_id IS NOT NULL;
 
 1. Go to [Stripe Dashboard → Developers → Webhooks](https://dashboard.stripe.com/webhooks)
 2. Click **Add endpoint**
-3. **Endpoint URL:** `https://YOUR_DOMAIN/api/v1/payments/webhook`  
-   - Example: `https://44.215.209.41:5000/api/v1/payments/webhook` (use HTTPS if possible)
+3. **Endpoint URL:** Use your backend URL + `/api/v1/payments/webhook`  
+   - Example: `https://aztrosyssalonappapi.ddns.net/api/v1/payments/webhook`
+   - **Verify URL:** Visit `GET https://YOUR_DOMAIN/api/v1/payments/webhook` in a browser – it returns the exact URL to use
    - Stripe requires HTTPS in production
 4. **Events to send:** Select `payment_intent.succeeded`
 5. Click **Add endpoint**

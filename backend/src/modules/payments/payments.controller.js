@@ -170,14 +170,16 @@ class PaymentsController {
       const appointment = result.rows[0];
       console.log('✅ Webhook: created appointment', appointment.id, 'for payment', paymentIntentId, '- will appear in admin-web');
 
-      // Email confirmation
-      emailService.sendAppointmentConfirmation(customerEmail, {
-        customerName: customerName || 'Customer',
-        serviceName: service.name,
-        date: appointmentDate,
-        time: appointmentTime,
-        price: totalPrice,
-      }).catch(err => console.error('Email failed:', err));
+      // Email confirmation (only if customer has email)
+      if (customerEmail && String(customerEmail).trim()) {
+        emailService.sendAppointmentConfirmation(customerEmail, {
+          customerName: customerName || 'Customer',
+          serviceName: service.name,
+          date: appointmentDate,
+          time: appointmentTime,
+          price: totalPrice,
+        }).catch(err => console.error('❌ Webhook: Email failed:', err.message));
+      }
 
       // WebSocket
       if (global.io) {
@@ -185,13 +187,13 @@ class PaymentsController {
         global.io.emit('appointments-updated', { type: 'created', appointment });
       }
 
-      // Push notifications
+      // Push notification to customer
       const pushService = require('../../services/pushNotificationService');
       pushService.sendToUser(userId, {
         title: 'Appointment Confirmed',
         body: `Your appointment for ${service.name} on ${appointmentDate} is confirmed!`,
         data: { type: 'appointment', id: appointment.id },
-      }).catch(() => {});
+      }).catch(err => console.error('❌ Webhook: Push to customer failed:', err.message));
       pushService.sendToAdmins({
         title: 'New Booking',
         body: `${customerName || 'Customer'} booked ${service.name} for ${appointmentDate} (paid)`,

@@ -72,9 +72,12 @@ server.listen(PORT, '0.0.0.0', async () => {
           ADD COLUMN IF NOT EXISTS offer_id UUID REFERENCES offers(id) ON DELETE SET NULL
         `);
       } catch (_) {
-        /* offer_id may already exist or offers table order - non-critical */
+        /* offer_id may already exist - non-critical */
       }
-      console.log('✓ Appointments table migrations verified');
+      await pool.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS fcm_token TEXT
+      `);
+      console.log('✓ Appointments & users table migrations verified');
     } catch (migErr) {
       console.warn('⚠️ Migration check:', migErr.message);
     }

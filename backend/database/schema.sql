@@ -46,6 +46,7 @@ CREATE TABLE users (
     reset_password_expires TIMESTAMP,
     failed_login_attempts INTEGER DEFAULT 0,
     lockout_until TIMESTAMP,
+    fcm_token TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP
