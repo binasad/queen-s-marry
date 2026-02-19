@@ -305,6 +305,19 @@ class AppointmentsController {
         }).catch(() => {});
       }
 
+      // Email when appointment is confirmed
+      if (status === 'confirmed' && apt.customer_email && apt.customer_email.trim()) {
+        const serviceResult = await query('SELECT name FROM services WHERE id = $1', [apt.service_id]);
+        const serviceName = serviceResult.rows[0]?.name || 'Your service';
+        emailService.sendAppointmentConfirmation(apt.customer_email, {
+          customerName: apt.customer_name || 'Customer',
+          serviceName,
+          date: apt.appointment_date,
+          time: apt.appointment_time,
+          price: apt.total_price,
+        }).catch(err => console.error('Email failed:', err));
+      }
+
       res.json({
         success: true,
         message: 'Appointment status updated successfully.',
@@ -359,6 +372,18 @@ class AppointmentsController {
           body: 'Your appointment payment has been confirmed. Thank you!',
           data: { type: 'appointment', id: apt.id },
         }).catch(() => {});
+      }
+      // Email when payment confirmed (appointment becomes confirmed)
+      if (apt.customer_email && apt.customer_email.trim()) {
+        const serviceResult = await query('SELECT name FROM services WHERE id = $1', [apt.service_id]);
+        const serviceName = serviceResult.rows[0]?.name || 'Your service';
+        emailService.sendAppointmentConfirmation(apt.customer_email, {
+          customerName: apt.customer_name || 'Customer',
+          serviceName,
+          date: apt.appointment_date,
+          time: apt.appointment_time,
+          price: apt.total_price,
+        }).catch(err => console.error('Email failed:', err));
       }
       pushService.sendToAdmins({
         title: 'Payment Received',

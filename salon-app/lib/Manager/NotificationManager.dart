@@ -1,6 +1,10 @@
 // lib/Manager/NotificationManager.dart
 import 'package:flutter/foundation.dart';
 
+/// Called when user taps a push notification (e.g. appointment/payment).
+/// Data keys: type, id, status (optional).
+typedef NotificationTapCallback = void Function(Map<String, String> data);
+
 class AppNotification {
   final String id;
   final String title;
@@ -22,6 +26,12 @@ class NotificationManager extends ChangeNotifier {
   NotificationManager._();
 
   final List<AppNotification> _notifications = [];
+
+  /// Set by app to handle notification taps (e.g. navigate to appointments).
+  static NotificationTapCallback? onNotificationTap;
+
+  /// Pending tap data when app opened from terminated state (before handler set).
+  static Map<String, String>? pendingTapData;
 
   List<AppNotification> get notifications => List.unmodifiable(_notifications);
 
@@ -48,5 +58,22 @@ class NotificationManager extends ChangeNotifier {
   void clearAll() {
     _notifications.clear();
     notifyListeners();
+  }
+
+  /// Notify that user tapped a notification. Call from push service.
+  static void handleNotificationTap(Map<String, String> data) {
+    if (onNotificationTap != null) {
+      onNotificationTap!(data);
+    } else {
+      pendingTapData = data;
+    }
+  }
+
+  /// Call when handler is set – processes any pending tap from cold start.
+  static void processPendingTap() {
+    if (pendingTapData != null && onNotificationTap != null) {
+      onNotificationTap!(pendingTapData!);
+      pendingTapData = null;
+    }
   }
 }

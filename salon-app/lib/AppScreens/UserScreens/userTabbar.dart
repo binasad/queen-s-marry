@@ -14,6 +14,7 @@ import '../Settings.dart';
 import 'AppointmentList.dart';
 import 'Course Screens/CoursesScreen.dart';
 import 'BlogsScreen.dart';
+import '../../Manager/NotificationManager.dart';
 
 class BottomTabBar extends ConsumerStatefulWidget {
   // final String userName;
@@ -45,6 +46,15 @@ class _BottomTabBarState extends ConsumerState<BottomTabBar> {
     super.initState();
     loadUserData();
 
+    // Handle push notification tap – navigate to appointments
+    NotificationManager.onNotificationTap = (data) {
+      if (mounted && (data['type'] == 'appointment' || data['type'] == 'payment')) {
+        setState(() => _currentIndex = 1);
+        _refreshScreen(1);
+      }
+    };
+    NotificationManager.processPendingTap();
+
     // Setup WebSocket after a short delay to ensure auth provider is ready
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
@@ -72,6 +82,7 @@ class _BottomTabBarState extends ConsumerState<BottomTabBar> {
 
   @override
   void dispose() {
+    NotificationManager.onNotificationTap = null;
     // Cancel stream subscriptions
     _offersSubscription?.cancel();
     _servicesSubscription?.cancel();

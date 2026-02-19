@@ -99,6 +99,7 @@ class PushNotificationService {
         title: initial!.notification!.title ?? 'Merry Queen',
         body: initial.notification!.body ?? '',
       );
+      _handleNotificationTap(initial);
     }
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       if (message.notification != null) {
@@ -106,6 +107,7 @@ class PushNotificationService {
           title: message.notification!.title ?? 'Merry Queen',
           body: message.notification!.body ?? '',
         );
+        _handleNotificationTap(message);
       }
     });
   }
@@ -129,6 +131,15 @@ class PushNotificationService {
       await _localNotifications
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(_channel);
+    }
+  }
+
+  void _handleNotificationTap(RemoteMessage message) {
+    final data = message.data;
+    if (data.isEmpty) return;
+    final map = Map<String, String>.from(data);
+    if (map['type'] == 'appointment' || map['type'] == 'payment') {
+      NotificationManager.handleNotificationTap(map);
     }
   }
 
