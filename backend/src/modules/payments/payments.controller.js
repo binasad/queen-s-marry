@@ -38,6 +38,7 @@ class PaymentsController {
       res.status(200).json({
         success: true,
         clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
       });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
@@ -204,6 +205,38 @@ class PaymentsController {
       throw err;
     }
   }
+
+  // Client-side fallback: when app confirms payment, create appointment if webhook hasn't
+  confirmAppointment = async (req, res) => {
+    try {
+      const { paymentIntentId } = req.body;
+      if (!paymentIntentId) {
+        return res.status(400).json({ success: false, message: 'paymentIntentId required' });
+      }
+
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({
+          success: false,
+          message: `Payment not completed (status: ${paymentIntent.status})`,
+        });
+      }
+
+      await this._handlePaymentSucceeded(paymentIntent);
+      const result = await query(
+        'SELECT id FROM appointments WHERE payment_intent_id = $1',
+        [paymentIntentId]
+      );
+      res.json({
+        success: true,
+        message: 'Appointment created',
+        data: { appointmentId: result.rows[0]?.id },
+      });
+    } catch (err) {
+      console.error('❌ confirmAppointment error:', err.message);
+      res.status(500).json({ success: false, message: err.message });
+    }
+  };
 
   getRecentPayments = async (req, res) => {
     try {

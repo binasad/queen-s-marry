@@ -11,4 +11,7 @@ router.get('/recent', auth, paymentsController.getRecentPayments);
 // Create PaymentIntent with booking metadata (webhook creates appointment on success)
 router.post('/create-intent', auth, createIntentValidation, handleValidationErrors, paymentsController.createPaymentIntent);
 
+// Client fallback: create appointment when payment succeeds (if webhook hasn't)
+router.post('/confirm-appointment', auth, paymentsController.confirmAppointment);
+
 module.exports = router;
