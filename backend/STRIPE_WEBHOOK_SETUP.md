@@ -1,47 +1,55 @@
-# Stripe Webhook Setup
+# Stripe Webhook Setup – Appointments Not Showing in Admin-Web
 
-Payment verification uses Stripe webhooks. The backend creates appointments only when Stripe confirms payment via `payment_intent.succeeded`.
+When customers pay via Stripe, the appointment is created by the **webhook**, not by the create-intent. If the webhook is not configured or fails, no appointment is created and nothing appears in admin-web.
 
-## 1. Run the migration
+## 1. Run the database migration
 
-```sql
--- In Supabase SQL Editor or psql
-\i database/add_payment_intent_id.sql
-```
-
-Or run the contents of `database/add_payment_intent_id.sql`.
-
-## 2. Configure environment
-
-Add to your `.env`:
-
-```
-STRIPE_SECRET_KEY=sk_test_xxx          # or sk_live_xxx for production
-STRIPE_WEBHOOK_SECRET=whsec_xxx        # from Stripe Dashboard
-```
-
-## 3. Get the webhook secret
-
-### Production
-
-1. Go to [Stripe Dashboard → Developers → Webhooks](https://dashboard.stripe.com/webhooks)
-2. Add endpoint: `https://your-backend.com/api/v1/payments/webhook`
-3. Select event: `payment_intent.succeeded`
-4. Copy the **Signing secret** (starts with `whsec_`)
-
-### Local development (Stripe CLI)
+Ensure the `payment_intent_id` column exists:
 
 ```bash
-# Install Stripe CLI: https://stripe.com/docs/stripe-cli
-stripe listen --forward-to localhost:5000/api/v1/payments/webhook
+# In Supabase SQL Editor or psql, run:
 ```
 
-The CLI will output a webhook secret like `whsec_xxx` — use that in `.env` for local testing.
+```sql
+-- From backend/database/add_payment_intent_id.sql
+ALTER TABLE appointments
+ADD COLUMN IF NOT EXISTS payment_intent_id VARCHAR(255) UNIQUE;
 
-## 4. Flow
+CREATE INDEX IF NOT EXISTS idx_appointments_payment_intent ON appointments(payment_intent_id)
+WHERE payment_intent_id IS NOT NULL;
+```
 
-1. **App** → `POST /payments/create-intent` with booking metadata (serviceId, date, time, customer info)
-2. **Backend** → Creates Stripe PaymentIntent with metadata
-3. **User** → Pays via Stripe Payment Sheet in the app
-4. **Stripe** → Sends `payment_intent.succeeded` webhook to your backend
-5. **Backend** → Verifies signature, creates appointment, sends email & push notifications
+## 2. Configure Stripe webhook
+
+1. Go to [Stripe Dashboard → Developers → Webhooks](https://dashboard.stripe.com/webhooks)
+2. Click **Add endpoint**
+3. **Endpoint URL:** `https://YOUR_DOMAIN/api/v1/payments/webhook`  
+   - Example: `https://44.215.209.41:5000/api/v1/payments/webhook` (use HTTPS if possible)
+   - Stripe requires HTTPS in production
+4. **Events to send:** Select `payment_intent.succeeded`
+5. Click **Add endpoint**
+6. Copy the **Signing secret** (starts with `whsec_`)
+
+## 3. Add webhook secret to .env
+
+```env
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Restart the backend after updating `.env`.
+
+## 4. Verify it works
+
+1. Make a test payment from the mobile app
+2. Check backend logs for:
+   - `📥 Stripe webhook received`
+   - `📥 Webhook event type: payment_intent.succeeded`
+   - `✅ Webhook: created appointment ... - will appear in admin-web`
+3. If you see `❌ Webhook signature verification failed` → wrong `STRIPE_WEBHOOK_SECRET`
+4. If you see `column "payment_intent_id" does not exist` → run the migration in step 1
+
+## 5. Admin-web appointments
+
+- Admin fetches via `GET /api/v1/appointments`
+- Requires `appointments.manage_all` permission
+- Check backend logs for `📋 Admin fetching appointments` and `📋 Appointments query returned X rows`

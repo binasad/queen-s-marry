@@ -46,11 +46,12 @@ class PaymentsController {
 
   // Stripe webhook - verifies payment and creates appointment server-side
   handleWebhook = async (req, res) => {
+    console.log('📥 Stripe webhook received');
     const sig = req.headers['stripe-signature'];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
-      console.error('❌ STRIPE_WEBHOOK_SECRET not configured');
+      console.error('❌ STRIPE_WEBHOOK_SECRET not configured – add it to .env and configure webhook in Stripe Dashboard');
       return res.status(500).send('Webhook secret not configured');
     }
 
@@ -62,9 +63,17 @@ class PaymentsController {
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+    console.log('📥 Webhook event type:', event.type);
+
     if (event.type === 'payment_intent.succeeded') {
       const paymentIntent = event.data.object;
-      await this._handlePaymentSucceeded(paymentIntent);
+      try {
+        await this._handlePaymentSucceeded(paymentIntent);
+      } catch (err) {
+        console.error('❌ Webhook: failed to create appointment:', err.message);
+        console.error('   Stack:', err.stack);
+        return res.status(500).json({ received: false, error: err.message });
+      }
     }
 
     res.json({ received: true });
@@ -159,7 +168,7 @@ class PaymentsController {
       );
 
       const appointment = result.rows[0];
-      console.log('✅ Webhook: created appointment', appointment.id, 'for payment', paymentIntentId);
+      console.log('✅ Webhook: created appointment', appointment.id, 'for payment', paymentIntentId, '- will appear in admin-web');
 
       // Email confirmation
       emailService.sendAppointmentConfirmation(customerEmail, {

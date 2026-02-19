@@ -135,6 +135,7 @@ CREATE TABLE appointments (
     cancelled_reason TEXT,
     paid_at TIMESTAMP,
     cancelled_at TIMESTAMP,
+    payment_intent_id VARCHAR(255) UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

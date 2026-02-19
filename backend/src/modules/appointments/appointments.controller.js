@@ -198,6 +198,7 @@ class AppointmentsController {
   async getAllAppointments(req, res) {
     try {
       const { status, date, page = 1, limit = 50 } = req.query;
+      console.log('📋 Admin fetching appointments:', { status: status || 'all', page, limit });
       const offset = (page - 1) * limit;
 
       let queryText = `
@@ -230,6 +231,7 @@ class AppointmentsController {
       queryParams.push(limit, offset);
 
       const result = await query(queryText, queryParams);
+      console.log('📋 Appointments query returned', result.rows.length, 'rows');
 
       // Get total count
       const countResult = await query(

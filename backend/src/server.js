@@ -51,10 +51,34 @@ server.listen(PORT, '0.0.0.0', async () => {
   console.log(`🔗 API Base URL: ${env.backendUrl}`);
   console.log(`🔌 WebSocket enabled`);
 
-  // Test database connection
+  // Test database connection and run migrations
   try {
     await pool.query('SELECT NOW()');
-    console.log('✓ Database connected successfully\n');
+    console.log('✓ Database connected successfully');
+
+    if (process.env.STRIPE_WEBHOOK_SECRET) {
+      console.log('✓ Stripe webhook secret configured – appointments will be created on payment success');
+    }
+
+    // Ensure payment_intent_id and offer_id columns exist (for Stripe webhook)
+    try {
+      await pool.query(`
+        ALTER TABLE appointments
+        ADD COLUMN IF NOT EXISTS payment_intent_id VARCHAR(255) UNIQUE
+      `);
+      try {
+        await pool.query(`
+          ALTER TABLE appointments
+          ADD COLUMN IF NOT EXISTS offer_id UUID REFERENCES offers(id) ON DELETE SET NULL
+        `);
+      } catch (_) {
+        /* offer_id may already exist or offers table order - non-critical */
+      }
+      console.log('✓ Appointments table migrations verified');
+    } catch (migErr) {
+      console.warn('⚠️ Migration check:', migErr.message);
+    }
+    console.log('');
   } catch (error) {
     console.error('⚠️ Database connection failed:', error.message);
     console.log('🔌 WebSocket server will continue running without database...\n');
