@@ -163,6 +163,13 @@ class ApiService {
       message = data; // express-rate-limit sends plain text
     } else if (data is Map) {
       message = data['message']?.toString() ?? data['error']?.toString() ?? 'Unknown error';
+      // Use first validation error if available (e.g. "Customer phone is required")
+      final errors = data['errors'];
+      if (errors is List && errors.isNotEmpty) {
+        final first = errors.first;
+        final msg = first is Map ? first['msg']?.toString() : null;
+        if (msg != null && msg.isNotEmpty) message = msg;
+      }
     } else {
       message = 'Unknown error';
     }
@@ -186,8 +193,66 @@ class ApiService {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    // Your existing 401 refresh logic stays here
-    handler.next(err);
+    final apiException = _dioExceptionToApiException(err);
+    handler.reject(
+      DioException(
+        requestOptions: err.requestOptions,
+        response: err.response,
+        type: err.type,
+        error: apiException,
+      ),
+    );
+  }
+
+  ApiException _dioExceptionToApiException(DioException err) {
+    switch (err.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return ApiException(
+          statusCode: 408,
+          message: 'Request timed out. Please check your connection and try again.',
+        );
+      case DioExceptionType.connectionError:
+        return ApiException(
+          statusCode: 0,
+          message: 'Connection failed. Please check your internet connection.',
+        );
+      case DioExceptionType.badResponse:
+        final res = err.response;
+        if (res != null) {
+          final data = res.data;
+          String message;
+          if (data is String && data.isNotEmpty) {
+            message = data;
+          } else if (data is Map) {
+            message = data['message']?.toString() ?? data['error']?.toString() ?? 'Unknown error';
+          } else {
+            message = 'Unknown error';
+          }
+          if (res.statusCode == 429) {
+            message = 'Too many attempts. Please wait a few minutes and try again.';
+          }
+          final code = data is Map ? data['code']?.toString() : null;
+          final isGuestRestricted = res.statusCode == 403 &&
+              (code == 'GUEST_RESTRICTED' ||
+                  message.toLowerCase().contains('guest') ||
+                  message.toLowerCase().contains('sign up'));
+          return ApiException(
+            statusCode: res.statusCode ?? 500,
+            message: message,
+            isGuestRestricted: isGuestRestricted,
+          );
+        }
+        return ApiException(statusCode: 500, message: 'Server error. Please try again later.');
+      case DioExceptionType.cancel:
+        return ApiException(statusCode: 0, message: 'Request was cancelled.');
+      default:
+        return ApiException(
+          statusCode: 0,
+          message: err.message ?? 'Connection failed. Please check your internet connection.',
+        );
+    }
   }
 
   Future<void> _testConnection() async {

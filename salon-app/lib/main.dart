@@ -35,8 +35,11 @@ void main() async {
   // Register FCM background handler (handler inits Firebase when notification arrives)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  Stripe.publishableKey =
-      'pk_test_51SGV17AdeL5kUQJvRdfCLGn4Dr8lBebNrq7dBFIn7nU7FKVTtflPI3E5haM3nsN2abws9UGoVJ0qlbUyjwQ6rEpa00TnRdVGad';
+  // Stripe key from .env
+  final stripeKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
+  if (stripeKey.isNotEmpty) {
+    Stripe.publishableKey = stripeKey;
+  }
 
   // Defer ALL heavy work so first frame shows immediately
   Future(() async {

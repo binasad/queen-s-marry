@@ -276,6 +276,7 @@ class _ApiCategoryServicesTabbedScreenState
                     final val = double.tryParse(pct.toString()) ?? 0;
                     offerDiscountedPrice = (finalPrice * (1 - val / 100)).roundToDouble();
                     offerId = offer['id']?.toString();
+                    serviceMap['_base_price'] = finalPrice.toString(); // Original price for correct discount calc
                     serviceMap['price'] = offerDiscountedPrice.toString();
                     serviceMap['_offer_id'] = offerId ?? '';
                     serviceMap['_offer_title'] = offer['title']?.toString() ?? '';

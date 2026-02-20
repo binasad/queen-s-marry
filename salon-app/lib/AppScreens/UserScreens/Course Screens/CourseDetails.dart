@@ -54,7 +54,11 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
       final applicable = (offers as List)
           .map((o) => Map<String, dynamic>.from(o as Map))
           .where((o) {
+        final applyTo = o['apply_to']?.toString() ?? o['applyTo']?.toString();
         final offerCourseId = o['course_id']?.toString();
+        if (applyTo == 'all_services' || applyTo == 'service') return false;
+        if (applyTo == 'all_courses' || applyTo == 'all') return offerCourseId == null || offerCourseId.isEmpty || offerCourseId == courseId;
+        if (applyTo == 'course') return offerCourseId == courseId;
         return offerCourseId == null || offerCourseId.isEmpty || offerCourseId == courseId;
       }).toList();
       setState(() {

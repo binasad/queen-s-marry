@@ -24,12 +24,12 @@ const env = {
     url: process.env.DATABASE_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
   },
 
-  // JWT
+  // JWT (from .env - set JWT_SECRET and JWT_REFRESH_SECRET)
   jwt: {
-    secret: process.env.JWT_SECRET || 'b7afe8d3009d0b4e6c5172436b5349fd871477f4e14585e7cd3190cd8b2fd2d3',
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || '37098196e3e14ce9fdc65ce7dd620363e6deb564392a15abc80d900cbeb7c6c8',
-    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
+    secret: process.env.JWT_SECRET,
+    expiresIn: process.env.JWT_EXPIRES_IN || process.env.JWT_EXPIRE || '7d',
+    refreshSecret: process.env.JWT_REFRESH_SECRET,
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || process.env.JWT_REFRESH_EXPIRE || '30d',
   },
 
   // Rate Limiting
@@ -51,18 +51,18 @@ const env = {
   // Google Sign-In (Web OAuth client ID for idToken verification)
   googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID?.trim() || '',
 
-  // URLs
+  // URLs (from .env - local: http://192.168.18.112:5000)
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   adminWebUrl: process.env.ADMIN_WEB_URL || 'http://localhost:3001',
-  backendUrl: process.env.BACKEND_URL || 'http://44.215.209.41/:5000',
+  backendUrl: process.env.BACKEND_URL || 'http://localhost:5000',
 
-  // AWS S3
+  // AWS S3 (from .env - optional)
   s3: {
-    region: process.env.AWS_REGION || 'us-east-1',
-    bucket: process.env.AWS_S3_BUCKET || 'salon-app-assets-saad',
+    region: process.env.AWS_REGION,
+    bucket: process.env.AWS_S3_BUCKET,
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    baseUrl: process.env.AWS_S3_BASE_URL || 'https://salon-app-assets-saad.s3.amazonaws.com',
+    baseUrl: process.env.AWS_S3_BASE_URL,
   },
 
   get isDevelopment() { return this.nodeEnv === 'development'; },

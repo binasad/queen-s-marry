@@ -1,5 +1,19 @@
 const { query } = require('../../config/db');
 
+function resolveApplyTo(applyTo, serviceId, courseId) {
+  const at = applyTo || 'all';
+  if (at === 'service' && serviceId) {
+    return { applyTo: 'service', serviceId, courseId: null };
+  }
+  if (at === 'course' && courseId) {
+    return { applyTo: 'course', serviceId: null, courseId };
+  }
+  if (['all_services', 'all_courses', 'all'].includes(at)) {
+    return { applyTo: at, serviceId: null, courseId: null };
+  }
+  return { applyTo: 'all', serviceId: null, courseId: null };
+}
+
 class OffersController {
   // Get all offers (public - only active ones)
   async getAllOffers(req, res) {
@@ -145,7 +159,7 @@ class OffersController {
   // Create offer (Admin only)
   async createOffer(req, res) {
     try {
-      const { title, description, discountPercentage, discountAmount, imageUrl, startDate, endDate, isActive, serviceId, courseId } = req.body;
+      const { title, description, discountPercentage, discountAmount, imageUrl, startDate, endDate, isActive, applyTo, serviceId, courseId } = req.body;
 
       // Validate that at least one discount type is provided
       if (!discountPercentage && !discountAmount) {
@@ -155,9 +169,20 @@ class OffersController {
         });
       }
 
+      const at = applyTo || 'all';
+      if (at === 'service' && !serviceId) {
+        return res.status(400).json({ success: false, message: 'Service is required when applying to specific service.' });
+      }
+      if (at === 'course' && !courseId) {
+        return res.status(400).json({ success: false, message: 'Course is required when applying to specific course.' });
+      }
+
+      // Resolve apply_to and ids based on applyTo
+      const resolved = resolveApplyTo(applyTo, serviceId, courseId);
+
       const result = await query(
-        `INSERT INTO offers (title, description, discount_percentage, discount_amount, image_url, start_date, end_date, is_active, service_id, course_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `INSERT INTO offers (title, description, discount_percentage, discount_amount, image_url, start_date, end_date, is_active, apply_to, service_id, course_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING *`,
         [
           title,
@@ -168,8 +193,9 @@ class OffersController {
           startDate,
           endDate,
           isActive !== undefined ? isActive : true,
-          serviceId || null,
-          courseId || null,
+          resolved.applyTo,
+          resolved.serviceId,
+          resolved.courseId,
         ]
       );
 
@@ -212,7 +238,18 @@ class OffersController {
   async updateOffer(req, res) {
     try {
       const { id } = req.params;
-      const { title, description, discountPercentage, discountAmount, imageUrl, startDate, endDate, isActive, serviceId, courseId } = req.body;
+      const { title, description, discountPercentage, discountAmount, imageUrl, startDate, endDate, isActive, applyTo, serviceId, courseId } = req.body;
+
+      // Resolve apply_to and ids when applyTo is provided
+      let resolvedServiceId = serviceId;
+      let resolvedCourseId = courseId;
+      let resolvedApplyTo = applyTo;
+      if (applyTo !== undefined) {
+        const resolved = resolveApplyTo(applyTo, serviceId, courseId);
+        resolvedApplyTo = resolved.applyTo;
+        resolvedServiceId = resolved.serviceId;
+        resolvedCourseId = resolved.courseId;
+      }
 
       // Build dynamic update query
       const updates = [];
@@ -251,13 +288,22 @@ class OffersController {
         updates.push(`is_active = $${paramCounter++}`);
         values.push(isActive);
       }
-      if (serviceId !== undefined) {
+      if (applyTo !== undefined) {
+        updates.push(`apply_to = $${paramCounter++}`);
+        values.push(resolvedApplyTo || 'all');
         updates.push(`service_id = $${paramCounter++}`);
-        values.push(serviceId || null);
-      }
-      if (courseId !== undefined) {
+        values.push(resolvedServiceId || null);
         updates.push(`course_id = $${paramCounter++}`);
-        values.push(courseId || null);
+        values.push(resolvedCourseId || null);
+      } else {
+        if (serviceId !== undefined) {
+          updates.push(`service_id = $${paramCounter++}`);
+          values.push(serviceId || null);
+        }
+        if (courseId !== undefined) {
+          updates.push(`course_id = $${paramCounter++}`);
+          values.push(courseId || null);
+        }
       }
 
       if (updates.length === 0) {

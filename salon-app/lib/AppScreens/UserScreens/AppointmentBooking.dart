@@ -6,6 +6,8 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:lottie/lottie.dart';
 import '../../services/user_service.dart';
 import '../../services/api_service.dart';
+import '../../utils/error_handler.dart';
+import '../PersonalInfo.dart';
 
 class AppColors {
   static const Color primaryPink = Color(0xFFFF0068);
@@ -110,14 +112,57 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     return '${hour.toString().padLeft(2, '0')}:${mStr.padLeft(2, '0')}';
   }
 
-  double _getStandardPrice() =>
-      double.tryParse(widget.service['price']?.toString() ?? '0') ?? 0.0;
+  double _getStandardPrice() {
+    // Use _base_price when present (from offer flow) for correct Standard Rate display
+    final base = widget.service['_base_price'];
+    if (base != null) {
+      return double.tryParse(base.toString()) ?? 0.0;
+    }
+    return double.tryParse(widget.service['price']?.toString() ?? '0') ?? 0.0;
+  }
   double _getFinalPrice() => widget.offerDiscountedPrice ?? _getStandardPrice();
   double _getChargeAmount() => _getFinalPrice();
 
   Future<void> _bookAppointment() async {
     if (_selectedTimeIndex == -1) {
       _showSnackBar('Please select a time', Colors.orange);
+      return;
+    }
+
+    final phone = _userPhone?.trim() ?? '';
+    final email = _userEmail?.trim() ?? '';
+    if (phone.isEmpty || email.isEmpty) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Complete Profile'),
+            content: Text(
+              phone.isEmpty
+                  ? 'Please add your phone number in Settings to complete your booking.'
+                  : 'Please add your email in Settings to complete your booking.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const UserPersonalInfo(),
+                    ),
+                  );
+                },
+                child: const Text('Go to Profile'),
+              ),
+            ],
+          ),
+        );
+      }
       return;
     }
 
@@ -177,7 +222,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
         _showSnackBar("Payment Cancelled", Colors.orange);
       } else {
         debugPrint('❌ Booking Error: $e');
-        _showSnackBar('Error: ${e.toString()}', Colors.red);
+        if (mounted) ErrorHandler.show(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

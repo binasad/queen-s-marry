@@ -17,8 +17,8 @@ const validationRules = {
       .withMessage('Discount percentage must be between 0 and 100'),
     body('discountAmount')
       .optional()
-      .isFloat({ min: 0 })
-      .withMessage('Discount amount must be a positive number'),
+      .custom((val) => val == null || val === '' || (typeof val === 'number' && val >= 0))
+      .withMessage('Discount amount must be a positive number or null/empty to clear'),
     body('imageUrl')
       .optional()
       .isURL()
@@ -43,6 +43,10 @@ const validationRules = {
       .optional()
       .isBoolean()
       .withMessage('isActive must be a boolean'),
+    body('applyTo')
+      .optional()
+      .isIn(['all', 'all_services', 'all_courses', 'service', 'course'])
+      .withMessage('applyTo must be one of: all, all_services, all_courses, service, course'),
     body('serviceId')
       .optional()
       .isUUID()
@@ -73,8 +77,8 @@ const validationRules = {
       .withMessage('Discount percentage must be between 0 and 100'),
     body('discountAmount')
       .optional()
-      .isFloat({ min: 0 })
-      .withMessage('Discount amount must be a positive number'),
+      .custom((val) => val == null || val === '' || (typeof val === 'number' && val >= 0))
+      .withMessage('Discount amount must be a positive number or null/empty to clear'),
     body('imageUrl')
       .optional()
       .isURL()
@@ -97,6 +101,10 @@ const validationRules = {
       .optional()
       .isBoolean()
       .withMessage('isActive must be a boolean'),
+    body('applyTo')
+      .optional()
+      .isIn(['all', 'all_services', 'all_courses', 'service', 'course'])
+      .withMessage('applyTo must be one of: all, all_services, all_courses, service, course'),
     body('serviceId')
       .optional()
       .isUUID()

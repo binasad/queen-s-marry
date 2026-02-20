@@ -2,8 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    // Allows images to be loaded from localhost and your AWS EC2 IP
-    domains: ['localhost', '44.215.209.41'], 
+    // Local dev + production (uncomment when using deployed backend)
+    domains: ['localhost'],
+    // domains: ['localhost', '44.215.209.41'],
   },
   async rewrites() {
     return [

@@ -18,6 +18,7 @@ interface Offer {
   start_date: string;
   end_date: string;
   is_active?: boolean;
+  apply_to?: 'all' | 'all_services' | 'all_courses' | 'service' | 'course';
   service_id?: string;
   course_id?: string;
   created_at?: string;
@@ -39,6 +40,7 @@ export default function OffersPage() {
     startDate: '',
     endDate: '',
     isActive: true,
+    applyTo: 'all' as 'all' | 'all_services' | 'all_courses' | 'service' | 'course',
     serviceId: '',
     courseId: '',
   });
@@ -176,6 +178,14 @@ export default function OffersPage() {
       toast.error('Discount percentage is required (1–100)');
       return;
     }
+    if (formData.applyTo === 'service' && !formData.serviceId) {
+      toast.error('Please select a service');
+      return;
+    }
+    if (formData.applyTo === 'course' && !formData.courseId) {
+      toast.error('Please select a course');
+      return;
+    }
     if (!formData.startDate || !formData.endDate) {
       toast.error('Start and end dates are required');
       return;
@@ -199,13 +209,14 @@ export default function OffersPage() {
         startDate: formData.startDate,
         endDate: formData.endDate,
         isActive: formData.isActive,
-        serviceId: formData.serviceId || undefined,
-        courseId: formData.courseId || undefined,
+        applyTo: formData.applyTo,
+        serviceId: formData.applyTo === 'service' ? formData.serviceId || undefined : undefined,
+        courseId: formData.applyTo === 'course' ? formData.courseId || undefined : undefined,
       };
 
       if (formData.discountPercentage) {
         data.discountPercentage = parseFloat(formData.discountPercentage);
-        data.discountAmount = null; // Use only % discount
+        data.discountAmount = null; // Clear fixed amount when using % only
       }
 
       if (imageUrl) {
@@ -229,6 +240,7 @@ export default function OffersPage() {
 
   const handleEdit = (offer: Offer) => {
     setEditingOffer(offer);
+    const applyTo = offer.apply_to || (offer.service_id ? 'service' : offer.course_id ? 'course' : 'all');
     setFormData({
       title: offer.title,
       description: offer.description || '',
@@ -237,6 +249,7 @@ export default function OffersPage() {
       startDate: offer.start_date ? offer.start_date.split('T')[0] : '',
       endDate: offer.end_date ? offer.end_date.split('T')[0] : '',
       isActive: offer.is_active !== false,
+      applyTo,
       serviceId: offer.service_id || '',
       courseId: offer.course_id || '',
     });
@@ -415,11 +428,17 @@ export default function OffersPage() {
                           </p>
                           
                           {/* Applies to */}
-                          {!offer.service_id && !offer.course_id && (
-                            <div className="text-xs text-primary-600 font-medium mb-2">
-                              Applies to all services & courses
-                            </div>
-                          )}
+                          <div className="text-xs text-primary-600 font-medium mb-2">
+                            {(() => {
+                              const at = offer.apply_to || (offer.service_id ? 'service' : offer.course_id ? 'course' : 'all');
+                              if (at === 'all_services') return 'Applies to all services';
+                              if (at === 'all_courses') return 'Applies to all courses';
+                              if (at === 'all') return 'Applies to all services & courses';
+                              if (at === 'service') return 'Applies to specific service';
+                              if (at === 'course') return 'Applies to specific course';
+                              return 'Applies to all services & courses';
+                            })()}
+                          </div>
                           {/* Dates */}
                           <div className="flex items-center text-sm text-gray-500 mb-4">
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -622,42 +641,62 @@ export default function OffersPage() {
                   </div>
                 </div>
 
-                {/* Apply to Service or Course - empty = all */}
+                {/* Apply to */}
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
-                    Apply to (optional)
+                    Apply to
                   </label>
-                  <p className="text-xs text-gray-500">
-                    Leave both empty to apply this offer to <strong>all services and courses</strong>. Or select one to limit the offer to that specific item.
-                  </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Service</label>
+                  <div className="space-y-2">
+                    {[
+                      { value: 'all', label: 'All services & courses' },
+                      { value: 'all_services', label: 'All services only' },
+                      { value: 'all_courses', label: 'All courses only' },
+                      { value: 'service', label: 'Specific service' },
+                      { value: 'course', label: 'Specific course' },
+                    ].map((opt) => (
+                      <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="applyTo"
+                          value={opt.value}
+                          checked={formData.applyTo === opt.value}
+                          onChange={() => setFormData({ ...formData, applyTo: opt.value as any, serviceId: opt.value === 'service' ? formData.serviceId : '', courseId: opt.value === 'course' ? formData.courseId : '' })}
+                          className="text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="text-sm">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {formData.applyTo === 'service' && (
+                    <div className="mt-3">
+                      <label className="block text-xs text-gray-500 mb-1">Select service</label>
                       <select
                         value={formData.serviceId}
-                        onChange={(e) => setFormData({ ...formData, serviceId: e.target.value, courseId: e.target.value ? '' : formData.courseId })}
+                        onChange={(e) => setFormData({ ...formData, serviceId: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       >
-                        <option value="">— None —</option>
+                        <option value="">— Select service —</option>
                         {services.map((s) => (
                           <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Course</label>
+                  )}
+                  {formData.applyTo === 'course' && (
+                    <div className="mt-3">
+                      <label className="block text-xs text-gray-500 mb-1">Select course</label>
                       <select
                         value={formData.courseId}
-                        onChange={(e) => setFormData({ ...formData, courseId: e.target.value, serviceId: e.target.value ? '' : formData.serviceId })}
+                        onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       >
-                        <option value="">— None —</option>
+                        <option value="">— Select course —</option>
                         {courses.map((c) => (
                           <option key={c.id} value={c.id}>{c.title}</option>
                         ))}
                       </select>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Active Toggle */}

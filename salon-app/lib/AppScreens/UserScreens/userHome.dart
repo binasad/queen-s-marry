@@ -16,6 +16,7 @@ import '../../services/websocket_service.dart';
 import '../../providers/services_provider.dart';
 import '../../widgets/offline_banner.dart';
 import '../../utils/debouncer.dart';
+import '../../utils/error_handler.dart';
 import '../../utils/haptic_feedback.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../widgets/cached_image.dart';
@@ -87,6 +88,8 @@ class _UserHomeState extends ConsumerState<UserHome>
   late PageController _offerPageController;
   int _currentOfferPage = 0;
 
+  StreamSubscription<Map<String, dynamic>>? _offersUpdatedSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -130,6 +133,14 @@ class _UserHomeState extends ConsumerState<UserHome>
     _searchController.addListener(() {
       _searchDebouncer.call(_onSearchChanged);
     });
+
+    // Refresh offers when admin updates (WebSocket)
+    _offersUpdatedSubscription = WebSocketService().offersUpdatedStream.listen((_) {
+      if (mounted) {
+        debugPrint('📦 Offers updated via WebSocket - refreshing...');
+        loadOffers(forceRefresh: true);
+      }
+    });
   }
 
   /// Load all data from APIs concurrently
@@ -152,6 +163,7 @@ class _UserHomeState extends ConsumerState<UserHome>
 
   @override
   void dispose() {
+    _offersUpdatedSubscription?.cancel();
     _entranceController.dispose();
     _searchController.dispose();
     _offerPageController.dispose();
@@ -181,6 +193,7 @@ class _UserHomeState extends ConsumerState<UserHome>
               offer['start_date'],
               offer['end_date'],
             ),
+            'apply_to': offer['apply_to']?.toString() ?? offer['applyTo']?.toString(),
             'service_id': offer['service_id']?.toString(),
             'course_id': offer['course_id']?.toString(),
             'discount_percentage': offer['discount_percentage'],
@@ -404,30 +417,36 @@ class _UserHomeState extends ConsumerState<UserHome>
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
         child: Row(
           children: [
-            profile.isNotEmpty
-                ? CachedCircleImage(imageUrl: profile, radius: 24)
-                : CircleAvatar(
-                    radius: 24,
-                    backgroundImage: const AssetImage('assets/profile.jpg'),
-                  ),
+            GestureDetector(
+              onTap: () => Scaffold.of(context).openDrawer(),
+              child: profile.isNotEmpty
+                  ? CachedCircleImage(imageUrl: profile, radius: 24)
+                  : CircleAvatar(
+                      radius: 24,
+                      backgroundImage: const AssetImage('assets/profile.jpg'),
+                    ),
+            ),
             const SizedBox(width: 14),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hello, $name',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2D2D3A),
+              child: GestureDetector(
+                onTap: () => Scaffold.of(context).openDrawer(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hello, $name',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2D2D3A),
+                      ),
                     ),
-                  ),
-                  const Text(
-                    'Welcome to Merry Queen',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
-                ],
+                    const Text(
+                      'Welcome to Merry Queen',
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
             ),
             GestureDetector(
@@ -641,11 +660,25 @@ class _UserHomeState extends ConsumerState<UserHome>
   Future<void> _onOfferTap(Map<String, dynamic> offer) async {
     final serviceId = offer['service_id']?.toString();
     final courseId = offer['course_id']?.toString();
-    final isAllOffer = (serviceId == null || serviceId.isEmpty) && (courseId == null || courseId.isEmpty);
+    final applyTo = offer['apply_to']?.toString() ?? offer['applyTo']?.toString() ??
+        (serviceId != null && serviceId.isNotEmpty
+            ? 'service'
+            : courseId != null && courseId.isNotEmpty
+                ? 'course'
+                : 'all');
 
-    if (isAllOffer) {
+    // all_services, all_courses, or all -> show bottom sheet with appropriate options
+    if (applyTo == 'all_services' || applyTo == 'all_courses' || applyTo == 'all') {
       HapticHelper.mediumImpact();
       if (!mounted) return;
+      final showServices = applyTo == 'all_services' || applyTo == 'all';
+      final showCourses = applyTo == 'all_courses' || applyTo == 'all';
+      final message = applyTo == 'all_services'
+          ? 'This offer applies to all services'
+          : applyTo == 'all_courses'
+              ? 'This offer applies to all courses'
+              : 'This offer applies to all services and courses';
+
       showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
@@ -667,56 +700,58 @@ class _UserHomeState extends ConsumerState<UserHome>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'This offer applies to all services and courses',
+                    message,
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ServicesScreen(activeOffer: offer),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.spa_outlined),
-                      label: const Text('Browse Services'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE91E63),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  if (showServices)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ServicesScreen(activeOffer: offer),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.spa_outlined),
+                        label: const Text('Browse Services'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE91E63),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => CoursesScreen(activeOffer: offer),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.school_outlined),
-                      label: const Text('Browse Courses'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFFE91E63),
-                        side: const BorderSide(color: Color(0xFFE91E63)),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  if (showServices && showCourses) const SizedBox(height: 12),
+                  if (showCourses)
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CoursesScreen(activeOffer: offer),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.school_outlined),
+                        label: const Text('Browse Courses'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFE91E63),
+                          side: const BorderSide(color: Color(0xFFE91E63)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -726,7 +761,7 @@ class _UserHomeState extends ConsumerState<UserHome>
       return;
     }
 
-    if (serviceId != null && serviceId.isNotEmpty) {
+    if (applyTo == 'service' && serviceId != null && serviceId.isNotEmpty) {
       HapticHelper.mediumImpact();
       try {
         final service = await ServiceCatalogService().getServiceById(serviceId);
@@ -735,6 +770,7 @@ class _UserHomeState extends ConsumerState<UserHome>
               (double.tryParse(service['price']?.toString() ?? '0') ?? 0);
           final discountedPrice = _applyOfferDiscount(basePrice, offer);
           final serviceWithOffer = Map<String, dynamic>.from(service);
+          serviceWithOffer['_base_price'] = basePrice;
           serviceWithOffer['price'] = discountedPrice;
           serviceWithOffer['_offer_id'] = offer['id']?.toString();
           serviceWithOffer['_offer_title'] = offer['title']?.toString();
@@ -751,13 +787,9 @@ class _UserHomeState extends ConsumerState<UserHome>
         }
       } catch (e) {
         debugPrint('Failed to load service: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not open service')),
-          );
-        }
+        if (mounted) ErrorHandler.show(context, e);
       }
-    } else if (courseId != null && courseId.isNotEmpty) {
+    } else if (applyTo == 'course' && courseId != null && courseId.isNotEmpty) {
       HapticHelper.mediumImpact();
       try {
         final raw = await CourseService().getCourseById(courseId);
@@ -796,11 +828,7 @@ class _UserHomeState extends ConsumerState<UserHome>
         }
       } catch (e) {
         debugPrint('Failed to load course: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not open course')),
-          );
-        }
+        if (mounted) ErrorHandler.show(context, e);
       }
     }
   }

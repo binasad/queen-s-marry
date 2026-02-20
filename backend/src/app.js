@@ -47,6 +47,7 @@ const allowedOrigins = [
   env.adminWebUrl,
   'https://admin-web-navy-three.vercel.app'
 ].filter(Boolean);
+
 const corsOptions = {
   origin: (origin, callback) => {
     // Mobile apps (Android/iOS) don't send origin header - always allow
@@ -54,14 +55,16 @@ const corsOptions = {
       console.log('📱 Request from mobile app (no origin header) - allowing');
       return callback(null, true);
     }
-    
+
     console.log(`🌐 CORS check - Origin: ${origin}`);
-    
-    // In development, allow all localhost origins and common mobile/emulator IPs
+
+    // In development, allow localhost, 127.0.0.1, emulator, and local network IPs
     if (env.isDevelopment) {
-      if (origin.startsWith('http://localhost') || 
+      if (origin.startsWith('http://localhost') ||
           origin.startsWith('http://127.0.0.1') ||
-          origin.startsWith('http://10.0.2.2')) {
+          origin.startsWith('http://10.0.2.2') ||
+          origin.startsWith('http://10.') ||
+          origin.startsWith('http://192.168.')) {
         console.log('✅ Allowing origin (development):', origin);
         return callback(null, true);
       }
@@ -72,23 +75,24 @@ const corsOptions = {
       console.log('✅ Allowing origin (Vercel):', origin);
       return callback(null, true);
     }
-    
+
     // Production: check explicit whitelist
     if (allowedOrigins.includes(origin)) {
       console.log('✅ Allowing origin (whitelist):', origin);
       return callback(null, true);
     }
-    
+
     console.log('❌ Blocking origin:', origin);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
 };
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle preflight BEFORE routes
 app.use(`/api/${API_VERSION}`, favoritesRoutes);
-app.options('*', cors(corsOptions));
 app.use(compression()); // Compress responses
 
 // Stripe webhook - MUST be before express.json() (needs raw body for signature verification)

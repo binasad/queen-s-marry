@@ -1,9 +1,16 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1` : 'http://44.215.209.41:5000/api/v1');
+// From .env.local - set NEXT_PUBLIC_API_URL or NEXT_PUBLIC_BACKEND_URL
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1` : '');
+
+if (!API_URL && typeof window !== 'undefined') {
+  console.warn('[api] Set NEXT_PUBLIC_API_URL in .env.local (e.g. http://localhost:5000/api/v1)');
+}
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_URL || undefined,
   headers: {
     'Content-Type': 'application/json',
   },

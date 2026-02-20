@@ -126,13 +126,17 @@ class PaymentsController {
 
       if (offerId) {
         const offerResult = await query(
-          `SELECT id, discount_percentage, discount_amount, service_id
+          `SELECT id, discount_percentage, discount_amount, service_id, apply_to
            FROM offers WHERE id = $1 AND is_active = TRUE
            AND start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE`,
           [offerId]
         );
         if (offerResult.rows.length > 0) {
           const offer = offerResult.rows[0];
+          const applyTo = offer.apply_to || (offer.service_id ? 'service' : 'all');
+          if (applyTo === 'all_courses' || applyTo === 'course') {
+            // Offer is for courses only, skip for service booking
+          } else {
           const offerServiceId = offer.service_id?.toString();
           if (!offerServiceId || offerServiceId === serviceId) {
             appliedOfferId = offer.id;
@@ -142,6 +146,7 @@ class PaymentsController {
               totalPrice = Math.max(0, totalPrice - parseFloat(offer.discount_amount));
             }
             totalPrice = Math.round(totalPrice * 100) / 100;
+          }
           }
         }
       }

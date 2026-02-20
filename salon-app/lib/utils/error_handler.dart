@@ -1,9 +1,14 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'guest_guard.dart';
 
 class ErrorHandler {
   static String getMessage(dynamic error) {
+    // DioException may wrap ApiException in its error property
+    if (error is DioException && error.error is ApiException) {
+      return getMessage(error.error as ApiException);
+    }
     if (error is ApiException) {
       // Return the actual message from backend first
       if (error.message.isNotEmpty && error.message != 'Unknown error') {
@@ -28,6 +33,28 @@ class ErrorHandler {
           return error.message;
       }
     }
+    // DioException without wrapped ApiException (e.g. from other Dio usage)
+    if (error is DioException) {
+      switch (error.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          return 'Request timed out. Please check your connection and try again.';
+        case DioExceptionType.connectionError:
+          return 'Connection failed. Please check your internet connection.';
+        case DioExceptionType.cancel:
+          return 'Request was cancelled.';
+        case DioExceptionType.badResponse:
+          final res = error.response;
+          if (res != null && res.data is Map) {
+            final msg = res.data['message'] ?? res.data['error'];
+            if (msg != null && msg.toString().isNotEmpty) return msg.toString();
+          }
+          return 'Server error. Please try again later.';
+        default:
+          return error.message ?? 'Connection failed. Please check your internet connection.';
+      }
+    }
     return 'An unexpected error occurred.';
   }
 
@@ -38,8 +65,12 @@ class ErrorHandler {
     dynamic error, {
     String? guestActionDescription,
   }) async {
-    // Check if this is a guest restriction error
-    if (error is ApiException && error.isGuestRestricted) {
+    final apiEx = error is DioException && error.error is ApiException
+        ? error.error as ApiException
+        : error is ApiException
+            ? error
+            : null;
+    if (apiEx != null && apiEx.isGuestRestricted) {
       await GuestGuard.showSignupPrompt(
         context,
         actionDescription: guestActionDescription,

@@ -76,7 +76,11 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
       final applicable = offers
           .map((o) => Map<String, dynamic>.from(o as Map))
           .where((o) {
+        final applyTo = o['apply_to']?.toString() ?? o['applyTo']?.toString();
         final offerSvcId = o['service_id']?.toString();
+        if (applyTo == 'all_courses' || applyTo == 'course') return false;
+        if (applyTo == 'all_services' || applyTo == 'all') return offerSvcId == null || offerSvcId.isEmpty || offerSvcId == serviceId;
+        if (applyTo == 'service') return offerSvcId == serviceId;
         return offerSvcId == null || offerSvcId.isEmpty || offerSvcId == serviceId;
       }).toList();
       setState(() {
@@ -472,7 +476,10 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
 
 
   double _getEffectivePrice() {
-    final basePrice = double.tryParse(widget.service['price']?.toString() ?? '0') ?? 0;
+    // Use _base_price when present (from offer flow) to avoid double-discounting
+    final basePrice = (widget.service['_base_price'] != null)
+        ? (double.tryParse(widget.service['_base_price'].toString()) ?? 0)
+        : (double.tryParse(widget.service['price']?.toString() ?? '0') ?? 0);
     final offer = _selectedOffer ?? widget.activeOffer;
     if (offer != null) {
       final pct = offer['discount_percentage'];
@@ -694,9 +701,13 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
                   final offer = _selectedOffer ?? widget.activeOffer;
                   final offerId = offer?['id']?.toString();
                   final discountedPrice = _getEffectivePrice();
+                  final basePrice = (widget.service['_base_price'] != null)
+                      ? (double.tryParse(widget.service['_base_price'].toString()) ?? 0)
+                      : (double.tryParse(widget.service['price']?.toString() ?? '0') ?? 0);
                   if (offerId != null && offer != null) {
                     serviceToPass['_offer_id'] = offerId;
                     serviceToPass['_offer_title'] = offer['title']?.toString();
+                    serviceToPass['_base_price'] = basePrice; // For Standard Rate display
                     serviceToPass['price'] = discountedPrice.toStringAsFixed(0);
                   }
                   Navigator.push(
