@@ -16,7 +16,9 @@ List<Map<String, String>> appliedCandidates = [];
 
 class CoursesScreen extends ConsumerStatefulWidget {
   final VoidCallback? onRefresh;
-  const CoursesScreen({super.key, this.onRefresh});
+  final Map<String, dynamic>? activeOffer;
+
+  const CoursesScreen({super.key, this.onRefresh, this.activeOffer});
 
   @override
   ConsumerState<CoursesScreen> createState() => _CoursesScreenState();
@@ -48,6 +50,62 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
       if (mounted) ref.read(coursesProvider.notifier).loadCourses(isActive: true, forceRefresh: true);
     });
     wsService.connect();
+  }
+
+  Widget _buildOfferBanner() {
+    final offer = widget.activeOffer!;
+    final pct = offer['discount_percentage']?.toString();
+    final title = offer['title']?.toString() ?? 'Special Offer';
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 70, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [brandPink, brandPink.withOpacity(0.8)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: brandPink.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.local_offer, color: Colors.white, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                if (pct != null && pct.isNotEmpty)
+                  Text(
+                    '$pct% off on all courses',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Helper to format API data for the UI
@@ -93,37 +151,58 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
       ),
       body: loading && courses.isEmpty
           ? const Center(child: CupertinoActivityIndicator(radius: 15))
-          : RefreshIndicator(
-              color: brandPink,
-              onRefresh: () async => ref.read(coursesProvider.notifier).loadCourses(isActive: true),
-              child: AnimationLimiter(
-                child: ListView.builder(
-                  padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 80, 20, 20),
-                  itemCount: courses.length,
-                  physics: const BouncingScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final courseData = _formatCourse(courses[index] as Map<String, dynamic>);
-                    return AnimationConfiguration.staggeredList(
-                      position: index,
-                      duration: const Duration(milliseconds: 600),
-                      child: SlideAnimation(
-                        verticalOffset: 50.0,
-                        child: FadeInAnimation(
-                          child: _PremiumCourseCard(
-                            course: courseData,
-                            onTap: () {
-                              HapticHelper.mediumImpact();
-                              Navigator.push(context, MaterialPageRoute(
-                                builder: (_) => CourseDetailScreen(course: courseData),
-                              ));
-                            },
-                          ),
-                        ),
+          : Column(
+              children: [
+                if (widget.activeOffer != null) _buildOfferBanner(),
+                Expanded(
+                  child: RefreshIndicator(
+                    color: brandPink,
+                    onRefresh: () async => ref.read(coursesProvider.notifier).loadCourses(isActive: true),
+                    child: AnimationLimiter(
+                      child: ListView.builder(
+                        padding: EdgeInsets.fromLTRB(20, widget.activeOffer != null ? 16 : MediaQuery.of(context).padding.top + 80, 20, 20),
+                        itemCount: courses.length,
+                        physics: const BouncingScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          final courseData = _formatCourse(courses[index] as Map<String, dynamic>);
+                          return AnimationConfiguration.staggeredList(
+                            position: index,
+                            duration: const Duration(milliseconds: 600),
+                            child: SlideAnimation(
+                              verticalOffset: 50.0,
+                              child: FadeInAnimation(
+                                child: _PremiumCourseCard(
+                                  course: courseData,
+                                  onTap: () {
+                                    HapticHelper.mediumImpact();
+                                    var courseToPass = Map<String, dynamic>.from(courseData);
+                                    if (widget.activeOffer != null) {
+                                      final offer = widget.activeOffer!;
+                                      final basePrice = double.tryParse(courseData['price']?.toString() ?? '0') ?? 0;
+                                      final pct = offer['discount_percentage'];
+                                      if (pct != null) {
+                                        final val = double.tryParse(pct.toString()) ?? 0;
+                                        final discounted = (basePrice * (1 - val / 100)).roundToDouble();
+                                        courseToPass['price'] = discounted.toStringAsFixed(0);
+                                        courseToPass['_base_price'] = basePrice;
+                                        courseToPass['_offer_id'] = offer['id']?.toString();
+                                        courseToPass['_offer_title'] = offer['title']?.toString();
+                                      }
+                                    }
+                                    Navigator.push(context, MaterialPageRoute(
+                                      builder: (_) => CourseDetailScreen(course: courseToPass),
+                                    ));
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
     );
   }

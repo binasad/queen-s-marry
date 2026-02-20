@@ -6,7 +6,9 @@ import '../../services/websocket_service.dart';
 import 'ApiCategoryServicesTabbed.dart';
 
 class ServicesScreen extends StatefulWidget {
-  const ServicesScreen({super.key});
+  final Map<String, dynamic>? activeOffer;
+
+  const ServicesScreen({super.key, this.activeOffer});
 
   @override
   State<ServicesScreen> createState() => _ServicesScreenState();
@@ -104,11 +106,74 @@ class _ServicesScreenState extends State<ServicesScreen> {
           ),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _brandColor, strokeWidth: 2))
-          : _error != null
-              ? _buildErrorState()
-              : _buildCategoryGrid(),
+      body: Column(
+        children: [
+          if (widget.activeOffer != null) _buildOfferBanner(),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator(color: _brandColor, strokeWidth: 2))
+                : _error != null
+                    ? _buildErrorState()
+                    : _buildCategoryGrid(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfferBanner() {
+    final offer = widget.activeOffer!;
+    final pct = offer['discount_percentage']?.toString();
+    final title = offer['title']?.toString() ?? 'Special Offer';
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [_brandColor, _brandColor.withOpacity(0.8)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _brandColor.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.local_offer, color: Colors.white, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                if (pct != null && pct.isNotEmpty)
+                  Text(
+                    '$pct% off on all services',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -158,6 +223,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   builder: (_) => ApiCategoryServicesTabbedScreen(
                     categoryId: id,
                     title: name,
+                    activeOffer: widget.activeOffer,
                   ),
                 ),
               );

@@ -10,11 +10,13 @@ import 'servicesdetails.dart';
 class ApiCategoryServicesTabbedScreen extends StatefulWidget {
   final String categoryId;
   final String title;
+  final Map<String, dynamic>? activeOffer;
 
   const ApiCategoryServicesTabbedScreen({
     super.key,
     required this.categoryId,
     required this.title,
+    this.activeOffer,
   });
 
   @override
@@ -264,12 +266,30 @@ class _ApiCategoryServicesTabbedScreenState
                   'category_id':
                       s['category_id']?.toString() ?? widget.categoryId,
                 };
+                double finalPrice = double.tryParse(price) ?? 0;
+                String? offerId;
+                double? offerDiscountedPrice;
+                if (widget.activeOffer != null) {
+                  final offer = widget.activeOffer!;
+                  final pct = offer['discount_percentage'];
+                  if (pct != null) {
+                    final val = double.tryParse(pct.toString()) ?? 0;
+                    offerDiscountedPrice = (finalPrice * (1 - val / 100)).roundToDouble();
+                    offerId = offer['id']?.toString();
+                    serviceMap['price'] = offerDiscountedPrice.toString();
+                    serviceMap['_offer_id'] = offerId ?? '';
+                    serviceMap['_offer_title'] = offer['title']?.toString() ?? '';
+                  }
+                }
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => ServiceDetailedScreen(
                       service: serviceMap,
                       allServices: [],
+                      activeOffer: widget.activeOffer,
+                      offerId: offerId,
+                      offerDiscountedPrice: offerDiscountedPrice,
                     ),
                   ),
                 );

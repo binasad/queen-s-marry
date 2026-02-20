@@ -24,6 +24,7 @@ import '../Services/ApiCategoryServicesTabbed.dart';
 import '../Services/servicesdetails.dart';
 import 'AppointmentBooking.dart';
 import 'Course Screens/CourseDetails.dart';
+import 'Course Screens/CoursesScreen.dart';
 import 'UserNotifications.dart';
 import '../../services/course_service.dart';
 import '../googleMap.dart';
@@ -460,16 +461,17 @@ class _UserHomeState extends ConsumerState<UserHome>
                 color: Color(0xFF2D2D3A),
               ),
             ),
-            GestureDetector(
-              onTap: onSeeAll,
-              child: const Text(
-                'See All',
-                style: TextStyle(
-                  color: Color(0xFFE91E63),
-                  fontWeight: FontWeight.w600,
+            if (onSeeAll != null)
+              GestureDetector(
+                onTap: onSeeAll,
+                child: const Text(
+                  'See All',
+                  style: TextStyle(
+                    color: Color(0xFFE91E63),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -639,6 +641,91 @@ class _UserHomeState extends ConsumerState<UserHome>
   Future<void> _onOfferTap(Map<String, dynamic> offer) async {
     final serviceId = offer['service_id']?.toString();
     final courseId = offer['course_id']?.toString();
+    final isAllOffer = (serviceId == null || serviceId.isEmpty) && (courseId == null || courseId.isEmpty);
+
+    if (isAllOffer) {
+      HapticHelper.mediumImpact();
+      if (!mounted) return;
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    offer['title'] ?? 'Special Offer',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'This offer applies to all services and courses',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ServicesScreen(activeOffer: offer),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.spa_outlined),
+                      label: const Text('Browse Services'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE91E63),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CoursesScreen(activeOffer: offer),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.school_outlined),
+                      label: const Text('Browse Courses'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFE91E63),
+                        side: const BorderSide(color: Color(0xFFE91E63)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
     if (serviceId != null && serviceId.isNotEmpty) {
       HapticHelper.mediumImpact();
       try {
@@ -716,7 +803,6 @@ class _UserHomeState extends ConsumerState<UserHome>
         }
       }
     }
-    // No link: tap does nothing (or could show a toast)
   }
 
   Widget _buildOfferCard(
@@ -731,7 +817,8 @@ class _UserHomeState extends ConsumerState<UserHome>
   }) {
     final hasLink =
         (serviceId != null && serviceId.isNotEmpty) ||
-        (courseId != null && courseId.isNotEmpty);
+        (courseId != null && courseId.isNotEmpty) ||
+        ((serviceId == null || serviceId.isEmpty) && (courseId == null || courseId.isEmpty));
     return GestureDetector(
       onTap: hasLink ? onTap : null,
       child: Container(

@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../UserScreens/AppointmentBooking.dart';
 
 import '../../services/service_catalog_service.dart';
-
+import '../../services/offer_service.dart';
 import '../../services/review_service.dart';
 import '../../services/favorites_service.dart';
 import '../../services/api_service.dart';
@@ -20,14 +20,19 @@ import '../../widgets/cached_image.dart';
 
 class ServiceDetailedScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> service;
-
   final List<Map<String, dynamic>>? allServices;
+  final Map<String, dynamic>? activeOffer;
+  final String? offerId;
+  final double? offerDiscountedPrice;
 
-
-
-  const ServiceDetailedScreen({Key? key, required this.service, this.allServices})
-
-      : super(key: key);
+  const ServiceDetailedScreen({
+    Key? key,
+    required this.service,
+    this.allServices,
+    this.activeOffer,
+    this.offerId,
+    this.offerDiscountedPrice,
+  }) : super(key: key);
 
 
 
@@ -37,7 +42,7 @@ class ServiceDetailedScreen extends ConsumerStatefulWidget {
 
 class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
   final ServiceCatalogService _catalog = ServiceCatalogService();
-
+  final OfferService _offerService = OfferService();
   final ReviewService _reviewService = ReviewService();
   final FavoritesService _favoritesService = FavoritesService();
   List<Map<String, dynamic>> _relatedServices = [];
@@ -47,23 +52,42 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
   double _avgRating = 0;
 
   bool _loadingRelated = true;
-
   bool _loadingReviews = true;
   bool _isFavorite = false;
   bool _loadingFavorite = false;
-
-
+  List<Map<String, dynamic>> _applicableOffers = [];
+  Map<String, dynamic>? _selectedOffer;
 
   @override
-
   void initState() {
-
     super.initState();
-
     _loadRelatedServices();
-
     _loadReviews();
     _loadFavoriteStatus();
+    _loadApplicableOffers();
+    if (widget.activeOffer != null) _selectedOffer = widget.activeOffer;
+  }
+
+  Future<void> _loadApplicableOffers() async {
+    try {
+      final offers = await _offerService.getOffers(isActive: true);
+      final serviceId = widget.service['id']?.toString();
+      if (!mounted) return;
+      final applicable = offers
+          .map((o) => Map<String, dynamic>.from(o as Map))
+          .where((o) {
+        final offerSvcId = o['service_id']?.toString();
+        return offerSvcId == null || offerSvcId.isEmpty || offerSvcId == serviceId;
+      }).toList();
+      setState(() {
+        _applicableOffers = applicable;
+        if (_selectedOffer == null && applicable.isNotEmpty && widget.activeOffer == null) {
+          _selectedOffer = applicable.first;
+        }
+      });
+    } catch (_) {
+      if (mounted) setState(() {});
+    }
   }
 
   Future<void> _loadFavoriteStatus() async {
@@ -202,6 +226,50 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
                       _buildStatsRow(),
 
                       const SizedBox(height: 32),
+
+                      if (_applicableOffers.isNotEmpty) ...[
+                        const Text("Available Offers", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 44,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _applicableOffers.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 10),
+                            itemBuilder: (context, i) {
+                              final o = _applicableOffers[i];
+                              final isSelected = _selectedOffer?['id'] == o['id'];
+                              final pct = o['discount_percentage']?.toString() ?? '';
+                              return GestureDetector(
+                                onTap: () => setState(() => _selectedOffer = o),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? const Color(0xFFFF6CBF) : Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.local_offer, size: 16, color: isSelected ? Colors.white : Colors.grey[700]),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        pct.isNotEmpty ? '$pct% OFF' : (o['title'] ?? 'Offer'),
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.white : Colors.grey[800],
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
 
                       const Text("Description", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
 
@@ -351,83 +419,92 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
 
 
   Widget _buildHeaderSection() {
-
     return Column(
-
       crossAxisAlignment: CrossAxisAlignment.start,
-
       children: [
-
+        if (widget.activeOffer != null)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFFF6CBF),
+                  const Color(0xFFFF6CBF).withOpacity(0.8),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.local_offer, size: 16, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(
+                  widget.activeOffer!['title']?.toString() ?? 'Offer applied',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
         Text(
-
           widget.service['name']?.toString() ?? '',
-
           style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1),
-
         ),
-
         const SizedBox(height: 8),
-
         Row(
-
           children: [
-
             const Icon(Icons.access_time_rounded, size: 18, color: Colors.grey),
-
             const SizedBox(width: 6),
-
             Text("${widget.service['duration'] ?? '45 min'}", style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
-
           ],
-
         ),
-
       ],
-
     );
-
   }
 
 
 
+  double _getEffectivePrice() {
+    final basePrice = double.tryParse(widget.service['price']?.toString() ?? '0') ?? 0;
+    final offer = _selectedOffer ?? widget.activeOffer;
+    if (offer != null) {
+      final pct = offer['discount_percentage'];
+      if (pct != null) {
+        final val = double.tryParse(pct.toString()) ?? 0;
+        return (basePrice * (1 - val / 100)).roundToDouble();
+      }
+    }
+    return basePrice;
+  }
+
   Widget _buildStatsRow() {
-
     final ratingStr = _avgRating > 0 ? '$_avgRating ★' : '—';
-
     final countStr = _reviews.isNotEmpty ? '${_reviews.length}+' : '0';
+    final effectivePrice = _getEffectivePrice();
 
     return Container(
-
       padding: const EdgeInsets.all(16),
-
       decoration: BoxDecoration(
-
         color: Colors.white,
-
         borderRadius: BorderRadius.circular(24),
-
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
-
       ),
-
       child: Row(
-
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-
         children: [
-
           _StatItem(label: "Rating", value: ratingStr),
-
           _StatItem(label: "Reviews", value: countStr),
-
-          _StatItem(label: "Price", value: "PKR ${widget.service['price'] ?? '—'}"),
-
+          _StatItem(label: "Price", value: "PKR ${effectivePrice.toStringAsFixed(0)}"),
         ],
-
       ),
-
     );
-
   }
 
 
@@ -613,7 +690,25 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
               child: _SwipeToBookButton(
                 onCompleted: () {
                   HapticFeedback.heavyImpact();
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => AppointmentBookingScreen(service: widget.service)));
+                  final serviceToPass = Map<String, dynamic>.from(widget.service);
+                  final offer = _selectedOffer ?? widget.activeOffer;
+                  final offerId = offer?['id']?.toString();
+                  final discountedPrice = _getEffectivePrice();
+                  if (offerId != null && offer != null) {
+                    serviceToPass['_offer_id'] = offerId;
+                    serviceToPass['_offer_title'] = offer['title']?.toString();
+                    serviceToPass['price'] = discountedPrice.toStringAsFixed(0);
+                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AppointmentBookingScreen(
+                        service: serviceToPass,
+                        offerId: offerId,
+                        offerDiscountedPrice: offerId != null ? discountedPrice : null,
+                      ),
+                    ),
+                  );
                 },
               ),
             ),

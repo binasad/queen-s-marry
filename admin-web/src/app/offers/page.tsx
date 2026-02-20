@@ -35,7 +35,6 @@ export default function OffersPage() {
     title: '',
     description: '',
     discountPercentage: '',
-    discountAmount: '',
     imageUrl: '',
     startDate: '',
     endDate: '',
@@ -173,7 +172,10 @@ export default function OffersPage() {
       toast.error('Title is required');
       return;
     }
-    
+    if (!formData.discountPercentage || parseFloat(formData.discountPercentage) <= 0) {
+      toast.error('Discount percentage is required (1–100)');
+      return;
+    }
     if (!formData.startDate || !formData.endDate) {
       toast.error('Start and end dates are required');
       return;
@@ -201,11 +203,9 @@ export default function OffersPage() {
         courseId: formData.courseId || undefined,
       };
 
-      // Only include one type of discount
       if (formData.discountPercentage) {
         data.discountPercentage = parseFloat(formData.discountPercentage);
-      } else if (formData.discountAmount) {
-        data.discountAmount = parseFloat(formData.discountAmount);
+        data.discountAmount = null; // Use only % discount
       }
 
       if (imageUrl) {
@@ -233,7 +233,6 @@ export default function OffersPage() {
       title: offer.title,
       description: offer.description || '',
       discountPercentage: offer.discount_percentage?.toString() || '',
-      discountAmount: offer.discount_amount?.toString() || '',
       imageUrl: offer.image_url || '',
       startDate: offer.start_date ? offer.start_date.split('T')[0] : '',
       endDate: offer.end_date ? offer.end_date.split('T')[0] : '',
@@ -273,7 +272,6 @@ export default function OffersPage() {
       title: '',
       description: '',
       discountPercentage: '',
-      discountAmount: '',
       imageUrl: '',
       startDate: '',
       endDate: '',
@@ -313,9 +311,6 @@ export default function OffersPage() {
   const formatDiscount = (offer: Offer) => {
     if (offer.discount_percentage) {
       return `${offer.discount_percentage}% OFF`;
-    }
-    if (offer.discount_amount) {
-      return `₹${offer.discount_amount} OFF`;
     }
     return 'Special Offer';
   };
@@ -419,6 +414,12 @@ export default function OffersPage() {
                             {offer.description || 'No description provided'}
                           </p>
                           
+                          {/* Applies to */}
+                          {!offer.service_id && !offer.course_id && (
+                            <div className="text-xs text-primary-600 font-medium mb-2">
+                              Applies to all services & courses
+                            </div>
+                          )}
                           {/* Dates */}
                           <div className="flex items-center text-sm text-gray-500 mb-4">
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -521,41 +522,23 @@ export default function OffersPage() {
                 </div>
 
                 {/* Discount */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Discount Percentage
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        value={formData.discountPercentage}
-                        onChange={(e) => setFormData({ ...formData, discountPercentage: e.target.value, discountAmount: '' })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="e.g., 20"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Or Fixed Amount
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
-                      <input
-                        type="number"
-                        value={formData.discountAmount}
-                        onChange={(e) => setFormData({ ...formData, discountAmount: e.target.value, discountPercentage: '' })}
-                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="e.g., 500"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Discount Percentage <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={formData.discountPercentage}
+                      onChange={(e) => setFormData({ ...formData, discountPercentage: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="e.g., 20"
+                      min="1"
+                      max="100"
+                      step="0.01"
+                      required
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
                   </div>
                 </div>
 
@@ -639,12 +622,14 @@ export default function OffersPage() {
                   </div>
                 </div>
 
-                {/* Link to Service or Course - tap takes user to specific screen */}
+                {/* Apply to Service or Course - empty = all */}
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
-                    Link to (optional)
+                    Apply to (optional)
                   </label>
-                  <p className="text-xs text-gray-500">When user taps this offer in the app, they will be taken to the linked service or course.</p>
+                  <p className="text-xs text-gray-500">
+                    Leave both empty to apply this offer to <strong>all services and courses</strong>. Or select one to limit the offer to that specific item.
+                  </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">Service</label>

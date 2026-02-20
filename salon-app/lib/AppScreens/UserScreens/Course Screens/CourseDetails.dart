@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'CourseApplyScreen.dart';
 import '../../../services/review_service.dart';
+import '../../../services/offer_service.dart';
 import '../../../widgets/cached_image.dart';
 import '../../../services/favorites_service.dart';
 import '../../../services/api_service.dart';
@@ -23,9 +24,13 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
   static const Color brandPink = Color(0xFFFF0068);
   final ReviewService _reviewService = ReviewService();
   final FavoritesService _favoritesService = FavoritesService();
+  final OfferService _offerService = OfferService();
   List<Map<String, dynamic>> _reviews = [];
+  List<Map<String, dynamic>> _applicableOffers = [];
+  Map<String, dynamic>? _selectedOffer;
   double _avgRating = 0;
   bool _loadingReviews = true;
+  bool _loadingOffers = true;
   bool _isFavorite = false;
   bool _loadingFavorite = false;
 
@@ -34,6 +39,51 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
     super.initState();
     _loadReviews();
     _loadFavoriteStatus();
+    _loadApplicableOffers();
+    final preOfferId = widget.course['_offer_id']?.toString();
+    if (preOfferId != null) {
+      _selectedOffer = {'id': preOfferId, 'title': widget.course['_offer_title']};
+    }
+  }
+
+  Future<void> _loadApplicableOffers() async {
+    try {
+      final offers = await _offerService.getOffers(isActive: true);
+      final courseId = widget.course['id']?.toString();
+      if (!mounted) return;
+      final applicable = (offers as List)
+          .map((o) => Map<String, dynamic>.from(o as Map))
+          .where((o) {
+        final offerCourseId = o['course_id']?.toString();
+        return offerCourseId == null || offerCourseId.isEmpty || offerCourseId == courseId;
+      }).toList();
+      setState(() {
+        _applicableOffers = applicable;
+        _loadingOffers = false;
+        if (_selectedOffer == null && applicable.isNotEmpty) {
+          _selectedOffer = applicable.first;
+        } else if (_selectedOffer != null && _selectedOffer!['id'] != null) {
+          final match = applicable.where((o) => o['id']?.toString() == _selectedOffer!['id']?.toString()).toList();
+          if (match.isNotEmpty) _selectedOffer = match.first;
+        }
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingOffers = false);
+    }
+  }
+
+  double _getEffectivePrice() {
+    final basePrice = (widget.course['_base_price'] != null)
+        ? (double.tryParse(widget.course['_base_price'].toString()) ?? 0)
+        : (double.tryParse(widget.course['price']?.toString() ?? '0') ?? 0);
+    if (_selectedOffer != null) {
+      final pct = _selectedOffer!['discount_percentage'];
+      if (pct != null) {
+        final val = double.tryParse(pct.toString()) ?? 0;
+        return (basePrice * (1 - val / 100)).roundToDouble();
+      }
+    }
+    return basePrice;
   }
 
   Future<void> _loadFavoriteStatus() async {
@@ -163,6 +213,50 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
                       Text(widget.course["title"], style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1)),
                       const SizedBox(height: 12),
                       _buildInfoBadges(),
+
+                      if (_applicableOffers.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        const Text("Available Offers", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 44,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _applicableOffers.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 10),
+                            itemBuilder: (context, i) {
+                              final o = _applicableOffers[i];
+                              final isSelected = _selectedOffer?['id'] == o['id'];
+                              final pct = o['discount_percentage']?.toString() ?? '';
+                              return GestureDetector(
+                                onTap: () => setState(() => _selectedOffer = o),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? brandPink : Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.local_offer, size: 16, color: isSelected ? Colors.white : Colors.grey[700]),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        pct.isNotEmpty ? '$pct% OFF' : (o['title'] ?? 'Offer'),
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.white : Colors.grey[800],
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
         
                       const SizedBox(height: 32),
                       const Text("Curriculum", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
@@ -196,10 +290,10 @@ Widget _buildInfoBadges() {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         _badge(Icons.timer_outlined, widget.course["duration"]),
-        _badge(Icons.payments_outlined, "PKR ${widget.course["price"]}"),
+        _badge(Icons.payments_outlined, "PKR ${_getEffectivePrice().toStringAsFixed(0)}"),
         if (_avgRating > 0) 
           _badge(Icons.star, "${_avgRating.toStringAsFixed(1)} ★"),
-        if (widget.course["_offer_title"] != null)
+        if (_selectedOffer != null)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -222,7 +316,7 @@ Widget _buildInfoBadges() {
                 const Icon(Icons.local_offer, size: 14, color: Colors.white),
                 const SizedBox(width: 6),
                 Text(
-                  "${widget.course["_offer_title"]}",
+                  _selectedOffer!['title']?.toString() ?? 'Offer',
                   style: const TextStyle(
                     color: Colors.white, 
                     fontWeight: FontWeight.bold, 
@@ -519,7 +613,7 @@ Widget _buildInfoBadges() {
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ApplyFormScreen(
           course: widget.course["title"],
           courseId: widget.course["id"]?.toString(),
-          offerId: widget.course["_offer_id"]?.toString(),
+          offerId: _selectedOffer?['id']?.toString() ?? widget.course["_offer_id"]?.toString(),
         ))),
         child: const Text("Enroll in Academy", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
       ),
