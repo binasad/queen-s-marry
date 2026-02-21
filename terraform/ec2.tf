@@ -69,6 +69,9 @@ resource "aws_instance" "my_instance" {
   key_name               = aws_key_pair.my_key.key_name
   vpc_security_group_ids = [aws_security_group.my_security_group.id]
 
+  # Bootstrap: installs Node 20, PM2, Nginx reverse-proxy, Docker, Certbot
+  user_data = file("${path.module}/user-data.sh")
+
   root_block_device {
     volume_size = 15
     volume_type = "gp3"
