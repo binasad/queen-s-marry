@@ -75,6 +75,7 @@ const corsOptions = {
     // Allow all Vercel deployments (*.vercel.app - production + preview URLs)
     if (origin.endsWith('.vercel.app')) {
       console.log('✅ Allowing origin (Vercel):', origin);
+      console.log('🔑 Allowed origins:', allowedOrigins);
       return callback(null, true);
     }
 
