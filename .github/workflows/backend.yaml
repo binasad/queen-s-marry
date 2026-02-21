@@ -31,13 +31,11 @@ jobs:
           docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest ./backend
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
 
-      # 3. Prepare SSH key (EC2_SSH_KEY = raw private key content, incl. BEGIN/END lines)
-      - name: Prepare SSH key
-        env:
-          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+      # 3. Setup SSH Key
+      - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
       # 4. SSH to EC2 and Deploy
