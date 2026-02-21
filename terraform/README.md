@@ -1,44 +1,70 @@
-# Terraform - Salon App Infrastructure
+# Terraform - Queen's Marry Salon Infrastructure
 
-This directory provisions AWS infrastructure for the Queen's Marry salon app.
+This directory provisions AWS infrastructure for the Queen's Marry salon app backend.
 
 ## What Terraform Manages
 
 | Resource | Purpose |
 |----------|---------|
-| **EC2 instance** | Backend API (Node.js) – runs Docker |
-| **S3 bucket** | File storage (profile images, service images) |
-| **Security group** | Firewall rules (ports 22, 80, 443, 5000) |
-| **Elastic IP** (optional) | Stable public IP for DDNS (e.g. aztrosyssalonappapi.ddns.net) |
+| **Key pair** | SSH key (`terra-key-ec2`) uploaded to EC2 for secure access |
+| **Security group** | Firewall rules (SSH 22, HTTP 80, Backend API 5000) |
+| **EC2 instance** | Ubuntu server for backend API (Node.js / Docker) |
+| **S3 bucket** | Storage for salon assets (images, uploads) |
 
 ## Prerequisites
 
-1. **AWS CLI** configured with credentials:
-   ```bash
-   aws configure
-   ```
+### 1. AWS CLI
 
-2. **Terraform** installed ([terraform.io](https://terraform.io)):
-   ```bash
-   # Windows (choco)
-   choco install terraform
+Configure credentials:
 
-   # Or download from https://www.terraform.io/downloads
-   ```
+```powershell
+aws configure
+```
 
-3. **SSH key pair** in AWS EC2 (create in AWS Console → EC2 → Key Pairs)
+Verify:
+
+```powershell
+aws sts get-caller-identity
+```
+
+### 2. Terraform
+
+**Windows (winget):**
+
+```powershell
+winget install Hashicorp.Terraform
+```
+
+Close and reopen the terminal, or refresh PATH:
+
+```powershell
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+```
+
+**Chocolatey:** `choco install terraform`  
+**Manual:** [terraform.io/downloads](https://developer.hashicorp.com/terraform/downloads)
+
+### 3. SSH Key Pair
+
+Create a key pair in the `terraform` folder (or use an existing one):
+
+```powershell
+cd terraform
+ssh-keygen -t ed25519 -f terra-key-ec2
+```
+
+Keep `terra-key-ec2` (private) and `terra-key-ec2.pub` (public). Terraform uploads the public key to AWS.
 
 ## Quick Start
 
-```bash
+```powershell
 cd terraform
 
-# 1. Copy and edit variables
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your s3_bucket_name, ssh_key_name
-
-# 2. Initialize
+# 1. Initialize (downloads providers)
 terraform init
+
+# 2. Validate configuration
+terraform validate
 
 # 3. Plan (preview changes)
 terraform plan
@@ -47,48 +73,51 @@ terraform plan
 terraform apply
 ```
 
-## Outputs After Apply
+## File Structure
 
-- `backend_public_ip` – EC2 public IP
-- `backend_elastic_ip` – Stable IP for DDNS (if enabled)
-- `s3_bucket_name` – S3 bucket for assets
-- `backend_ssh_command` – SSH command to connect
+| File | Purpose |
+|------|---------|
+| `terraform.tf` | Terraform & provider requirements |
+| `providers.tf` | AWS provider config (region) |
+| `ec2.tf` | Key pair, security group, EC2 instance |
+| `s3.tf` | S3 bucket for salon assets |
+| `variables.tf` | Input variables |
+| `user-data.sh` | EC2 bootstrap script (Docker install) |
+| `terra-key-ec2` / `terra-key-ec2.pub` | SSH keys (do not commit private key) |
 
-## Current Setup vs Terraform
+## Variables
 
-| Component | Current | With Terraform |
-|-----------|---------|----------------|
-| Backend | Docker on EC2 (manual) | EC2 + user-data (Docker pre-installed) |
-| Database | Supabase (managed) | Keep Supabase – no change |
-| S3 | Manual bucket | Terraform-managed bucket |
-| Admin-web | Vercel | Keep Vercel – no change |
+Copy the example and edit:
 
-## Optional: Supabase with Terraform
-
-If you want to manage Supabase via Terraform:
-
-```hcl
-# Add to main.tf
-terraform {
-  required_providers {
-    supabase = {
-      source  = "supabase/supabase"
-      version = "~> 1.0"
-    }
-  }
-}
+```powershell
+copy terraform.tfvars.example terraform.tfvars
 ```
 
-See [Supabase Terraform Provider](https://registry.terraform.io/providers/supabase/supabase/latest/docs).
+Edit `terraform.tfvars` with your values. **Never commit `terraform.tfvars` or `.env`** – they may contain secrets.
 
-## Optional: Vercel Deployment
+## Outputs
 
-Vercel has a [Terraform provider](https://registry.terraform.io/providers/vercel/vercel/latest/docs) for managing deployments.
+After `terraform apply`, useful outputs include:
+
+- EC2 public IP for SSH and API access
+- SSH command to connect
 
 ## Destroy
 
 To tear down all resources:
 
-```bash
+```powershell
 terraform destroy
 ```
+
+## Security
+
+- **Never commit:** `terraform.tfvars`, `.env`, or `terra-key-ec2` (private key)
+- Add to `.gitignore` if needed: `.env`, `terra-key-ec2`
+- Rotate AWS keys if they were ever exposed
+
+## Notes
+
+- **Region:** Ensure `providers.tf` uses a valid region (e.g. `us-east-1`). `eu-east-1` is invalid.
+- **Database:** Supabase remains separate – not managed by this Terraform.
+- **Admin-web:** Deployed on Vercel – not managed here.

@@ -1,9 +1,9 @@
 # Copy to terraform.tfvars and fill in your values
 # terraform.tfvars is gitignored - never commit secrets
 
-aws_region       = "us-east-1"
-environment      = "prod"
-s3_bucket_name   = "salon-app-assets-your-unique-name"
-instance_type    = "t3.small"
-ssh_key_name     = "your-aws-key-pair-name"
-assign_elastic_ip = true
+aws_region          = "us-east-1"
+environment         = "prod"
+s3_bucket_name      = "salon-app-assets-YOUR-UNIQUE-SUFFIX"  # Must be globally unique
+s3_allow_public_read = true
+instance_type       = "t3.small"
+assign_elastic_ip   = true

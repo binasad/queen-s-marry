@@ -11,8 +11,14 @@ variable "environment" {
 }
 
 variable "s3_bucket_name" {
-  description = "S3 bucket name for salon assets"
+  description = "S3 bucket name for salon assets (must be globally unique)"
   type        = string
+}
+
+variable "s3_allow_public_read" {
+  description = "Allow public read for bucket objects (needed for serving images)"
+  type        = bool
+  default     = true
 }
 
 variable "instance_type" {
@@ -22,8 +28,9 @@ variable "instance_type" {
 }
 
 variable "ssh_key_name" {
-  description = "Name of the SSH key pair for EC2 access"
+  description = "Name of the SSH key pair for EC2 access (matches aws_key_pair.my_key)"
   type        = string
+  default     = "terra-key-ec2"
 }
 
 variable "ssh_allowed_cidrs" {

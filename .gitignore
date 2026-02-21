@@ -55,6 +55,20 @@ yarn-error.log*
 .env.*.local
 !.env.example
 
+# Project-specific env (may contain production URLs / secrets)
+admin-web/.env.local
+admin-web/.env.local.example
+salon-app/.env.example
+
+# Terraform (state, providers, secrets)
+terraform/
+
+# Terraform (state, providers, secrets)
+terraform/
+
+# Terraform (state, providers, keys, env)
+terraform/
+
 # Firebase credentials (NEVER commit)
 **/firebase-admin-sdk.json
 
