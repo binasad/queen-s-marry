@@ -150,6 +150,21 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Root route - API info
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Salon Booking API',
+    version: API_VERSION,
+    endpoints: {
+      api: `GET /api/${API_VERSION}`,
+      health: 'GET /health',
+      login: `POST /api/${API_VERSION}/auth/login`,
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Health check endpoint (root and versioned)
 app.get('/health', (req, res) => {
   console.log('🏥 Health check requested');
@@ -263,7 +278,6 @@ app.use(`/api/${API_VERSION}`, reviewsRoutes);
 // 404 handler
 app.use((req, res) => {
   console.log(`❌ 404 - Route not found: ${req.method} ${req.path}`);
-  console.log("hello");
   res.status(404).json({
     success: false,
     message: 'Route not found',

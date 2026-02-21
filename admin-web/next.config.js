@@ -7,35 +7,38 @@ const nextConfig = {
     // domains: ['localhost', '44.215.209.41'],
   },
   async rewrites() {
+    // Backend URL for proxy (use NEXT_PUBLIC_BACKEND_URL + /api/v1, or fallback to NEXT_PUBLIC_API_URL)
+    const backendApi =
+      process.env.NEXT_PUBLIC_BACKEND_URL
+        ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1`
+        : (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/v1\/?$/, '') + '/api/v1';
+    const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, '') || '';
+
     return [
       {
         /**
-         * REVERSE PROXY: 
-         * This intercepts any request to /api/v1/... and sends it to your AWS EC2.
-         * The browser thinks it's talking to HTTPS (Vercel), so the Mixed Content 
-         * error is bypassed.
+         * REVERSE PROXY:
+         * Requests to /api/v1/* go through Vercel to your backend (avoids CORS).
          */
         source: '/api/v1/:path*',
-        //destination: process.env.NEXT_PUBLIC_API_URL + '/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+        destination: `${backendApi || 'http://localhost:5000/api/v1'}/:path*`,
       },
       {
         /**
          * SOCKET.IO PROXY:
-         * If you are using WebSockets for real-time notifications in the salon app,
-         * this ensures the handshake also goes through the secure Vercel tunnel.
+         * WebSocket handshake goes through Vercel to the backend.
          */
         source: '/socket.io/:path*',
-        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/v1$/, '')}/socket.io/:path*`,
+        destination: `${backendBase || 'http://localhost:5000'}/socket.io/:path*`,
       },
     ];
   },
   env: {
     /**
-     * Use a relative path so the browser targets the Vercel domain.
-     * Vercel will then use the 'rewrites' above to forward to AWS.
+     * Use relative /api/v1 when NEXT_PUBLIC_BACKEND_URL is set so requests go through
+     * the rewrite (same-origin, no CORS). Otherwise use NEXT_PUBLIC_API_URL for direct backend.
      */
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api/v1',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_BACKEND_URL ? '/api/v1' : (process.env.NEXT_PUBLIC_API_URL || '/api/v1'),
   },
 }
 

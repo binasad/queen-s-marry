@@ -15,17 +15,38 @@ sudo apt install -y nginx certbot python3-certbot-nginx
 
 echo "=== Creating Nginx config (HTTP only for cert validation) ==="
 sudo tee /etc/nginx/sites-available/salon-api << 'NGINX'
+# CORS: allow admin-web (Vercel) and localhost
+map $http_origin $cors_origin {
+    default "";
+    "~^https://[a-z0-9-]+\.vercel\.app$" $http_origin;
+    "~^https://aztrosyssalonappapi\.ddns\.net$" $http_origin;
+    "~^http://localhost(:[0-9]+)?$" $http_origin;
+    "~^http://127\.0\.0\.1(:[0-9]+)?$" $http_origin;
+}
+
 server {
     listen 80;
     server_name aztrosyssalonappapi.ddns.net;
-    
+
     location / {
+        # Handle CORS preflight in Nginx (ensures response even if backend is slow/down)
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' $cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS, PATCH' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, Accept' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Max-Age' 86400;
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+
         proxy_pass http://127.0.0.1:5000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Origin $http_origin;
     }
 }
 NGINX
