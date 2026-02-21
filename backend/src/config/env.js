@@ -53,7 +53,7 @@ const env = {
 
   // URLs (from .env - local: http://192.168.18.112:5000)
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
-  adminWebUrl: process.env.ADMIN_WEB_URL || 'http://localhost:3001',
+  adminWebUrl: process.env.ADMIN_WEB_URL || 'https://admin-web-navy-three.vercel.app/',
   backendUrl: process.env.BACKEND_URL || 'http://localhost:5000',
 
   // AWS S3 (from .env - optional)
