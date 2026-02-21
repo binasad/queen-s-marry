@@ -289,6 +289,7 @@ export default function OffersPage() {
       startDate: '',
       endDate: '',
       isActive: true,
+      applyTo: 'all',
       serviceId: '',
       courseId: '',
     });
