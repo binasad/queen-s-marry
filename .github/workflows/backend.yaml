@@ -31,7 +31,14 @@ jobs:
           docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest ./backend
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
 
-      # 3. SSH to EC2 and Deploy
+      # 3. Prepare SSH key (EC2_SSH_KEY must be base64 of private key - see README)
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      # 4. SSH to EC2 and Deploy
       - name: SSH to EC2 and Update
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -40,7 +47,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key_path: ~/.ssh/deploy_key
           envs: FIREBASE_ADMIN_SDK_JSON,ENV_FILE
           script: |
             set -e
@@ -72,13 +79,13 @@ jobs:
             rm -f /home/ubuntu/Aztrosys/backend/firebase.env 2>/dev/null || true
             sudo docker image prune -f
 
-      # 4. Verify container is running
+      # 5. Verify container is running
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key_path: ~/.ssh/deploy_key
           script: |
             echo "=== Docker containers ==="
             sudo docker ps -a
