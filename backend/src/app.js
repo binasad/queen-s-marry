@@ -5,12 +5,11 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
-const favoritesRoutes = require('./modules/favorites/favorites.routes');
 const rateLimit = require('express-rate-limit');
 const env = require('./config/env');
 const { pool } = require('./config/db');
 
-const API_VERSION = env.apiVersion;
+const API_VERSION = env.apiVersion || 'v1';
 
 // Import routes
 const authRoutes = require('./modules/auth/auth.routes');
@@ -27,61 +26,49 @@ const paymentRoutes = require('./modules/payments/payments.routes');
 const blogsRoutes = require('./modules/blogs/blogs.routes');
 const reportsRoutes = require('./modules/reports/reports.routes');
 const reviewsRoutes = require('./modules/reviews/reviews.routes');
+const favoritesRoutes = require('./modules/favorites/favorites.routes');
+
+// Handle missing dashboard routes dynamically to prevent 404s
+let dashboardRoutes = null;
+try {
+  dashboardRoutes = require('./modules/dashboard/dashboard.routes');
+} catch (error) {
+  console.log('⚠️ Dashboard routes not found. Create ./modules/dashboard/dashboard.routes.js to fix /dashboard 404s.');
+}
 
 const app = express();
 
-// Trust proxy
+// Trust proxy (Crucial for Nginx reverse proxy)
 app.set('trust proxy', 1);
-app.disable('x-powered-by'); // Hide Express signature
+app.disable('x-powered-by'); 
 
 // Middleware
 app.use(helmet({
   referrerPolicy: { policy: 'no-referrer' },
-  contentSecurityPolicy: false, // APIs typically don't need CSP; can tighten later
+  contentSecurityPolicy: false, 
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration - more permissive in development
+// --- CORS Configuration ---
 const allowedOrigins = [
   env.frontendUrl,
   env.adminWebUrl,
   'https://admin-web-navy-three.vercel.app',
   'https://aztrosyssalonappapi.ddns.net',
-  'http://aztrosyssalonappapi.ddns.net',
 ].filter(Boolean);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Mobile apps (Android/iOS) don't send origin header - always allow
-    if (!origin) {
-      console.log('📱 Request from mobile app (no origin header) - allowing');
+    // Allow mobile apps (no origin)
+    if (!origin) return callback(null, true);
+    
+    // Allow local development
+    if (env.isDevelopment && (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://10.') || origin.startsWith('http://192.168.'))) {
       return callback(null, true);
     }
 
-    console.log(`🌐 CORS check - Origin: ${origin}`);
-
-    // In development, allow localhost, 127.0.0.1, emulator, and local network IPs
-    if (env.isDevelopment) {
-      if (origin.startsWith('http://localhost') ||
-          origin.startsWith('http://127.0.0.1') ||
-          origin.startsWith('http://10.0.2.2') ||
-          origin.startsWith('http://10.') ||
-          origin.startsWith('http://192.168.')) {
-        console.log('✅ Allowing origin (development):', origin);
-        return callback(null, true);
-      }
-    }
-
-    // Allow all Vercel deployments (*.vercel.app - production + preview URLs)
-    if (origin.endsWith('.vercel.app')) {
-      console.log('✅ Allowing origin (Vercel):', origin);
-      console.log('🔑 Allowed origins:', allowedOrigins);
-      return callback(null, true);
-    }
-
-    // Production: check explicit whitelist
-    if (allowedOrigins.includes(origin)) {
-      console.log('✅ Allowing origin (whitelist):', origin);
+    // Allow Vercel deployments and whitelisted URLs
+    if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
@@ -93,173 +80,68 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
 };
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Handle preflight BEFORE routes
-app.use(`/api/${API_VERSION}`, favoritesRoutes);
-app.use(compression()); // Compress responses
 
-// Stripe webhook - MUST be before express.json() (needs raw body for signature verification)
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); 
+app.use(compression()); 
+
+// --- Webhooks (Must be before express.json for raw body parsing) ---
 const paymentsController = require('./modules/payments/payments.controller');
 app.get(`/api/${API_VERSION}/payments/webhook`, (req, res) => {
   const baseUrl = (req.protocol || 'https') + '://' + (req.get('host') || 'YOUR_SERVER');
-  res.json({
-    ok: true,
-    message: 'Stripe webhook endpoint. Configure in Stripe Dashboard:',
-    webhookUrl: `${baseUrl}/api/${API_VERSION}/payments/webhook`,
-    event: 'payment_intent.succeeded',
-    secret: process.env.STRIPE_WEBHOOK_SECRET ? 'configured' : 'MISSING',
-  });
+  res.json({ ok: true, webhookUrl: `${baseUrl}/api/${API_VERSION}/payments/webhook` });
 });
 app.post(`/api/${API_VERSION}/payments/webhook`, express.raw({ type: 'application/json' }), paymentsController.handleWebhook);
 
-app.use(express.json({ limit: '10mb' })); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
+// --- Body Parsers ---
+app.use(express.json({ limit: '10mb' })); 
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); 
 
-// Enhanced logging middleware
+// --- Logging ---
 app.use((req, res, next) => {
   console.log(`\n📥 ${new Date().toISOString()} - ${req.method} ${req.path}`);
-  console.log(`   IP: ${req.ip || req.connection.remoteAddress}`);
   console.log(`   Origin: ${req.headers.origin || 'None (mobile app)'}`);
-  console.log(`   User-Agent: ${req.headers['user-agent'] || 'Unknown'}`);
   if (req.body && Object.keys(req.body).length > 0) {
-    console.log(`   Body: ${JSON.stringify(req.body).substring(0, 200)}...`);
+    const safeBody = { ...req.body };
+    if (safeBody.password) safeBody.password = '***HIDDEN***'; // Keep logs secure
+    console.log(`   Body: ${JSON.stringify(safeBody).substring(0, 200)}`);
   }
   next();
 });
+app.use(morgan(env.isDevelopment ? 'dev' : 'combined'));
 
-app.use(morgan(env.isDevelopment ? 'dev' : 'combined')); // Logging
-
-// Rate limiting (skip for admin web)
+// --- Rate Limiting ---
 const limiter = rateLimit({
-  windowMs: env.rateLimit.windowMs,
-  max: env.rateLimit.maxRequests,
+  windowMs: env.rateLimit?.windowMs || 15 * 60 * 1000,
+  max: env.rateLimit?.maxRequests || 100,
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
     const origin = req.headers.origin || '';
-    const isAdmin = origin === env.adminWebUrl ||
-      origin.endsWith('.vercel.app') ||
-      (env.isDevelopment && (origin.startsWith('http://localhost:3001') || origin.startsWith('http://127.0.0.1:3001')));
-    return isAdmin;
+    return origin === env.adminWebUrl || origin.endsWith('.vercel.app') || (env.isDevelopment && origin.includes('localhost'));
   },
-  handler: (req, res) => {
-    res.status(429).json({
-      success: false,
-      message: 'Too many requests from this IP. Please wait a few minutes and try again.',
-    });
-  },
+  handler: (req, res) => res.status(429).json({ success: false, message: 'Too many requests.' }),
 });
 app.use('/api/', limiter);
 
-// Root route - API info
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Salon Booking API',
-    version: API_VERSION,
-    endpoints: {
-      api: `GET /api/${API_VERSION}`,
-      health: 'GET /health',
-      login: `POST /api/${API_VERSION}/auth/login`,
-    },
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Health check endpoint (root and versioned)
-app.get('/health', (req, res) => {
-  console.log('🏥 Health check requested');
-  res.json({
-    success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    environment: env.nodeEnv,
-    apiVersion: env.apiVersion,
-  });
-});
-app.get(`/api/${API_VERSION}/health`, (req, res) => {
-  console.log('🏥 API v1 health check requested');
-  res.json({
-    success: true,
-    message: 'API v1 is healthy',
-    timestamp: new Date().toISOString(),
-    environment: env.nodeEnv,
-    apiVersion: env.apiVersion,
-  });
-});
-
-// Test endpoint for connectivity
-app.get('/test', (req, res) => {
-  console.log('🧪 Test endpoint called');
-  res.json({
-    success: true,
-    message: 'Backend is reachable!',
-    timestamp: new Date().toISOString(),
-    clientIP: req.ip || req.connection.remoteAddress,
-    headers: {
-      origin: req.headers.origin || 'None',
-      'user-agent': req.headers['user-agent'] || 'Unknown',
-    },
-  });
-});
-
-// Serve uploaded files at /api/v1/uploads (so reverse proxy forwards them)
+// --- Static Files ---
 const uploadsDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 app.use(`/api/${API_VERSION}/uploads`, express.static(uploadsDir));
 
-// API Routes
-// API root endpoint - shows available routes
-app.get(`/api/${API_VERSION}`, (req, res) => {
-  res.json({
-    success: true,
-    message: 'Salon Booking API',
-    version: API_VERSION,
-    endpoints: {
-      auth: {
-        register: `POST /api/${API_VERSION}/auth/register`,
-        login: `POST /api/${API_VERSION}/auth/login`,
-        verifyEmail: `POST /api/${API_VERSION}/auth/verify-email`,
-        resendVerification: `POST /api/${API_VERSION}/auth/resend-verification`,
-        forgotPassword: `POST /api/${API_VERSION}/auth/forgot-password`,
-        resetPassword: `POST /api/${API_VERSION}/auth/reset-password`,
-        refreshToken: `POST /api/${API_VERSION}/auth/refresh-token`,
-        changePassword: `POST /api/${API_VERSION}/auth/change-password`,
-        sendChangePasswordOtp: `POST /api/${API_VERSION}/auth/send-change-password-otp`,
-        changePasswordOtp: `POST /api/${API_VERSION}/auth/change-password-otp`,
-      },
-      users: {
-        profile: `GET /api/${API_VERSION}/profile`,
-        updateProfile: `PUT /api/${API_VERSION}/profile`,
-      },
-      services: {
-        categories: `GET /api/${API_VERSION}/categories`,
-        allServices: `GET /api/${API_VERSION}/services`,
-        serviceById: `GET /api/${API_VERSION}/services/:id`,
-        experts: `GET /api/${API_VERSION}/experts`,
-      },
-      appointments: {
-        create: `POST /api/${API_VERSION}/appointments`,
-        myAppointments: `GET /api/${API_VERSION}/appointments/my`,
-        allAppointments: `GET /api/${API_VERSION}/appointments`,
-        cancel: `DELETE /api/${API_VERSION}/appointments/:id/cancel`,
-      },
-      health: `GET /health`,
-      test: `GET /test`,
-    },
-    timestamp: new Date().toISOString(),
-  });
-});
+// --- Utility Routes ---
+app.get('/', (req, res) => res.json({ success: true, message: 'Salon Booking API', version: API_VERSION }));
+app.get('/health', (req, res) => res.json({ success: true, message: 'Server is running' }));
+app.get(`/api/${API_VERSION}/health`, (req, res) => res.json({ success: true, message: 'API is healthy' }));
 
-// Disable caching on auth routes to reduce token exposure
+// Disable caching on auth routes
 const noCache = (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   res.set('Pragma', 'no-cache');
   next();
 };
 
+// --- Mount API Routes ---
 app.use(`/api/${API_VERSION}/auth`, noCache, authRoutes);
 app.use(`/api/${API_VERSION}`, usersRoutes);
 app.use(`/api/${API_VERSION}`, servicesRoutes);
@@ -269,33 +151,27 @@ app.use(`/api/${API_VERSION}`, coursesRoutes);
 app.use(`/api/${API_VERSION}`, expertsRoutes);
 app.use(`/api/${API_VERSION}`, supportRoutes);
 app.use(`/api/${API_VERSION}`, notificationsRoutes);
-
 app.use(`/api/${API_VERSION}/payments`, paymentRoutes);
 app.use(`/api/${API_VERSION}`, offersRoutes);
 app.use(`/api/${API_VERSION}`, blogsRoutes);
 app.use(`/api/${API_VERSION}/reports`, reportsRoutes);
 app.use(`/api/${API_VERSION}`, reviewsRoutes);
+app.use(`/api/${API_VERSION}`, favoritesRoutes);
 
-// 404 handler
+// Mount dashboard routes safely
+if (dashboardRoutes) {
+  app.use(`/api/${API_VERSION}/dashboard`, dashboardRoutes);
+}
+
+// --- 404 Handler ---
 app.use((req, res) => {
   console.log(`❌ 404 - Route not found: ${req.method} ${req.path}`);
-  res.status(404).json({
-    success: false,
-    message: 'Route not found',
-    path: req.path,
-    method: req.method,
-  });
+  res.status(404).json({ success: false, message: 'Route not found', path: req.path });
 });
 
-// Global error handler
+// --- Global Error Handler ---
 app.use((err, req, res, next) => {
-  console.error('❌ Global error handler triggered');
-  console.error('   Path:', req.path);
-  console.error('   Method:', req.method);
-  console.error('   Error:', err.message);
-  if (env.isDevelopment) {
-    console.error('   Stack:', err.stack);
-  }
+  console.error(`❌ Error [${req.method} ${req.path}]:`, err.message);
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',
