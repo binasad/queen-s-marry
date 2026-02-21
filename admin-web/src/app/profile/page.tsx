@@ -7,10 +7,12 @@ import Header from '@/components/Header';
 import { authAPI } from '@/lib/api';
 import { servicesAPI } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateUser, logout } = useAuthStore();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sendingResetLink, setSendingResetLink] = useState(false);
@@ -90,6 +92,11 @@ export default function ProfilePage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
   };
 
   const handleSendResetLink = async () => {
@@ -229,6 +236,24 @@ export default function ProfilePage() {
                       className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
                     >
                       {sendingResetLink ? 'Sending...' : 'Send password reset link to my email'}
+                    </button>
+                  </div>
+
+                  {/* Logout */}
+                  <div className="bg-white rounded-lg shadow p-6 mt-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Logout</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Sign out of your admin account on this device.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Logout
                     </button>
                   </div>
                 </>
