@@ -1,13 +1,11 @@
 import axios from 'axios';
 
-// From .env.local - set NEXT_PUBLIC_API_URL or NEXT_PUBLIC_BACKEND_URL
+// Resolve API base URL (order: env var → hard-coded production fallback)
+const PROD_API = 'https://aztrosyssalonappapi.ddns.net/api/v1';
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1` : '');
-
-if (!API_URL && typeof window !== 'undefined') {
-  console.warn('[api] Set NEXT_PUBLIC_API_URL in .env.local (e.g. http://localhost:5000/api/v1)');
-}
+  (process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1` : '') ||
+  PROD_API;
 
 const api = axios.create({
   baseURL: API_URL || undefined,

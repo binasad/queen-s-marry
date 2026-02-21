@@ -42,10 +42,15 @@ const nextConfig = {
   },
   env: {
     /**
-     * Use relative /api/v1 when NEXT_PUBLIC_BACKEND_URL is set so requests go through
-     * the rewrite (same-origin, no CORS). Otherwise use NEXT_PUBLIC_API_URL for direct backend.
+     * Resolve API URL:
+     *  - If NEXT_PUBLIC_BACKEND_URL is set → use relative /api/v1 (goes through rewrite proxy, no CORS)
+     *  - If NEXT_PUBLIC_API_URL is set → use it as-is
+     *  - Fallback → absolute production backend URL (direct cross-origin, CORS whitelisted)
      */
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_BACKEND_URL ? '/api/v1' : (process.env.NEXT_PUBLIC_API_URL || '/api/v1'),
+    NEXT_PUBLIC_API_URL:
+      process.env.NEXT_PUBLIC_BACKEND_URL
+        ? '/api/v1'
+        : (process.env.NEXT_PUBLIC_API_URL || 'https://aztrosyssalonappapi.ddns.net/api/v1'),
   },
 }
 
