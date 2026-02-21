@@ -15,7 +15,7 @@ const server = http.createServer(app);
 // Initialize Socket.IO with permissive CORS for mobile apps
 const io = new Server(server, {
   cors: {
-    origin: '*', // Allow all origins including mobile apps
+    origin: ['https://admin-web-navy-three.vercel.app', 'http://localhost:3000'], // Allow all origins including mobile apps
     methods: ["GET", "POST"],
     credentials: true
   }
