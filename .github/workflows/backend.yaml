@@ -31,14 +31,7 @@ jobs:
           docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest ./backend
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest
 
-      # 3. Setup SSH Key
-      - name: Setup SSH Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-
-      # 4. SSH to EC2 and Deploy
+      # 3. SSH to EC2 and Deploy
       - name: SSH to EC2 and Update
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -47,19 +40,18 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key_path: ~/.ssh/deploy_key
+          key: ${{ secrets.EC2_SSH_KEY }} # <--- Native key injection
           envs: FIREBASE_ADMIN_SDK_JSON,ENV_FILE
           script: |
             set -e
             mkdir -p /home/ubuntu/Aztrosys/backend
             
-            # Write .env (printf preserves newlines; avoid "EOF" in ENV_FILE content)
+            # Write .env
             printf '%s\n' "$ENV_FILE" > /home/ubuntu/Aztrosys/backend/.env
             
-            # Build docker run args - add firebase env only if secret is set
+            # Build docker run args
             ENV_ARGS="--env-file /home/ubuntu/Aztrosys/backend/.env"
             if [ -n "$FIREBASE_ADMIN_SDK_JSON" ]; then
-              # Minify JSON to single line (Docker env file does not allow newlines in values)
               FIREBASE_JSON_ONELINE=$(echo "$FIREBASE_ADMIN_SDK_JSON" | tr -d '\n\r')
               printf 'FIREBASE_ADMIN_SDK_JSON=%s\n' "$FIREBASE_JSON_ONELINE" > /home/ubuntu/Aztrosys/backend/firebase.env
               ENV_ARGS="$ENV_ARGS --env-file /home/ubuntu/Aztrosys/backend/firebase.env"
@@ -79,13 +71,13 @@ jobs:
             rm -f /home/ubuntu/Aztrosys/backend/firebase.env 2>/dev/null || true
             sudo docker image prune -f
 
-      # 5. Verify container is running
+      # 4. Verify container is running
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key_path: ~/.ssh/deploy_key
+          key: ${{ secrets.EC2_SSH_KEY }} # <--- Native key injection
           script: |
             echo "=== Docker containers ==="
             sudo docker ps -a
