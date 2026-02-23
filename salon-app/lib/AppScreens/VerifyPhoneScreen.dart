@@ -22,7 +22,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     // Convert Pakistani local format 03XXXXXXXXX to +923XXXXXXXXX
     final cleaned = local.replaceAll(RegExp(r'[^0-9]'), '');
     if (RegExp(r'^03\d{9}$').hasMatch(cleaned)) {
-      return '+92' + cleaned.substring(1); // drop leading 0
+      return '+92${cleaned.substring(1)}'; // drop leading 0
     }
     // If already in E.164, return as-is
     if (RegExp(r'^\+92\d{10}$').hasMatch(local)) {

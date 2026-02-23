@@ -6,7 +6,7 @@ import '../../widgets/skeleton_loader.dart';
 import '../../services/notification_service.dart';
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({Key? key}) : super(key: key);
+  const NotificationsScreen({super.key});
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();

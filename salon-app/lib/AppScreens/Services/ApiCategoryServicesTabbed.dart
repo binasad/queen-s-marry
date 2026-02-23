@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'dart:async';
 import '../../services/service_catalog_service.dart';
 import '../../widgets/cached_image.dart';

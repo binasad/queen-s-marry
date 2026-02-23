@@ -55,15 +55,16 @@ const allowedOrigins = [
   env.adminWebUrl,
   'https://admin-web-navy-three.vercel.app',
   'https://aztrosyssalonappapi.ddns.net',
+  'http://aztrosyssalonappapi.ddns.net',
 ].filter(Boolean);
 
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow mobile apps (no origin)
     if (!origin) return callback(null, true);
-    
-    // Allow local development
-    if (env.isDevelopment && (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://10.') || origin.startsWith('http://192.168.'))) {
+
+    // Allow local development (localhost, 127.0.0.1, Android emulator 10.0.2.2, local network)
+    if (env.isDevelopment && (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://10.0.2.2') || origin.startsWith('http://10.') || origin.startsWith('http://192.168.'))) {
       return callback(null, true);
     }
 

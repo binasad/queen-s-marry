@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class nameTest extends StatelessWidget {
@@ -6,10 +5,10 @@ class nameTest extends StatelessWidget {
   final String userEmail;
 
   const nameTest({
-    Key? key,
+    super.key,
     required this.userName,
     required this.userEmail,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

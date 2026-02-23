@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'googleMap.dart';
 
 class AboutScreen extends StatelessWidget {
-  const AboutScreen({Key? key}) : super(key: key);
+  const AboutScreen({super.key});
 
   // Help for launching
   Future<void> _launchPhone(String phoneNumber) async {

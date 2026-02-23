@@ -21,11 +21,11 @@ class BottomTabBar extends ConsumerStatefulWidget {
   // final String userEmail;
   // final String prfile;
 
-  BottomTabBar({
-    Key? key,
+  const BottomTabBar({
+    super.key,
     // required this.userName, required this.userEmail,
     // required this.prfile,
-  }) : super(key: key);
+  });
   @override
   ConsumerState<BottomTabBar> createState() => _BottomTabBarState();
 }

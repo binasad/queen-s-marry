@@ -3,6 +3,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class GoogleMapScreen extends StatefulWidget {
+  const GoogleMapScreen({super.key});
+
   @override
   _GoogleMapScreenState createState() => _GoogleMapScreenState();
 }

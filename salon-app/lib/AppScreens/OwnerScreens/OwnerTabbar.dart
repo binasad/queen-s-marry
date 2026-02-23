@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../Settings.dart';
-import '../UserScreens/AppointmentList.dart';
 import 'OwnerAppointmentList.dart';
 import 'OwnerDashboard.dart';
 import 'OwnerGallery.dart';
@@ -17,10 +16,10 @@ class OwnerBottomTabBar extends StatefulWidget {
   // final String userEmail;
   // final String prfile;
 
-  OwnerBottomTabBar({Key? key,
+  const OwnerBottomTabBar({super.key,
     // required this.userName, required this.userEmail,
     // required this.prfile,
-  }) : super(key: key);
+  });
   @override
   _OwnerBottomTabBarState createState() => _OwnerBottomTabBarState();
 }

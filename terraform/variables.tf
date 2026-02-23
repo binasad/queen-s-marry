@@ -10,6 +10,18 @@ variable "environment" {
   default     = "prod"
 }
 
+variable "s3_bucket_name" {
+  description = "S3 bucket name for salon assets (must be globally unique)"
+  type        = string
+  default     = "salon-app-assets-queensmarry-2026"
+}
+
+variable "s3_allow_public_read" {
+  description = "Allow public read for bucket objects (needed for serving images)"
+  type        = bool
+  default     = true
+}
+
 variable "instance_type" {
   description = "EC2 instance type for backend"
   type        = string

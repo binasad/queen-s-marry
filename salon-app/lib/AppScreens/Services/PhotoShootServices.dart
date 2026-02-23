@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../UserScreens/AppointmentBooking.dart';
 
 class ShootServices extends StatefulWidget {
+  const ShootServices({super.key});
+
   @override
   _ShootServicesState createState() => _ShootServicesState();
 }
@@ -181,8 +183,7 @@ class ServiceDetailScreen extends StatelessWidget {
   final Map<String, dynamic> service;
   final List<Map<String, dynamic>> allServices;
 
-  const ServiceDetailScreen({Key? key, required this.service, required this.allServices})
-      : super(key: key);
+  const ServiceDetailScreen({super.key, required this.service, required this.allServices});
 
   @override
   Widget build(BuildContext context) {

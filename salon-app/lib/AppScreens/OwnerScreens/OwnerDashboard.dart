@@ -6,18 +6,12 @@ import 'package:salon/AppScreens/Services/userServices.dart';
 import 'package:salon/AppScreens/OwnerScreens/OwnerCourseAppliedList.dart';
 
 import '../PersonalInfo.dart';
-import '../Services/UserFacialServices.dart';
-import '../Services/UserHairServices.dart';
-import '../Services/UserMakeupServices.dart';
-import '../Services/UserMassageServices.dart';
-import '../Services/UserMehndiServices.dart';
-import '../Services/UserWaxingServices.dart';
 import '../UserScreens/AppointmentList.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
 
 
-  const OwnerDashboardScreen({Key? key, }) : super(key: key);
+  const OwnerDashboardScreen({super.key, });
 
   @override
   State<OwnerDashboardScreen> createState() => _OwnerDashboardScreenState();

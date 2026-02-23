@@ -122,8 +122,9 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
                     maxLength: 6,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Enter the code';
-                      if (v.length != 6 || !RegExp(r'^\d{6}$').hasMatch(v))
+                      if (v.length != 6 || !RegExp(r'^\d{6}$').hasMatch(v)) {
                         return 'Code must be 6 digits';
+                      }
                       return null;
                     },
                   ),
@@ -146,10 +147,12 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
                     ),
                     obscureText: true,
                     validator: (v) {
-                      if (v == null || v.isEmpty)
+                      if (v == null || v.isEmpty) {
                         return 'Confirm your password';
-                      if (v != _passwordController.text)
+                      }
+                      if (v != _passwordController.text) {
                         return 'Passwords do not match';
+                      }
                       return null;
                     },
                   ),

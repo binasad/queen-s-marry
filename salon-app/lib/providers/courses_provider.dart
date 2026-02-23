@@ -6,7 +6,7 @@ import '../services/cache_service.dart';
 class CoursesNotifier extends StateNotifier<CoursesState> {
   final CourseService _courseService = CourseService();
 
-  CoursesNotifier() : super(_initialState()) {}
+  CoursesNotifier() : super(_initialState());
 
   static CoursesState _initialState() {
     final cached = CacheService.getCourses();

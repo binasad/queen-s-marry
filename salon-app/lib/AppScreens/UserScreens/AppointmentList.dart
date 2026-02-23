@@ -8,7 +8,7 @@ import '../../utils/guest_guard.dart';
 
 class AppointmentsListScreen extends StatefulWidget {
   final VoidCallback? onRefresh;
-  const AppointmentsListScreen({Key? key, this.onRefresh}) : super(key: key);
+  const AppointmentsListScreen({super.key, this.onRefresh});
 
   @override
   _AppointmentsListScreenState createState() => _AppointmentsListScreenState();

@@ -5,7 +5,7 @@ import '../../Manager/NotificationManager.dart';
 import '../../services/websocket_service.dart';
 
 class AdminAppointmentsListScreen extends StatefulWidget {
-  const AdminAppointmentsListScreen({Key? key}) : super(key: key);
+  const AdminAppointmentsListScreen({super.key});
 
   @override
   _AdminAppointmentsListScreenState createState() =>

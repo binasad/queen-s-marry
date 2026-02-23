@@ -5,15 +5,13 @@ import 'package:image_picker/image_picker.dart';
 import '../widgets/cached_image.dart';
 import 'package:provider/provider.dart' as provider_package;
 import '../services/user_service.dart';
-import '../services/auth_service.dart';
 import '../services/api_service.dart';
-import '../providers/auth_provider.dart' as app_auth;
 import '../utils/error_handler.dart';
 import '../utils/guest_guard.dart';
 import '../providers/auth_provider.dart';
 
 class UserPersonalInfo extends StatefulWidget {
-  const UserPersonalInfo({Key? key}) : super(key: key);
+  const UserPersonalInfo({super.key});
 
   @override
   State<UserPersonalInfo> createState() => _UserPersonalInfoState();
@@ -100,12 +98,11 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            dialogBackgroundColor: Colors.blueGrey,
             colorScheme: const ColorScheme.light(
               primary: Colors.blue,
               onPrimary: Colors.white,
               onSurface: Colors.black,
-            ),
+            ), dialogTheme: DialogThemeData(backgroundColor: Colors.blueGrey),
           ),
           child: child!,
         );

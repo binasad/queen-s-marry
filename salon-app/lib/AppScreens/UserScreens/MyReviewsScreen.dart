@@ -4,7 +4,7 @@ import '../../services/appointment_service.dart';
 import '../../utils/error_handler.dart';
 
 class MyReviewsScreen extends StatefulWidget {
-  const MyReviewsScreen({Key? key}) : super(key: key);
+  const MyReviewsScreen({super.key});
 
   @override
   State<MyReviewsScreen> createState() => _MyReviewsScreenState();

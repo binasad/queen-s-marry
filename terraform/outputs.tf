@@ -17,3 +17,14 @@ output "api_base_url" {
   description = "Backend API base URL (update your .env with this)"
   value       = "https://aztrosyssalonappapi.ddns.net/api/v1"
 }
+
+# CloudFront outputs
+output "cloudfront_domain_name" {
+  description = "CloudFront distribution domain (e.g. d1234abcd.cloudfront.net)"
+  value       = aws_cloudfront_distribution.salon_assets.domain_name
+}
+
+output "cloudfront_url" {
+  description = "Base URL for S3 assets via CloudFront - use https://<this>/path/to/image.jpg"
+  value       = "https://${aws_cloudfront_distribution.salon_assets.domain_name}"
+}

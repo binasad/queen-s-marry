@@ -1,10 +1,11 @@
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../OwnerScreens/OwnerGallery.dart';
 
 class UserGalleryScreen extends StatelessWidget {
+  const UserGalleryScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final images = AdminGalleryScreen.galleryImages; // shared list

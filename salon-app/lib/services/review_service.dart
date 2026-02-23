@@ -25,7 +25,6 @@ class ReviewService {
 
   Future<List<dynamic>> getMyReviews() async {
     final response = await _api.get('/reviews/my', requiresAuth: true);
-    if (response is! Map) return [];
     final data = response['data'];
     if (data is Map && data['reviews'] != null) {
       final list = data['reviews'];

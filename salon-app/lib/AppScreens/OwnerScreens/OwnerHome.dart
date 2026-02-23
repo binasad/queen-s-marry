@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,12 +7,10 @@ import 'package:provider/provider.dart' as provider_package;
 import 'package:salon/AppScreens/PersonalInfo.dart';
 import '../../Manager/ExpertManager.dart';
 import '../../Manager/OfferManager.dart';
-import '../Settings.dart';
 import '../googleMap.dart';
 import 'OwnerDrawer.dart';
 import '../../services/user_service.dart';
 import '../../providers/auth_provider.dart' as app_auth;
-import '../../services/auth_service.dart';
 import '../../services/api_service.dart';
 class OwnerHome extends StatefulWidget {
   const OwnerHome({super.key});
@@ -63,7 +59,7 @@ class _OwnerHomeState extends State<OwnerHome> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setInnerState) {
-            Future<void> _pickImage() async {
+            Future<void> pickImage() async {
               final picker = ImagePicker();
               final pickedFile =
               await picker.pickImage(source: ImageSource.gallery);
@@ -95,7 +91,7 @@ class _OwnerHomeState extends State<OwnerHome> {
                     ),
                     SizedBox(height: 10),
                     ElevatedButton.icon(
-                      onPressed: _pickImage,
+                      onPressed: pickImage,
                       icon: Icon(CupertinoIcons.photo),
                       label: Text("Pick Image"),
                     ),
@@ -146,7 +142,7 @@ class _OwnerHomeState extends State<OwnerHome> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setInnerState) {
-            Future<void> _pickImage() async {
+            Future<void> pickImage() async {
               final picker = ImagePicker();
               final pickedFile =
               await picker.pickImage(source: ImageSource.gallery);
@@ -173,7 +169,7 @@ class _OwnerHomeState extends State<OwnerHome> {
                     ),
                     SizedBox(height: 10),
                     ElevatedButton.icon(
-                      onPressed: _pickImage,
+                      onPressed: pickImage,
                       icon: Icon(CupertinoIcons.photo),
                       label: Text("Pick Image"),
                     ),
@@ -313,7 +309,7 @@ class _OwnerHomeState extends State<OwnerHome> {
                 Row(
                   children: [
                     Text("Hello, ", style: TextStyle(color: Colors.black)),
-                    Text("${name}",
+                    Text(name,
                         style: TextStyle(
                             color: Colors.black, fontWeight: FontWeight.bold)),
                   ],
@@ -386,7 +382,7 @@ class _OwnerHomeState extends State<OwnerHome> {
               // Offers Section
               _buildSectionHeader("#SpecialForYou", onSeeAll: () {}),
               const SizedBox(height: 12),
-              Container(
+              SizedBox(
                 height: 160,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
@@ -422,7 +418,7 @@ class _OwnerHomeState extends State<OwnerHome> {
               SizedBox(height: 24),
               _buildSectionHeader("#OurExperts", onSeeAll: () {}),
               SizedBox(height: 12),
-              Container(
+              SizedBox(
                 height: 160,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,

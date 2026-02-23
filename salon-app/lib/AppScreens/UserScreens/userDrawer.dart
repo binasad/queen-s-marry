@@ -2,13 +2,11 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider_package;
-import 'package:salon/AppScreens/UserScreens/Course%20Screens/CoursesScreen.dart';
 import 'package:salon/AppScreens/UserScreens/UserNotifications.dart';
 import 'package:salon/AppScreens/UserScreens/FavoritesScreen.dart';
 import '../../services/auth_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/cached_image.dart';
-import 'Course Screens/CourseAppliedList.dart';
 import '../ChangePassword.dart';
 import '../PersonalInfo.dart';
 import '../about.dart';
@@ -18,12 +16,12 @@ class UserDrawer extends StatelessWidget {
   final String userName, userEmail;
   final String profileImageUrl;
 
-  UserDrawer({
-    Key? key,
+  const UserDrawer({
+    super.key,
     required this.userName,
     required this.userEmail,
     this.profileImageUrl = '',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

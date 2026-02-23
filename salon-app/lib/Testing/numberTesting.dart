@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class NumberGuessingGame extends StatefulWidget {
+  const NumberGuessingGame({super.key});
+
   @override
   _NumberGuessingGameState createState() => _NumberGuessingGameState();
 }

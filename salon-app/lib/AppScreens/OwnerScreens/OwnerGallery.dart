@@ -6,7 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import '../UserScreens/UserGallery.dart';
 
 class AdminGalleryScreen extends StatefulWidget {
-  static List<File> galleryImages = []; // Shared with user screen
+  static List<File> galleryImages = [];
+
+  const AdminGalleryScreen({super.key}); // Shared with user screen
 
   @override
   _AdminGalleryScreenState createState() => _AdminGalleryScreenState();

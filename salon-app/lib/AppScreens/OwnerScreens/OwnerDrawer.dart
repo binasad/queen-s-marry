@@ -4,20 +4,17 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:salon/AppScreens/OwnerScreens/OwnerAppointmentList.dart';
-import 'package:salon/AppScreens/UserScreens/Course%20Screens/CourseAppliedList.dart';
 import 'package:salon/AppScreens/OwnerScreens/OwnerCourseAppliedList.dart';
 import 'package:salon/AppScreens/about.dart';
 import '../ChangePassword.dart';
 import '../PersonalInfo.dart';
-import '../UserScreens/AppointmentList.dart';
 import '../UserScreens/userTabbar.dart';
 import '../login.dart';
 import 'OwnerDashboard.dart';
-import 'OwnerHome.dart';
 
 
 class OwnerDrawer extends StatefulWidget {
-  const OwnerDrawer({Key? key}) : super(key: key);
+  const OwnerDrawer({super.key});
 
   @override
   State<OwnerDrawer> createState() => _OwnerDrawerState();

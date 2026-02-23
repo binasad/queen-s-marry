@@ -1,10 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../UserScreens/AppointmentBooking.dart';
 
 class FacialService extends StatefulWidget {
-  const FacialService({Key? key}) : super(key: key);
+  const FacialService({super.key});
 
   @override
   State<FacialService> createState() => _FacialServiceState();
@@ -232,8 +231,7 @@ class ServiceDetailScreen extends StatelessWidget {
   final Map<String, dynamic> service;
   final List<Map<String, dynamic>> allServices;
 
-  const ServiceDetailScreen({Key? key, required this.service, required this.allServices})
-      : super(key: key);
+  const ServiceDetailScreen({super.key, required this.service, required this.allServices});
 
   @override
   Widget build(BuildContext context) {

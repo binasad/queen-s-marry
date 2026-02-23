@@ -26,13 +26,13 @@ class ServiceDetailedScreen extends ConsumerStatefulWidget {
   final double? offerDiscountedPrice;
 
   const ServiceDetailedScreen({
-    Key? key,
+    super.key,
     required this.service,
     this.allServices,
     this.activeOffer,
     this.offerId,
     this.offerDiscountedPrice,
-  }) : super(key: key);
+  });
 
 
 

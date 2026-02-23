@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CurvedContainer extends StatelessWidget {
-  const CurvedContainer({Key? key}) : super(key: key);
+  const CurvedContainer({super.key});
 
   @override
   Widget build(BuildContext context) {

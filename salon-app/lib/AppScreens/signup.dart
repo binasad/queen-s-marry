@@ -1,6 +1,4 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import '../services/auth_service.dart';
 import '../utils/error_handler.dart';
 import '../utils/route_animations.dart';

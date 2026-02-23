@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
@@ -28,11 +27,11 @@ class AppointmentBookingScreen extends StatefulWidget {
   final double? offerDiscountedPrice;
 
   const AppointmentBookingScreen({
-    Key? key,
+    super.key,
     required this.service,
     this.offerId,
     this.offerDiscountedPrice,
-  }) : super(key: key);
+  });
 
   @override
   State<AppointmentBookingScreen> createState() =>
@@ -92,8 +91,9 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     final t = time12h.trim().toLowerCase();
     if (t.contains('am') || t.contains('pm')) return _parseAmPm(time12h);
     final match = RegExp(r'^(\d{1,2}):(\d{2})').firstMatch(time12h.trim());
-    if (match != null)
+    if (match != null) {
       return '${match.group(1)!.padLeft(2, '0')}:${match.group(2)!}';
+    }
     return time12h;
   }
 

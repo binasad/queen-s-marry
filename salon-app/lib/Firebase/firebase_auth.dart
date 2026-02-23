@@ -160,7 +160,7 @@ class AuthService {
                       .child(FirebaseAuth.instance.currentUser!.uid)
                       .get();
 
-                  url = await snap.child('profile').value.toString();
+                  url = snap.child('profile').value.toString();
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -232,9 +232,9 @@ class AuthService {
                 .child('Users')
                 .child(value.user!.uid)
                 .get();
-            name = await snap.child('name').value.toString();
-            uid = await snap.child('uid').value.toString();
-            url = await snap.child('profile').value.toString();
+            name = snap.child('name').value.toString();
+            uid = snap.child('uid').value.toString();
+            url = snap.child('profile').value.toString();
             // Saving user information if it doesn't exist
 
             // await _firestore.collection("Users").doc(uid).set({

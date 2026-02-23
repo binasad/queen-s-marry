@@ -51,7 +51,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
       final offers = await _offerService.getOffers(isActive: true);
       final courseId = widget.course['id']?.toString();
       if (!mounted) return;
-      final applicable = (offers as List)
+      final applicable = (offers)
           .map((o) => Map<String, dynamic>.from(o as Map))
           .where((o) {
         final applyTo = o['apply_to']?.toString() ?? o['applyTo']?.toString();
@@ -443,7 +443,7 @@ Widget _buildInfoBadges() {
                       _loadReviews();
                     }
                   } catch (e) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e.toString()}'), backgroundColor: Colors.red));
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
                   }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: brandPink),
@@ -521,7 +521,7 @@ Widget _buildInfoBadges() {
             ],
           ),
         );
-      }).toList(),
+      }),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,

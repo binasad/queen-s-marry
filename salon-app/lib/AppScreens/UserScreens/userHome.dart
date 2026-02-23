@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as provider_package;
-import 'package:salon/AppScreens/PersonalInfo.dart';
 import 'package:salon/AppScreens/UserScreens/userDrawer.dart';
 import '../../Manager/ExpertManager.dart';
 import '../../Manager/OfferManager.dart';
@@ -14,7 +11,6 @@ import '../../services/service_catalog_service.dart';
 import '../../services/user_service.dart';
 import '../../services/websocket_service.dart';
 import '../../providers/services_provider.dart';
-import '../../widgets/offline_banner.dart';
 import '../../utils/debouncer.dart';
 import '../../utils/error_handler.dart';
 import '../../utils/haptic_feedback.dart';
@@ -22,19 +18,17 @@ import '../../widgets/skeleton_loader.dart';
 import '../../widgets/cached_image.dart';
 import '../Services/userServices.dart';
 import '../Services/ApiCategoryServicesTabbed.dart';
-import '../Services/servicesdetails.dart';
 import 'AppointmentBooking.dart';
 import 'Course Screens/CourseDetails.dart';
 import 'Course Screens/CoursesScreen.dart';
 import 'UserNotifications.dart';
 import '../../services/course_service.dart';
-import '../googleMap.dart';
 import '../../services/api_service.dart';
 import '../../providers/auth_provider.dart' as app_auth;
 
 class UserHome extends ConsumerStatefulWidget {
   final VoidCallback? onRefresh;
-  UserHome({Key? key, this.onRefresh}) : super(key: key);
+  const UserHome({super.key, this.onRefresh});
 
   /// Custom route with bottom-up slide animation for manual navigation
   static Route<dynamic> route({VoidCallback? onRefresh}) {
@@ -62,7 +56,7 @@ class UserHome extends ConsumerStatefulWidget {
 class _UserHomeState extends ConsumerState<UserHome>
     with SingleTickerProviderStateMixin {
   String location = "I8 Markaz, ISB";
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   late Debouncer _searchDebouncer;
 
   // Animation controller for the internal staggered entrance
@@ -1065,7 +1059,7 @@ class _UserHomeState extends ConsumerState<UserHome>
   }
 
   Widget _buildServiceIcon(String imageUrl, String label) {
-    return Container(
+    return SizedBox(
       width: 85,
       child: Column(
         mainAxisSize: MainAxisSize.min,
