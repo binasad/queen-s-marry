@@ -113,9 +113,29 @@ NGINX
 ln -sf /etc/nginx/sites-available/salon-api /etc/nginx/sites-enabled/salon-api
 nginx -t && systemctl enable nginx && systemctl restart nginx
 
-echo "===== 6/7  App directory ====="
-mkdir -p /home/ubuntu/salon-backend
-chown -R ubuntu:ubuntu /home/ubuntu/salon-backend
+echo "===== 6/7  App directory & salon-backend startup ====="
+mkdir -p /home/ubuntu/salon-backend /home/ubuntu/Aztrosys/backend
+chown -R ubuntu:ubuntu /home/ubuntu/salon-backend /home/ubuntu/Aztrosys
+
+# Systemd service to start salon-backend container on boot (after Docker is ready)
+# Safe if container doesn't exist yet (before first CI/CD deployment)
+cat > /etc/systemd/system/salon-backend-docker.service << 'SVC'
+[Unit]
+Description=Start salon-backend Docker container
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'docker ps -a -q -f name=^salon-backend$ | xargs -r docker start'
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target
+SVC
+systemctl daemon-reload
+systemctl enable salon-backend-docker.service
 
 echo "===== 7/7  Certbot (dry-run – run setup-ssl.sh manually after DNS resolves) ====="
 apt-get install -y certbot python3-certbot-nginx
