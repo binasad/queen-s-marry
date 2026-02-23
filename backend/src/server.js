@@ -1,7 +1,6 @@
 const app = require('./app');
 const env = require('./config/env');
 const { pool } = require('./config/db');
-const redis = require('./config/redis');
 const { initFirebase } = require('./services/pushNotificationService');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -52,11 +51,6 @@ server.listen(PORT, '0.0.0.0', async () => {
   console.log(`🔗 API Base URL: ${env.backendUrl}`);
   console.log(`🔌 WebSocket enabled`);
 
-  // Connect Redis (optional - caching disabled if not configured)
-  try {
-    await redis.connect();
-  } catch (_) { /* no-op */ }
-
   // Test database connection and run migrations
   try {
     await pool.query('SELECT NOW()');
@@ -99,7 +93,6 @@ server.listen(PORT, '0.0.0.0', async () => {
 process.on('SIGTERM', () => {
   console.log('\nSIGTERM received. Shutting down gracefully...');
   server.close(async () => {
-    await redis.disconnect();
     await pool.end();
     console.log('✓ Server closed');
     process.exit(0);
@@ -109,7 +102,6 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   console.log('\nSIGINT received. Shutting down gracefully...');
   server.close(async () => {
-    await redis.disconnect();
     await pool.end();
     console.log('✓ Server closed');
     process.exit(0);
