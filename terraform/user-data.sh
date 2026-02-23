@@ -8,15 +8,15 @@ exec > >(tee /var/log/user-data.log) 2>&1   # log everything
 DOMAIN="aztrosyssalonappapi.ddns.net"
 BACKEND_PORT=5000
 
-echo "===== 1/6  System update ====="
+echo "===== 1/7  System update ====="
 apt-get update && apt-get upgrade -y
 
-echo "===== 2/6  Node.js 20 LTS + PM2 ====="
+echo "===== 2/7  Node.js 20 LTS + PM2 ====="
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt-get install -y nodejs build-essential git
 npm install -g pm2
 
-echo "===== 3/6  Docker (optional – for DB or future containers) ====="
+echo "===== 3/7  Docker (optional – for DB or future containers) ====="
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 chmod a+r /etc/apt/keyrings/docker.gpg
@@ -26,7 +26,14 @@ apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 usermod -aG docker ubuntu
 
-echo "===== 4/6  Nginx ====="
+echo "===== 4/7  Redis (caching for backend) ====="
+apt-get install -y redis-server
+sed -i 's/^supervised no/supervised systemd/' /etc/redis/redis.conf
+systemctl enable redis-server
+systemctl start redis-server
+echo "Redis listening on 127.0.0.1:6379"
+
+echo "===== 5/7  Nginx ====="
 apt-get install -y nginx
 
 # Remove the default site so it can never shadow our config
@@ -104,11 +111,11 @@ NGINX
 ln -sf /etc/nginx/sites-available/salon-api /etc/nginx/sites-enabled/salon-api
 nginx -t && systemctl enable nginx && systemctl restart nginx
 
-echo "===== 5/6  App directory ====="
+echo "===== 6/7  App directory ====="
 mkdir -p /home/ubuntu/salon-backend
 chown -R ubuntu:ubuntu /home/ubuntu/salon-backend
 
-echo "===== 6/6  Certbot (dry-run – run setup-ssl.sh manually after DNS resolves) ====="
+echo "===== 7/7  Certbot (dry-run – run setup-ssl.sh manually after DNS resolves) ====="
 apt-get install -y certbot python3-certbot-nginx
 echo "Run 'sudo bash setup-ssl.sh [email]' once the domain resolves to this IP."
 

@@ -291,3 +291,15 @@ SELECT
 FROM permissions 
 WHERE slug IN ('appointments.create')
 ON CONFLICT DO NOTHING;
+
+-- User favorites (services and courses)
+CREATE TABLE IF NOT EXISTS user_favorites (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    item_type VARCHAR(20) NOT NULL CHECK (item_type IN ('service', 'course')),
+    item_id UUID NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, item_type, item_id)
+);
+CREATE INDEX IF NOT EXISTS idx_user_favorites_user ON user_favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_favorites_item ON user_favorites(item_type, item_id);

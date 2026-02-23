@@ -24,6 +24,9 @@ class FavoritesService {
     return await _storage.isGuest();
   }
 
+  /// Check if current user is guest (for UI to show signup prompt)
+  Future<bool> isGuest() async => _isGuest();
+
   Future<SharedPreferences> get _prefs async => SharedPreferences.getInstance();
 
   // --- Local storage (guests) ---
@@ -218,6 +221,36 @@ class FavoritesService {
       }
     }
     return items;
+  }
+
+  /// Get set of favorited service IDs (for list views)
+  Future<Set<String>> getFavoriteServiceIds() async {
+    final isGuestUser = await _isGuest();
+    if (isGuestUser) {
+      final ids = await _getLocalServiceIds();
+      return ids.toSet();
+    }
+    final list = await getFavoritesFromApi();
+    return list
+        .where((f) => (f['itemType']?.toString() ?? f['type']?.toString()) == 'service')
+        .map((f) => (f['itemId'] ?? f['id'])?.toString() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet();
+  }
+
+  /// Get set of favorited course IDs (for list views)
+  Future<Set<String>> getFavoriteCourseIds() async {
+    final isGuestUser = await _isGuest();
+    if (isGuestUser) {
+      final ids = await _getLocalCourseIds();
+      return ids.toSet();
+    }
+    final list = await getFavoritesFromApi();
+    return list
+        .where((f) => (f['itemType']?.toString() ?? f['type']?.toString()) == 'course')
+        .map((f) => (f['itemId'] ?? f['id'])?.toString() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet();
   }
 
   /// Check if service is favorited

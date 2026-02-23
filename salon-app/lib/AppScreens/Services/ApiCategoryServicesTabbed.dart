@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import '../../services/service_catalog_service.dart';
+import '../../services/favorites_service.dart';
+import '../../providers/favorites_provider.dart';
+import '../../utils/haptic_feedback.dart';
+import '../../utils/guest_guard.dart';
+import '../../services/api_service.dart';
 import '../../widgets/cached_image.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../services/websocket_service.dart';
 import 'servicesdetails.dart';
 
-class ApiCategoryServicesTabbedScreen extends StatefulWidget {
+class ApiCategoryServicesTabbedScreen extends ConsumerStatefulWidget {
   final String categoryId;
   final String title;
   final Map<String, dynamic>? activeOffer;
@@ -19,14 +25,15 @@ class ApiCategoryServicesTabbedScreen extends StatefulWidget {
   });
 
   @override
-  State<ApiCategoryServicesTabbedScreen> createState() =>
+  ConsumerState<ApiCategoryServicesTabbedScreen> createState() =>
       _ApiCategoryServicesTabbedScreenState();
 }
 
 class _ApiCategoryServicesTabbedScreenState
-    extends State<ApiCategoryServicesTabbedScreen>
+    extends ConsumerState<ApiCategoryServicesTabbedScreen>
     with TickerProviderStateMixin {
   final ServiceCatalogService _catalog = ServiceCatalogService();
+  final FavoritesService _favoritesService = FavoritesService();
   final WebSocketService _wsService = WebSocketService();
   StreamSubscription<Map<String, dynamic>>? _servicesSubscription;
   bool _loading = true;
@@ -35,6 +42,8 @@ class _ApiCategoryServicesTabbedScreenState
   List<String> _tabs = [];
   Map<String, List<dynamic>> _servicesByTag = {};
   TabController? _tabController;
+  Set<String> _favoriteServiceIds = {};
+  final Map<String, bool> _favoriteLoading = {};
 
   // Premium Theme Colors
   static const Color _brandColor = Color(0xFFE91E63); // Deep Pink
@@ -45,7 +54,15 @@ class _ApiCategoryServicesTabbedScreenState
   void initState() {
     super.initState();
     _load();
+    _loadFavoriteIds();
     _setupWebSocket();
+  }
+
+  Future<void> _loadFavoriteIds() async {
+    try {
+      final ids = await _favoritesService.getFavoriteServiceIds();
+      if (mounted) setState(() => _favoriteServiceIds = ids);
+    } catch (_) {}
   }
 
   @override
@@ -250,9 +267,16 @@ class _ApiCategoryServicesTabbedScreenState
           final duration = s['duration']?.toString() ?? '0';
           final imgUrl = s['image_url']?.toString() ?? '';
 
+          final serviceId = s['id']?.toString() ?? '';
+          final isFav = _favoriteServiceIds.contains(serviceId);
+          final isLoadingFav = _favoriteLoading[serviceId] ?? false;
+
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: InkWell(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                InkWell(
               borderRadius: BorderRadius.circular(20),
               onTap: () {
                 final serviceMap = {
@@ -406,6 +430,93 @@ class _ApiCategoryServicesTabbedScreenState
                   ],
                 ),
               ),
+            ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Material(
+                    color: Colors.white.withOpacity(0.9),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () async {
+                        if (isLoadingFav || serviceId.isEmpty) return;
+                        HapticHelper.lightImpact();
+                        setState(() => _favoriteLoading[serviceId] = true);
+                        try {
+                          final serviceData = {
+                            'id': serviceId,
+                            'name': name,
+                            'description': desc,
+                            'price': price,
+                            'duration': duration,
+                            'image_url': imgUrl,
+                            'category_id': s['category_id']?.toString() ?? widget.categoryId,
+                          };
+                          final newState = await _favoritesService.toggleServiceFavorite(
+                            serviceId,
+                            serviceData: serviceData,
+                          );
+                          if (mounted) {
+                            setState(() {
+                              _favoriteLoading[serviceId] = false;
+                              if (newState) {
+                                _favoriteServiceIds.add(serviceId);
+                              } else {
+                                _favoriteServiceIds.remove(serviceId);
+                              }
+                            });
+                            ref.invalidate(favoritesListProvider);
+                            if (newState) {
+                              final isGuest = await _favoritesService.isGuest();
+                              if (isGuest && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Added to favorites! Sign up to sync across devices.'),
+                                    backgroundColor: Color(0xFFE91E63),
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            setState(() => _favoriteLoading[serviceId] = false);
+                            await GuestGuard.handleApiError(
+                              context,
+                              e,
+                              actionDescription: 'save favorites',
+                            );
+                            if (!context.mounted) return;
+                            if (e is ApiException && !e.isGuestRestricted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(e.message),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: isLoadingFav
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Icon(
+                                isFav ? Icons.favorite : Icons.favorite_border,
+                                size: 22,
+                                color: isFav ? _brandColor : Colors.black54,
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },

@@ -82,7 +82,7 @@ terraform apply
 | `ec2.tf` | Key pair, security group, EC2 instance |
 | `s3.tf` | S3 bucket for salon assets |
 | `variables.tf` | Input variables |
-| `user-data.sh` | EC2 bootstrap script (Docker install) |
+| `user-data.sh` | EC2 bootstrap script (Node, Docker, Redis, Nginx) |
 | `terra-key-ec2` / `terra-key-ec2.pub` | SSH keys (do not commit private key) |
 
 ## Variables
@@ -120,4 +120,5 @@ terraform destroy
 
 - **Region:** Ensure `providers.tf` uses a valid region (e.g. `us-east-1`). `eu-east-1` is invalid.
 - **Database:** Supabase remains separate – not managed by this Terraform.
+- **Redis:** Installed on EC2 via user-data (localhost:6379). Ensure `REDIS_URL=redis://localhost:6379` in your backend `.env` on the server. For **existing** instances, install manually: `sudo apt install -y redis-server && sudo systemctl enable redis-server && sudo systemctl start redis-server`
 - **Admin-web:** Deployed on Vercel – not managed here.

@@ -7,8 +7,12 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import 'CourseDetails.dart';
 import '../../../providers/courses_provider.dart';
+import '../../../providers/favorites_provider.dart';
+import '../../../services/favorites_service.dart';
 import '../../../services/websocket_service.dart';
+import '../../../services/api_service.dart';
 import '../../../utils/haptic_feedback.dart';
+import '../../../utils/guest_guard.dart';
 import '../../../widgets/cached_image.dart';
 
 // GLOBAL list for demo/legacy logic
@@ -26,6 +30,9 @@ class CoursesScreen extends ConsumerStatefulWidget {
 
 class _CoursesScreenState extends ConsumerState<CoursesScreen> {
   StreamSubscription? _coursesSubscription;
+  final FavoritesService _favoritesService = FavoritesService();
+  Set<String> _favoriteCourseIds = {};
+  final Map<String, bool> _favoriteLoading = {};
   static const Color brandPink = Color(0xFFFF0068);
   static const Color premiumBg = Color(0xFFFBFBFD);
 
@@ -35,7 +42,15 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) ref.read(coursesProvider.notifier).loadCourses(isActive: true);
     });
+    _loadFavoriteIds();
     _setupWebSocket();
+  }
+
+  Future<void> _loadFavoriteIds() async {
+    try {
+      final ids = await _favoritesService.getFavoriteCourseIds();
+      if (mounted) setState(() => _favoriteCourseIds = ids);
+    } catch (_) {}
   }
 
   @override
@@ -164,7 +179,11 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                         itemCount: courses.length,
                         physics: const BouncingScrollPhysics(),
                         itemBuilder: (context, index) {
-                          final courseData = _formatCourse(courses[index] as Map<String, dynamic>);
+                          final rawCourse = courses[index] as Map<String, dynamic>;
+                          final courseData = _formatCourse(rawCourse);
+                          final courseId = courseData['id']?.toString() ?? '';
+                          final isFav = _favoriteCourseIds.contains(courseId);
+                          final isLoadingFav = _favoriteLoading[courseId] ?? false;
                           return AnimationConfiguration.staggeredList(
                             position: index,
                             duration: const Duration(milliseconds: 600),
@@ -173,6 +192,68 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                               child: FadeInAnimation(
                                 child: _PremiumCourseCard(
                                   course: courseData,
+                                  isFavorite: isFav,
+                                  isLoadingFavorite: isLoadingFav,
+                                  onFavoriteTap: () async {
+                                    if (courseId.isEmpty || isLoadingFav) return;
+                                    HapticHelper.lightImpact();
+                                    setState(() => _favoriteLoading[courseId] = true);
+                                    try {
+                                      final courseDataForFav = {
+                                        'id': rawCourse['id']?.toString(),
+                                        'title': rawCourse['title']?.toString(),
+                                        'price': rawCourse['price']?.toString(),
+                                        'duration': rawCourse['duration']?.toString(),
+                                        'image_url': rawCourse['image_url']?.toString(),
+                                        'image': rawCourse['image_url']?.toString(),
+                                        'description': rawCourse['description']?.toString(),
+                                      };
+                                      final newState = await _favoritesService.toggleCourseFavorite(
+                                        courseId,
+                                        courseData: courseDataForFav,
+                                      );
+                                      if (mounted) {
+                                        setState(() {
+                                          _favoriteLoading[courseId] = false;
+                                          if (newState) {
+                                            _favoriteCourseIds.add(courseId);
+                                          } else {
+                                            _favoriteCourseIds.remove(courseId);
+                                          }
+                                        });
+                                        ref.invalidate(favoritesListProvider);
+                                        if (newState) {
+                                          final isGuest = await _favoritesService.isGuest();
+                                          if (isGuest && context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Added to favorites! Sign up to sync across devices.'),
+                                                backgroundColor: Color(0xFFFF0068),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        setState(() => _favoriteLoading[courseId] = false);
+                                        await GuestGuard.handleApiError(
+                                          context,
+                                          e,
+                                          actionDescription: 'save favorites',
+                                        );
+                                        if (!context.mounted) return;
+                                        if (e is ApiException && !e.isGuestRestricted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(e.message),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    }
+                                  },
                                   onTap: () {
                                     HapticHelper.mediumImpact();
                                     var courseToPass = Map<String, dynamic>.from(courseData);
@@ -210,9 +291,18 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
 
 class _PremiumCourseCard extends StatelessWidget {
   final Map<String, dynamic> course;
+  final bool isFavorite;
+  final bool isLoadingFavorite;
   final VoidCallback onTap;
+  final VoidCallback? onFavoriteTap;
 
-  const _PremiumCourseCard({required this.course, required this.onTap});
+  const _PremiumCourseCard({
+    required this.course,
+    this.isFavorite = false,
+    this.isLoadingFavorite = false,
+    required this.onTap,
+    this.onFavoriteTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -225,39 +315,71 @@ class _PremiumCourseCard extends StatelessWidget {
           BoxShadow(color: const Color(0xFFFF0068).withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Column(
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              child: CachedImageWidget(
-                imageUrl: course['image'] ?? '',
-                height: 180,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(28),
+            child: Column(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  child: CachedImageWidget(
+                    imageUrl: course['image'] ?? '',
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: Text(course['title'], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900))),
-                      Text("PKR ${course['price']}", style: const TextStyle(color: Color(0xFFFF0068), fontWeight: FontWeight.bold)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(child: Text(course['title'], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900))),
+                          Text("PKR ${course['price']}", style: const TextStyle(color: Color(0xFFFF0068), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(course['duration'], style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(course['duration'], style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                ],
+                ),
+              ],
+            ),
+          ),
+          if (onFavoriteTap != null)
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Material(
+                color: Colors.white.withOpacity(0.9),
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: isLoadingFavorite ? null : onFavoriteTap,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: isLoadingFavorite
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            size: 22,
+                            color: isFavorite ? const Color(0xFFFF0068) : Colors.black54,
+                          ),
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

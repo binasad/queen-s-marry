@@ -1,4 +1,5 @@
 const { query } = require('../../config/db');
+const cache = require('../../services/cacheService');
 
 function resolveApplyTo(applyTo, serviceId, courseId) {
   const at = applyTo || 'all';
@@ -19,7 +20,19 @@ class OffersController {
   async getAllOffers(req, res) {
     try {
       const { isActive, page = 1, limit = 50 } = req.query;
-      const offset = (page - 1) * limit;
+      const pageNum = parseInt(page, 10) || 1;
+      const limitNum = parseInt(limit, 10) || 50;
+      const offset = (pageNum - 1) * limitNum;
+
+      // Cache only active offers (default public view)
+      const isCacheable = (isActive === undefined || isActive === 'true');
+      if (isCacheable) {
+        const cacheKey = cache.CacheKeys.offersActive(pageNum, limitNum);
+        const cached = await cache.get(cacheKey);
+        if (cached) {
+          return res.json({ success: true, data: cached });
+        }
+      }
 
       let queryText = 'SELECT * FROM offers WHERE 1=1';
       const queryParams = [];
@@ -37,7 +50,7 @@ class OffersController {
       }
 
       queryText += ` ORDER BY created_at DESC LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
-      queryParams.push(limit, offset);
+      queryParams.push(limitNum, offset);
 
       const result = await query(queryText, queryParams);
 
@@ -54,18 +67,24 @@ class OffersController {
 
       const countResult = await query(countQuery, countParams);
       const totalOffers = parseInt(countResult.rows[0].count, 10);
+      const responseData = {
+        offers: result.rows,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: totalOffers,
+          pages: Math.ceil(totalOffers / limitNum),
+        },
+      };
+
+      if (isCacheable) {
+        const cacheKey = cache.CacheKeys.offersActive(pageNum, limitNum);
+        await cache.set(cacheKey, responseData);
+      }
 
       res.json({
         success: true,
-        data: {
-          offers: result.rows,
-          pagination: {
-            page: parseInt(page, 10),
-            limit: parseInt(limit, 10),
-            total: totalOffers,
-            pages: Math.ceil(totalOffers / limit),
-          },
-        },
+        data: responseData,
       });
     } catch (error) {
       console.error('Get offers error:', error);
@@ -200,6 +219,7 @@ class OffersController {
       );
 
       const newOffer = result.rows[0];
+      await cache.delPattern(cache.CacheKeys.offersActivePattern);
 
       // Emit WebSocket event for real-time updates
       if (global.io) {
@@ -329,6 +349,7 @@ class OffersController {
       }
 
       const updatedOffer = result.rows[0];
+      await cache.delPattern(cache.CacheKeys.offersActivePattern);
 
       // Emit WebSocket event for real-time updates
       if (global.io) {
@@ -365,6 +386,7 @@ class OffersController {
       }
 
       const deletedOffer = result.rows[0];
+      await cache.delPattern(cache.CacheKeys.offersActivePattern);
 
       // Emit WebSocket event for real-time updates
       if (global.io) {

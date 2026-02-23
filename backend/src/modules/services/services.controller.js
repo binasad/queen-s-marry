@@ -1,6 +1,7 @@
 const { query } = require('../../config/db');
 const s3Service = require('../../services/s3Service');
 const { uploadToLocal } = require('../../services/localUploadService');
+const cache = require('../../services/cacheService');
 
 const isS3Configured = () => {
   const key = process.env.AWS_ACCESS_KEY_ID || '';
@@ -12,11 +13,18 @@ class ServicesController {
   // Get all service categories
   async getCategories(req, res) {
     try {
+      const cached = await cache.get(cache.CacheKeys.categories);
+      if (cached) {
+        return res.json({ success: true, data: { categories: cached } });
+      }
+
       const result = await query(
         `SELECT * FROM service_categories 
          WHERE is_active = TRUE 
          ORDER BY display_order ASC, name ASC`
       );
+
+      await cache.set(cache.CacheKeys.categories, result.rows);
 
       res.json({
         success: true,
@@ -43,6 +51,9 @@ class ServicesController {
         [name, description || null, imageUrl || null, icon || null, displayOrder || 0]
       );
 
+      await cache.del(cache.CacheKeys.categories);
+      await cache.delPattern('services:cat:*');
+
       res.status(201).json({
         success: true,
         message: 'Category created successfully.',
@@ -68,7 +79,18 @@ class ServicesController {
     try {
       const { categoryId, minPrice, maxPrice, search, isActive, page = 1, limit = 50 } = req.query;
       const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 500);
-      const offset = (Math.max(parseInt(page, 10) || 1, 1) - 1) * safeLimit;
+      const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+      const offset = (pageNum - 1) * safeLimit;
+
+      // Cache only simple queries: categoryId only, no filters, default pagination
+      const isCacheable = categoryId && !minPrice && !maxPrice && !search && (isActive === undefined || isActive === 'true');
+      if (isCacheable) {
+        const cacheKey = cache.CacheKeys.servicesByCategory(categoryId, pageNum, safeLimit);
+        const cached = await cache.get(cacheKey);
+        if (cached) {
+          return res.json({ success: true, data: cached });
+        }
+      }
 
       let whereClause = 'WHERE 1=1';
       const queryParams = [];
@@ -122,18 +144,24 @@ class ServicesController {
         ),
       ]);
       const total = parseInt(countResult.rows[0].count, 10);
+      const responseData = {
+        services: result.rows,
+        pagination: {
+          page: pageNum,
+          limit: safeLimit,
+          total,
+          pages: Math.ceil(total / safeLimit),
+        },
+      };
+
+      if (isCacheable) {
+        const cacheKey = cache.CacheKeys.servicesByCategory(categoryId, pageNum, safeLimit);
+        await cache.set(cacheKey, responseData);
+      }
 
       res.json({
         success: true,
-        data: {
-          services: result.rows,
-          pagination: {
-            page: parseInt(page, 10) || 1,
-            limit: safeLimit,
-            total,
-            pages: Math.ceil(total / safeLimit),
-          },
-        },
+        data: responseData,
       });
     } catch (error) {
       console.error('Get services error:', error);
@@ -202,6 +230,9 @@ class ServicesController {
       );
 
       const newService = result.rows[0];
+      await cache.del(cache.CacheKeys.categories);
+      await cache.delPattern('services:cat:*');
+
       if (global.io) {
         console.log('📢 Emitting service-created and services-updated events');
         global.io.to('admin').emit('service-created', { service: newService });
@@ -251,6 +282,9 @@ class ServicesController {
       }
 
       const updatedService = result.rows[0];
+      await cache.del(cache.CacheKeys.categories);
+      await cache.delPattern('services:cat:*');
+
       if (global.io) {
         console.log('📢 Emitting service-updated and services-updated events');
         global.io.to('admin').emit('service-updated', { service: updatedService });
@@ -289,6 +323,9 @@ class ServicesController {
       }
 
       const deletedServiceId = result.rows[0].id;
+      await cache.del(cache.CacheKeys.categories);
+      await cache.delPattern('services:cat:*');
+
       if (global.io) {
         global.io.to('admin').emit('service-deleted', { serviceId: deletedServiceId });
         global.io.emit('services-updated', { action: 'deleted', serviceId: deletedServiceId });
