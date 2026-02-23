@@ -49,7 +49,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           _userEmail = user['email']?.toString();
           
           // Debugging log (Optional, remove for production)
-          print('ChangePassword: User email loaded: $_userEmail');
+          debugPrint('ChangePassword: User email loaded: $_userEmail');
         });
       }
     } catch (e) {

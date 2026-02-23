@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 
 class SupportTicket {
@@ -62,7 +63,7 @@ class SupportTicketService {
       }
       return [];
     } catch (e) {
-      print('SupportTicketService Error (getMyTickets): $e');
+      debugPrint('SupportTicketService Error (getMyTickets): $e');
       rethrow;
     }
   }
@@ -75,7 +76,7 @@ class SupportTicketService {
       final tickets = response['data']['tickets'] as List;
       return tickets.map((t) => SupportTicket.fromJson(t)).toList();
     } catch (e) {
-      print('SupportTicketService Error (getAll): $e');
+      debugPrint('SupportTicketService Error (getAll): $e');
       rethrow;
     }
   }
@@ -85,7 +86,7 @@ class SupportTicketService {
       final response = await _apiService.get('/support/tickets/$id');
       return SupportTicket.fromJson(response['data']);
     } catch (e) {
-      print('SupportTicketService Error (getById): $e');
+      debugPrint('SupportTicketService Error (getById): $e');
       rethrow;
     }
   }
@@ -94,7 +95,7 @@ class SupportTicketService {
     try {
       await _apiService.post('/support/tickets', ticketData);
     } catch (e) {
-      print('SupportTicketService Error: $e');
+      debugPrint('SupportTicketService Error: $e');
       rethrow;
     }
   }
@@ -106,7 +107,7 @@ class SupportTicketService {
         updateData,
       ); // Use post or put as per your backend
     } catch (e) {
-      print('SupportTicketService Error (update): $e');
+      debugPrint('SupportTicketService Error (update): $e');
       rethrow;
     }
   }
@@ -115,7 +116,7 @@ class SupportTicketService {
     try {
       await _apiService.delete('/support/tickets/$id');
     } catch (e) {
-      print('SupportTicketService Error (delete): $e');
+      debugPrint('SupportTicketService Error (delete): $e');
       rethrow;
     }
   }

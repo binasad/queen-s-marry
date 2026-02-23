@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 import 'cache_service.dart';
 
@@ -61,7 +62,7 @@ class BlogService {
       }
       return blogs;
     } catch (e) {
-      print('BlogService Error: $e');
+      debugPrint('BlogService Error: $e');
       rethrow;
     }
   }

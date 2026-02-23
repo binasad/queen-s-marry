@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/service_catalog_service.dart';
 import '../services/cache_service.dart';
@@ -28,18 +29,18 @@ class ServicesNotifier extends StateNotifier<ServicesState> {
     state = state.copyWith(categoriesLoading: true);
 
     try {
-      print('🏷️ Loading categories from API...');
+      debugPrint('🏷️ Loading categories from API...');
       final categories = await _catalog.getCategories(
         forceRefresh: forceRefresh,
       );
-      print('🏷️ Loaded ${categories.length} categories from API');
+      debugPrint('🏷️ Loaded ${categories.length} categories from API');
       state = state.copyWith(
         categories: categories,
         categoriesLoading: false,
         categoriesError: null,
       );
     } catch (e) {
-      print('❌ Failed to load categories: $e');
+      debugPrint('❌ Failed to load categories: $e');
       state = state.copyWith(
         categoriesLoading: false,
         categoriesError: e.toString(),

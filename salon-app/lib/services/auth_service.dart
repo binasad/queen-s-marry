@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
@@ -13,7 +14,7 @@ class AuthService {
   /// Guest login - local only, no backend call (works offline, avoids rate limits)
   /// Creates synthetic user, uses local storage for favorites. Session-only.
   Future<Map<String, dynamic>> guestLogin() async {
-    print('AuthService: Guest login (local)');
+    debugPrint('AuthService: Guest login (local)');
     await _api.clearTokens();
     await _storage.setGuestStatus(true);
 
@@ -42,7 +43,7 @@ class AuthService {
     String? gender,
   }) async {
     try {
-      print('AuthService: Starting registration for $email');
+      debugPrint('AuthService: Starting registration for $email');
       final response = await _api.post('/auth/register', {
         'name': name,
         'email': email,
@@ -52,20 +53,20 @@ class AuthService {
         if (gender != null) 'gender': gender,
       }, requiresAuth: false);
 
-      print('AuthService: Registration response received');
-      print('Response keys: ${response.keys}');
+      debugPrint('AuthService: Registration response received');
+      debugPrint('Response keys: ${response.keys}');
 
       if (response.containsKey('data')) {
         return response['data'] as Map<String, dynamic>;
       }
 
       // If response doesn't have 'data' key, return the whole response
-      print(
+      debugPrint(
         'Warning: Response does not have "data" key, returning full response',
       );
       return response;
     } catch (e) {
-      print('AuthService: Registration error: $e');
+      debugPrint('AuthService: Registration error: $e');
       rethrow;
     }
   }
@@ -75,49 +76,49 @@ class AuthService {
     required String password,
   }) async {
     try {
-      print('AuthService: Starting login for $email');
+      debugPrint('AuthService: Starting login for $email');
       final response = await _api.post('/auth/login', {
         'email': email,
         'password': password,
       }, requiresAuth: false);
 
-      print('AuthService: Login response received');
-      print('Response keys: ${response.keys}');
+      debugPrint('AuthService: Login response received');
+      debugPrint('Response keys: ${response.keys}');
 
       if (!response.containsKey('data')) {
-        print('ERROR: Response does not have "data" key!');
-        print('Full response: $response');
+        debugPrint('ERROR: Response does not have "data" key!');
+        debugPrint('Full response: $response');
         throw Exception('Invalid login response: missing data key');
       }
 
       final data = response['data'] as Map<String, dynamic>;
-      print('Login response data: $data'); // Debug log
+      debugPrint('Login response data: $data'); // Debug log
 
       final accessToken = data['accessToken'] as String?;
       final refreshToken = data['refreshToken'] as String?;
 
-      print('Access token received: ${accessToken != null}');
-      print('Refresh token received: ${refreshToken != null}');
+      debugPrint('Access token received: ${accessToken != null}');
+      debugPrint('Refresh token received: ${refreshToken != null}');
 
       if (accessToken != null && refreshToken != null) {
         await _api.saveTokens(accessToken, refreshToken);
         await _storage.setGuestStatus(false); // Clear guest so favorites use API
-        print('Tokens saved successfully');
+        debugPrint('Tokens saved successfully');
 
         // Verify tokens were saved
         final savedToken = await _api.getAccessToken();
-        print('Token verification: ${savedToken != null}');
+        debugPrint('Token verification: ${savedToken != null}');
         if (savedToken != null) {
-          print('Saved token length: ${savedToken.length}');
+          debugPrint('Saved token length: ${savedToken.length}');
         }
       } else {
-        print('ERROR: Tokens not found in login response!');
-        print('Available keys in data: ${data.keys}');
+        debugPrint('ERROR: Tokens not found in login response!');
+        debugPrint('Available keys in data: ${data.keys}');
       }
 
       if (!data.containsKey('user')) {
-        print('ERROR: User data not found in login response!');
-        print('Available keys in data: ${data.keys}');
+        debugPrint('ERROR: User data not found in login response!');
+        debugPrint('Available keys in data: ${data.keys}');
         throw Exception('Invalid login response: missing user data');
       }
 
@@ -126,12 +127,12 @@ class AuthService {
       // Validate role - only Customer and Guest can access mobile app
       final role = user['role'] as Map<String, dynamic>?;
       final roleName = role?['name']?.toString() ?? '';
-      print('AuthService: User role is: $roleName');
+      debugPrint('AuthService: User role is: $roleName');
 
       if (!_allowedMobileRoles.contains(roleName)) {
         // Clear tokens since this user shouldn't have access
         await _api.clearTokens();
-        print('AuthService: Role "$roleName" not allowed on mobile app');
+        debugPrint('AuthService: Role "$roleName" not allowed on mobile app');
         throw Exception(
           'This account is for staff/admin access only. Please use the web portal to login.',
         );
@@ -139,7 +140,7 @@ class AuthService {
 
       return user;
     } catch (e) {
-      print('AuthService: Login error: $e');
+      debugPrint('AuthService: Login error: $e');
       rethrow;
     }
   }
@@ -272,7 +273,7 @@ class AuthService {
 
       return user;
     } catch (e) {
-      print('AuthService: Google login error: $e');
+      debugPrint('AuthService: Google login error: $e');
       // Extract backend message from DioException when available
       if (e is DioException && e.response?.data is Map) {
         final msg = e.response!.data['message']?.toString();

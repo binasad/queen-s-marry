@@ -226,6 +226,8 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
                           height: 44,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                            cacheExtent: 200,
                             itemCount: _applicableOffers.length,
                             separatorBuilder: (_, __) => const SizedBox(width: 10),
                             itemBuilder: (context, i) {

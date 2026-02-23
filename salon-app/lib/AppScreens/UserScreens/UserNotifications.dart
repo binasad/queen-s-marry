@@ -96,12 +96,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () {
               NotificationManager.instance.clearAll();
               setState(() {});
               Navigator.pop(ctx);
             },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6CBF),
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Clear'),
           ),
         ],
@@ -117,9 +121,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           "Notifications",
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Colors.white,
           ),
         ),
+        iconTheme: const IconThemeData(color: Colors.white),
         centerTitle: true,
         elevation: 0,
         flexibleSpace: Container(
@@ -127,7 +132,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             gradient: LinearGradient(
               colors: [
                 Color(0xFFFF6CBF),
-                Color(0xFFFFC371),
+                Color(0xFFFFB3D9),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -153,10 +158,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           gradient: LinearGradient(
             colors: [
               Color(0xFFFF6CBF),
-              Color(0xFFFFC371),
+              Color(0xFFFFB3D9),
             ],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
         child: Container(
@@ -213,6 +218,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               }
               return RefreshIndicator(
                 onRefresh: _loadNotifications,
+                color: const Color(0xFFFF6CBF),
                 child: ListView.builder(
                   padding: const EdgeInsets.only(top: 25, bottom: 24),
                   itemCount: notifications.length,
@@ -227,24 +233,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       elevation: 4,
                       child: Container(
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFFAD0C4),
-                              Color(0xFFFDCBF1),
-                              Color(0xFFD1FDFF),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF6CBF).withOpacity(0.15),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: ListTile(
-                          leading: const Icon(Icons.notifications,
-                              color: Colors.black),
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF6CBF).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.notifications_rounded,
+                                color: Color(0xFFFF6CBF), size: 22),
+                          ),
                           title: Text(
                             n.title,
                             style: const TextStyle(
-                              color: Colors.black,
+                              color: Color(0xFF1A1A2E),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -254,7 +266,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 n.body,
-                                style: const TextStyle(color: Colors.black87),
+                                style: TextStyle(color: Colors.grey[700]),
                               ),
                               const SizedBox(height: 4),
                               Text(

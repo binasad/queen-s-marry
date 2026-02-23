@@ -115,7 +115,7 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
         });
       }
     } catch (e) {
-      print('Error loading appointments: $e');
+      debugPrint('Error loading appointments: $e');
       if (mounted) {
         setState(() {
           _error = e.toString();

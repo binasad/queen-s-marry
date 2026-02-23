@@ -111,9 +111,27 @@ class UsersController {
       if (gender !== undefined) { updates.push(`gender = $${paramCounter++}`); values.push(gender); }
       if (profileImageUrl !== undefined) { updates.push(`profile_image_url = $${paramCounter++}`); values.push(profileImageUrl); }
 
+      const formatUser = (row) => row ? {
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        address: row.address,
+        phone: row.phone,
+        gender: row.gender,
+        profile_image_url: row.profile_image_url,
+        email_verified: row.email_verified,
+        created_at: row.created_at,
+        last_login: row.last_login,
+        role: {
+          id: row.role_id,
+          name: row.role_name,
+          permissions: row.permissions,
+        },
+      } : null;
+
       if (updates.length === 0) {
-        const user = await fetchUserWithRole(req.user.id);
-        return res.json({ success: true, data: { user } });
+        const row = await fetchUserWithRole(req.user.id);
+        return res.json({ success: true, data: { user: formatUser(row) } });
       }
 
       values.push(req.user.id);
@@ -122,12 +140,12 @@ class UsersController {
         values
       );
 
-      const user = await fetchUserWithRole(req.user.id);
+      const row = await fetchUserWithRole(req.user.id);
 
       res.json({
         success: true,
         message: 'Profile updated successfully.',
-        data: { user },
+        data: { user: formatUser(row) },
       });
     } catch (error) {
       console.error('Update profile error:', error);

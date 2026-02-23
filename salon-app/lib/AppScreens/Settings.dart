@@ -280,7 +280,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildEditButton() {
     return InkWell(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => UserPersonalInfo())),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserPersonalInfo()))
+          .then((_) { if (mounted) loadUserData(); }),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(color: brandPink, borderRadius: BorderRadius.circular(20)),

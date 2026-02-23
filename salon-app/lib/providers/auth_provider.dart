@@ -42,10 +42,13 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Update user profile (e.g. after photo upload) - merges with existing user
+  /// Update user profile (e.g. after photo upload or profile edit) - merges with existing user
   void updateUserProfile(Map<String, dynamic> updates) {
     if (_user == null) return;
     _user = {..._user!, ...updates};
+    if (_user!['isGuest'] != true) {
+      Future(() => _storage.saveCachedProfile({'user': _user}));
+    }
     notifyListeners();
   }
 

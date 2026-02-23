@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -38,7 +39,7 @@ class PushNotificationService {
     // Gatekeeper: Never init for guest users (privacy, cost, predictability)
     final isGuest = await _storage.isGuest();
     if (isGuest) {
-      print('PushNotificationService: Skipping – Guest user detected.');
+      debugPrint('PushNotificationService: Skipping – Guest user detected.');
       await clearToken();
       return;
     }
@@ -50,7 +51,7 @@ class PushNotificationService {
       sound: true,
     );
 
-    print('PushNotificationService: Permission status = ${settings.authorizationStatus}');
+    debugPrint('PushNotificationService: Permission status = ${settings.authorizationStatus}');
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
@@ -63,27 +64,27 @@ class PushNotificationService {
       // 2. Get the Token
       String? token = await _fcm.getToken();
       if (token == null || token.isEmpty) {
-        print('PushNotificationService: ⚠️ FCM returned null/empty token. '
+        debugPrint('PushNotificationService: ⚠️ FCM returned null/empty token. '
             'Ensure Firebase is configured (run: flutterfire configure)');
         return;
       }
-      print('PushNotificationService: Token obtained (${token.length} chars)');
+      debugPrint('PushNotificationService: Token obtained (${token.length} chars)');
 
       await _saveTokenToBackend(token);
 
       // Listen for token refresh (e.g. app reinstall, cache clear)
       _fcm.onTokenRefresh.listen((newToken) async {
-        print('PushNotificationService: Token refreshed, updating backend');
+        debugPrint('PushNotificationService: Token refreshed, updating backend');
         await _saveTokenToBackend(newToken);
       });
     } else {
-      print('PushNotificationService: Permission denied (${settings.authorizationStatus})');
+      debugPrint('PushNotificationService: Permission denied (${settings.authorizationStatus})');
     }
 
     // 3. Listen for messages while app is open – show and store
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
-        print('PushNotificationService: Foreground message: ${message.notification!.title}');
+        debugPrint('PushNotificationService: Foreground message: ${message.notification!.title}');
         NotificationManager.instance.addPushNotification(
           title: message.notification!.title ?? 'Merry Queen',
           body: message.notification!.body ?? '',
@@ -171,9 +172,9 @@ class PushNotificationService {
         {'fcmToken': token},
         requiresAuth: true,
       );
-      print('PushNotificationService: ✅ Token saved to backend');
+      debugPrint('PushNotificationService: ✅ Token saved to backend');
     } catch (e) {
-      print('PushNotificationService: ❌ Save token failed: $e');
+      debugPrint('PushNotificationService: ❌ Save token failed: $e');
     }
   }
 
@@ -185,7 +186,7 @@ class PushNotificationService {
         {},
         requiresAuth: true,
       );
-      print('PushNotificationService: Token cleared from backend.');
+      debugPrint('PushNotificationService: Token cleared from backend.');
     } catch (e) {
       // Ignore – user may not be logged in
     }

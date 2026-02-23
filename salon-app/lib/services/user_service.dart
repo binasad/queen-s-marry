@@ -1,22 +1,23 @@
+import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 
 class UserService {
   final ApiService _api = ApiService();
 
   Future<Map<String, dynamic>> getProfile() async {
-    print('UserService: Calling GET /profile');
+    debugPrint('UserService: Calling GET /profile');
 
     // Check if token exists before request
     final token = await _api.getAccessToken();
-    print('UserService: Token exists: ${token != null}');
+    debugPrint('UserService: Token exists: ${token != null}');
     if (token != null) {
-      print(
+      debugPrint(
         'UserService: Token preview: ${token.substring(0, token.length > 20 ? 20 : token.length)}...',
       );
     }
 
     final response = await _api.get('/profile');
-    print('UserService: Profile response: $response');
+    debugPrint('UserService: Profile response: $response');
     return response['data'] as Map<String, dynamic>;
   }
 

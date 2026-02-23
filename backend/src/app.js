@@ -55,7 +55,6 @@ const allowedOrigins = [
   env.adminWebUrl,
   'https://admin-web-navy-three.vercel.app',
   'https://aztrosyssalonappapi.ddns.net',
-  'http://aztrosyssalonappapi.ddns.net',
 ].filter(Boolean);
 
 const corsOptions = {

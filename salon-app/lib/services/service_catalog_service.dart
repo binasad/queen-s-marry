@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 import 'cache_service.dart';
 
@@ -9,7 +10,7 @@ class ServiceCatalogService {
     if (!forceRefresh) {
       final cachedCategories = CacheService.getCategories();
       if (cachedCategories != null && cachedCategories.isNotEmpty) {
-        print('📦 Loading categories from cache');
+        debugPrint('📦 Loading categories from cache');
         // Still fetch in background to update cache
         _fetchAndCacheCategories();
         return cachedCategories;
@@ -17,7 +18,7 @@ class ServiceCatalogService {
     }
 
     // Fetch from API
-    print('🌐 Loading categories from API');
+    debugPrint('🌐 Loading categories from API');
     final response = await _api.get('/categories', requiresAuth: false);
     // Backend format: { success: true, data: { categories: [...] } }
     // Some older code expected: { data: [...] }
@@ -53,10 +54,10 @@ class ServiceCatalogService {
 
       if (categories.isNotEmpty) {
         await CacheService.saveCategories(categories);
-        print('✅ Categories cache updated in background');
+        debugPrint('✅ Categories cache updated in background');
       }
     } catch (e) {
-      print('⚠️ Failed to update categories cache: $e');
+      debugPrint('⚠️ Failed to update categories cache: $e');
     }
   }
 
@@ -166,10 +167,10 @@ class ServiceCatalogService {
 
       if (services.isNotEmpty) {
         await CacheService.saveServices(services);
-        print('✅ Services cache updated in background');
+        debugPrint('✅ Services cache updated in background');
       }
     } catch (e) {
-      print('⚠️ Failed to update services cache: $e');
+      debugPrint('⚠️ Failed to update services cache: $e');
     }
   }
 

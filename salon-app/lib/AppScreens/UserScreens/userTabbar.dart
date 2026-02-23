@@ -146,7 +146,7 @@ class _BottomTabBarState extends ConsumerState<BottomTabBar> {
     try {
       // Try to load from backend instead of Firebase
       // This is a placeholder - you'll need to implement proper user data fetching
-      print('Loading user data...');
+      debugPrint('Loading user data...');
 
       // For now, set default values to prevent crashes
       setState(() {
@@ -157,7 +157,7 @@ class _BottomTabBarState extends ConsumerState<BottomTabBar> {
         profile = '';
       });
     } catch (e) {
-      print('Error loading user data: $e');
+      debugPrint('Error loading user data: $e');
       // Set defaults if error occurs
       setState(() {
         role = 'user';

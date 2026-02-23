@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 import 'cache_service.dart';
 
@@ -13,7 +14,7 @@ class CourseService {
     // Clear cache if force refresh is requested
     if (forceRefresh) {
       await CacheService.clearCourses();
-      print('🗑️ Courses cache cleared for force refresh');
+      debugPrint('🗑️ Courses cache cleared for force refresh');
     }
 
     // Only use cache if no filters are applied
@@ -23,7 +24,7 @@ class CourseService {
     if (!forceRefresh && !hasFilters) {
       final cachedCourses = CacheService.getCourses();
       if (cachedCourses != null && cachedCourses.isNotEmpty) {
-        print('📦 Loading courses from cache');
+        debugPrint('📦 Loading courses from cache');
         // Still fetch in background to update cache
         _fetchAndCacheCourses();
         return cachedCourses;
@@ -31,7 +32,7 @@ class CourseService {
     }
 
     // Fetch from API
-    print('🌐 Loading courses from API (forceRefresh: $forceRefresh)');
+    debugPrint('🌐 Loading courses from API (forceRefresh: $forceRefresh)');
     var endpoint = '/courses';
     final queryParams = <String>[];
     if (search != null && search.isNotEmpty) {
@@ -78,10 +79,10 @@ class CourseService {
 
       if (courses.isNotEmpty) {
         await CacheService.saveCourses(courses);
-        print('✅ Courses cache updated in background');
+        debugPrint('✅ Courses cache updated in background');
       }
     } catch (e) {
-      print('⚠️ Failed to update courses cache: $e');
+      debugPrint('⚠️ Failed to update courses cache: $e');
     }
   }
 

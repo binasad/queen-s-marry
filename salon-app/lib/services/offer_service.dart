@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 import 'cache_service.dart';
 
@@ -40,7 +41,7 @@ class OfferService {
       
       return offers;
     } catch (e) {
-      print('Error fetching offers: $e');
+      debugPrint('Error fetching offers: $e');
       rethrow;
     }
   }
@@ -79,7 +80,7 @@ class OfferService {
       
       throw Exception('Invalid offer data format');
     } catch (e) {
-      print('Error fetching offer: $e');
+      debugPrint('Error fetching offer: $e');
       rethrow;
     }
   }

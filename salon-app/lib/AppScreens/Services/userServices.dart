@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import '../../services/service_catalog_service.dart';
+import '../../widgets/cached_image.dart';
 import '../../services/websocket_service.dart';
 import 'ApiCategoryServicesTabbed.dart';
 
@@ -297,7 +298,10 @@ class _CategoryCardState extends State<_CategoryCard> with SingleTickerProviderS
                 // Image Background
                 Positioned.fill(
                   child: widget.imageUrl.isNotEmpty
-                      ? Image.network(widget.imageUrl, fit: BoxFit.cover)
+                      ? CachedImageWidget(
+                          imageUrl: widget.imageUrl,
+                          fit: BoxFit.cover,
+                        )
                       : Image.asset(widget.fallbackAsset, fit: BoxFit.cover),
                 ),
                 // Premium Soft Gradient Overlay
