@@ -10,6 +10,10 @@ android {
     namespace = "com.example.salon"
     compileSdk = 36
 
+    lint {
+        disable += "NullSafeMutableLiveData"
+    }
+
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11

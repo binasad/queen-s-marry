@@ -158,7 +158,6 @@ class _UserHomeState extends ConsumerState<UserHome>
   @override
   void dispose() {
     _offersUpdatedSubscription?.cancel();
-    _searchDebouncer.dispose();
     _entranceController.dispose();
     _searchController.dispose();
     _offerPageController.dispose();
@@ -1020,8 +1019,7 @@ class _UserHomeState extends ConsumerState<UserHome>
         height: 120,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          cacheExtent: 300,
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           itemCount: categories.length,
           itemBuilder: (context, index) {
@@ -1149,8 +1147,7 @@ class _UserHomeState extends ConsumerState<UserHome>
         height: 200,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          cacheExtent: 300,
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           itemCount: filteredExperts.length,
           itemBuilder: (context, index) {

@@ -25,7 +25,7 @@ class AuthService {
         );
       });
     } catch (error) {
-      debugPrint(error.toString());
+      print(error.toString());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Center(
@@ -243,7 +243,7 @@ class AuthService {
             // });
           })
           .onError((error, stackTrace) {
-            debugPrint(error.toString());
+            print(error.toString());
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
