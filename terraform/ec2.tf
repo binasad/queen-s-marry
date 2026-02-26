@@ -65,7 +65,7 @@ resource "aws_security_group" "my_security_group" {
 # EC2 instance
 resource "aws_instance" "my_instance" {
   ami                    = data.aws_ami.ubuntu.id
-  instance_type          = var.instance_type
+  instance_type          = "t2.micro"
   key_name               = aws_key_pair.my_key.key_name
   vpc_security_group_ids = [aws_security_group.my_security_group.id]
 

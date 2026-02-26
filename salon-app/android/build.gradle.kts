@@ -7,10 +7,6 @@ allprojects {
         google()
         mavenCentral()
     }
-    afterEvaluate {
-        // Disabling lintVital for release builds to speed up the process and avoid build-time lint crashes
-        tasks.findByName("lintVitalAnalyzeRelease")?.enabled = false
-    }
 }
 
 // Custom build directory configuration for your project structure
@@ -25,21 +21,6 @@ subprojects {
 subprojects {
     project.evaluationDependsOn(":app")
 }
-
-subprojects {
-    afterEvaluate {
-        // Safely access the android extension and use Kotlin-friendly lint configuration
-        val android = project.extensions.findByName("android") as? com.android.build.gradle.BaseExtension
-        android?.apply {
-            lintOptions {
-                // Fixed: Use the 'disable' function instead of '+=' operator for Kotlin DSL
-                disable("NullSafeMutableLiveData")
-            }
-        }
-    }
-}
-
-apply(from = "lint.gradle")
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
