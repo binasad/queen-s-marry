@@ -71,13 +71,20 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # ── Auto-increment versionCode (Play Store needs unique codes) ──
+      - name: Set build number
+        run: |
+          BUILD_NUMBER=${{ github.run_number }}
+          echo "Using versionCode=$BUILD_NUMBER"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+
       # ── Build APK ──────────────────────────────────────────
       - name: Build release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --build-number=${{ env.BUILD_NUMBER }}
 
       # ── Build AAB (App Bundle for Play Store) ──────────────
       - name: Build release App Bundle
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --build-number=${{ env.BUILD_NUMBER }}
 
       # ── Upload artifacts ───────────────────────────────────
       - name: Upload APK
@@ -93,3 +100,14 @@ jobs:
           name: app-release-aab
           path: salon-app/build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
+
+      # ── Publish to Google Play (internal testing) ──────────
+      - name: Publish to Google Play
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.aztrosys.merryqueen
+          releaseFiles: salon-app/build/app/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
