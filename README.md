@@ -4,6 +4,8 @@ A comprehensive salon booking system with a Flutter mobile app (user-only), Node
 
 📄 **[Technical Decisions & Problem-Solving](docs/TECHNICAL_DECISIONS.md)** – Why we chose Stripe webhooks, EC2 vs Lambda, S3, PostgreSQL, and more.
 
+🚀 **[CI/CD to Google Play with GitHub Actions](CICD_GOOGLE_PLAY_BLOG.md)** – How we automated Flutter builds and publishing to Google Play Console using GitHub Actions & Google Cloud.
+
 ## Project Structure
 
 ```
@@ -221,11 +223,16 @@ flutter run
 3. Set environment variables
 4. Configure domain and SSL
 
-### Mobile App Deployment
-1. Update API URLs to production
-2. Build release APK/IPA
-3. Upload to Google Play Store / Apple App Store
-4. Configure push notifications (FCM)
+### Mobile App Deployment (Automated via CI/CD)
+
+The mobile app uses a fully automated CI/CD pipeline. See the [complete blog post](CICD_GOOGLE_PLAY_BLOG.md) for details.
+
+1. Push to `main` branch triggers GitHub Actions
+2. Flutter builds signed APK + AAB automatically
+3. AAB is published to Google Play internal testing track
+4. Manual trigger available via `workflow_dispatch`
+
+> **Pipeline**: `.github/workflows/salon-app.yaml` · **Secrets required**: `KEYSTORE_BASE64`, `KEY_ALIAS`, `KEY_PASSWORD`, `STORE_PASSWORD`, `API_BASE_URL`, `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
 
 ## Default Roles
 
