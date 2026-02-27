@@ -7,6 +7,35 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:229108556395:android:df80817ed95d00d043c72e",
+        "android_client_info": {
+          "package_name": "com.aztrosys.merryqueen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "229108556395-h62rnber6r8mlcmsri605k93v4fce1a5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAp8SdDDjQlEvypq9icf_vnwYUrkhkQBVA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "229108556395-h62rnber6r8mlcmsri605k93v4fce1a5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:229108556395:android:1e5c5a833c01184043c72e",
         "android_client_info": {
           "package_name": "com.example.salon"

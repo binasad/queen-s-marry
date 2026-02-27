@@ -1,4 +1,4 @@
-package com.example.salon
+package com.aztrosys.merryqueen
 
 // 1. Change this import
 import io.flutter.embedding.android.FlutterFragmentActivity
