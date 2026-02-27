@@ -110,4 +110,4 @@ jobs:
           packageName: com.aztrosys.merryqueen
           releaseFiles: salon-app/build/app/outputs/bundle/release/app-release.aab
           track: internal
-          status: completed
+          status: draft

@@ -2,7 +2,9 @@
 
 # ✨ Merry Queen — Salon Booking System
 
-### A full-stack salon management platform built for real-world production use
+**A full-stack salon management platform built for real-world production use**
+
+<br/>
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)
@@ -16,13 +18,13 @@
 
 **Mobile App** · **Admin Dashboard** · **REST API** · **Automated CI/CD to Google Play**
 
-[📖 Technical Decisions](docs/TECHNICAL_DECISIONS.md) · [🚀 CI/CD Blog](CICD_GOOGLE_PLAY_BLOG.md) · [📐 Architecture](ARCHITECTURE.md)
+<br/>
 
----
+[📖 Technical Decisions](docs/TECHNICAL_DECISIONS.md) &nbsp;·&nbsp; [🚀 CI/CD Blog](CICD_GOOGLE_PLAY_BLOG.md) &nbsp;·&nbsp; [📐 Architecture](ARCHITECTURE.md)
 
 </div>
 
-<br/>
+---
 
 ## 🏗️ Architecture
 
@@ -58,7 +60,7 @@
               └──────────────────────┘
 ```
 
-<br/>
+---
 
 ## 📁 Project Structure
 
@@ -75,94 +77,74 @@ Aztrosys/
 └── docs/                   # 📖 Technical documentation
 ```
 
-<br/>
+---
 
 ## ⚡ Tech Stack
 
-<table>
-<tr>
-<td width="33%" valign="top">
-
 ### 📱 Mobile App
-| | Technology |
-|---|---|
+
+| Layer | Technology |
+|:------|:-----------|
 | Framework | **Flutter 3.x** |
 | Language | **Dart** |
-| State | **Provider** |
-| HTTP | **Dio + Interceptors** |
+| State Management | **Provider** |
+| HTTP Client | **Dio + Interceptors** |
 | Auth | **JWT + Secure Storage** |
 | Notifications | **Firebase FCM** |
 
-</td>
-<td width="33%" valign="top">
-
 ### ⚙️ Backend API
-| | Technology |
-|---|---|
+
+| Layer | Technology |
+|:------|:-----------|
 | Runtime | **Node.js 18** |
 | Framework | **Express.js** |
 | Database | **PostgreSQL 16** |
 | Auth | **JWT (access + refresh)** |
 | Email | **Nodemailer + OTP** |
-| Deploy | **Docker on EC2** |
-
-</td>
-<td width="33%" valign="top">
+| Deployment | **Docker on EC2** |
 
 ### 🌐 Admin Panel
-| | Technology |
-|---|---|
+
+| Layer | Technology |
+|:------|:-----------|
 | Framework | **Next.js 14** |
 | Language | **TypeScript** |
 | Styling | **Tailwind CSS** |
-| State | **Zustand** |
-| HTTP | **Axios** |
-| Deploy | **Vercel** |
+| State Management | **Zustand** |
+| HTTP Client | **Axios** |
+| Deployment | **Vercel** |
 
-</td>
-</tr>
-</table>
-
-<br/>
+---
 
 ## ✅ Features
 
-<table>
-<tr>
-<td width="50%" valign="top">
-
 ### 📱 User App (Mobile)
-- ☑️ Email registration with OTP verification
-- ☑️ Browse services by category
-- ☑️ Book appointments with date/time slots
-- ☑️ Choose expert/stylist
-- ☑️ Pay now or pay later (4-hour window)
-- ☑️ Appointment history & status tracking
-- ☑️ Push notifications
-- ☑️ Profile management
 
-</td>
-<td width="50%" valign="top">
+- ✅ Email registration with OTP verification
+- ✅ Browse services by category
+- ✅ Book appointments with date/time slots
+- ✅ Choose expert/stylist
+- ✅ Pay now or pay later (4-hour window)
+- ✅ Appointment history & status tracking
+- ✅ Push notifications
+- ✅ Profile management
 
 ### 🌐 Admin Dashboard (Web)
-- ☑️ Real-time statistics dashboard
-- ☑️ Appointment management (confirm/complete/cancel)
-- ☑️ Service CRUD operations
-- ☑️ Customer & expert management
-- ☑️ Revenue reports & tracking
-- ☑️ Mark payments as received
-- ☑️ Role-based access (Admin / Owner)
 
-</td>
-</tr>
-</table>
+- ✅ Real-time statistics dashboard
+- ✅ Appointment management (confirm/complete/cancel)
+- ✅ Service CRUD operations
+- ✅ Customer & expert management
+- ✅ Revenue reports & tracking
+- ✅ Mark payments as received
+- ✅ Role-based access (Admin / Owner)
 
-<br/>
+---
 
 ## 🔐 Security
 
 | Feature | Implementation |
-|---|---|
+|:--------|:---------------|
 | Password Hashing | bcrypt (10 rounds) |
 | Authentication | JWT access + refresh tokens |
 | Email Verification | 6-digit OTP required before login |
@@ -170,19 +152,19 @@ Aztrosys/
 | Brute Force Protection | 3 failed attempts → 30s lockout |
 | RBAC | Dynamic roles: `user` · `admin` · `owner` |
 | API Security | Helmet.js, CORS, parameterized SQL queries |
-| Secrets | GitHub Secrets, no credentials in code |
+| Secrets | GitHub Secrets — no credentials in code |
 
-<br/>
+---
 
 ## 🚀 CI/CD Pipelines
 
 Three automated pipelines power the entire delivery process:
 
 | Pipeline | Trigger | What It Does |
-|---|---|---|
-| **`salon-app.yaml`** | Push to `main` or manual | Build Flutter APK + AAB → **Publish to Google Play** (internal track) |
-| **`backend.yaml`** | Push to `main` | Build Docker image → **SSH deploy to AWS EC2** via PM2 |
-| **`admin-web.yaml`** | Push to `main` | Build Next.js → **Deploy to Vercel** |
+|:---------|:--------|:-------------|
+| **salon-app.yaml** | Push to `main` or manual | Build Flutter APK + AAB → **Publish to Google Play** (internal track) |
+| **backend.yaml** | Push to `main` | Build Docker image → **SSH deploy to AWS EC2** via PM2 |
+| **admin-web.yaml** | Push to `main` | Build Next.js → **Deploy to Vercel** |
 
 ### Mobile CI/CD Flow
 
@@ -197,7 +179,7 @@ git push main ──▶ GitHub Actions ──▶ Flutter Build ──▶ Sign AA
 
 > 📖 **Full write-up**: [How I Built CI/CD to Google Play with GitHub Actions](CICD_GOOGLE_PLAY_BLOG.md)
 
-<br/>
+---
 
 ## 🗄️ Database Schema
 
@@ -222,30 +204,34 @@ offers                 ├── id                    ├── title
 └── expires_at
 ```
 
-<br/>
+---
 
 ## 🔌 API Reference
 
 <details>
-<summary><b>Authentication</b></summary>
+<summary><strong>🔑 Authentication</strong></summary>
+
+<br/>
 
 | Method | Endpoint | Description | Auth |
-|---|---|---|---|
+|:-------|:---------|:------------|:-----|
 | `POST` | `/api/v1/auth/register` | Register with email + OTP | — |
 | `POST` | `/api/v1/auth/verify-email` | Verify 6-digit OTP | — |
 | `POST` | `/api/v1/auth/login` | Login → JWT tokens | — |
 | `POST` | `/api/v1/auth/refresh-token` | Refresh access token | 🔑 |
 | `POST` | `/api/v1/auth/forgot-password` | Request password reset | — |
 | `POST` | `/api/v1/auth/reset-password` | Reset with OTP | — |
-| `GET`  | `/api/v1/auth/profile` | Get current user profile | 🔑 |
+| `GET` | `/api/v1/auth/profile` | Get current user profile | 🔑 |
 
 </details>
 
 <details>
-<summary><b>Services</b></summary>
+<summary><strong>💇 Services</strong></summary>
+
+<br/>
 
 | Method | Endpoint | Description | Auth |
-|---|---|---|---|
+|:-------|:---------|:------------|:-----|
 | `GET` | `/api/v1/categories` | List all categories | — |
 | `GET` | `/api/v1/services` | List all services | — |
 | `GET` | `/api/v1/services/:id` | Get service details | — |
@@ -256,10 +242,12 @@ offers                 ├── id                    ├── title
 </details>
 
 <details>
-<summary><b>Appointments</b></summary>
+<summary><strong>📅 Appointments</strong></summary>
+
+<br/>
 
 | Method | Endpoint | Description | Auth |
-|---|---|---|---|
+|:-------|:---------|:------------|:-----|
 | `POST` | `/api/v1/appointments` | Book appointment | 🔑 |
 | `GET` | `/api/v1/appointments/my` | User's appointments | 🔑 |
 | `GET` | `/api/v1/appointments` | All appointments | 🔑 Admin |
@@ -270,20 +258,24 @@ offers                 ├── id                    ├── title
 </details>
 
 <details>
-<summary><b>Dashboard</b></summary>
+<summary><strong>📊 Dashboard</strong></summary>
+
+<br/>
 
 | Method | Endpoint | Description | Auth |
-|---|---|---|---|
+|:-------|:---------|:------------|:-----|
 | `GET` | `/api/v1/dashboard/stats` | Statistics overview | 🔑 Admin |
 
 </details>
 
-<br/>
+---
 
 ## 📋 Getting Started
 
 <details>
-<summary><b>Prerequisites</b></summary>
+<summary><strong>Prerequisites</strong></summary>
+
+<br/>
 
 - Node.js 18+
 - PostgreSQL 16+
@@ -293,7 +285,9 @@ offers                 ├── id                    ├── title
 </details>
 
 <details>
-<summary><b>Backend Setup</b></summary>
+<summary><strong>Backend Setup</strong></summary>
+
+<br/>
 
 ```bash
 cd backend
@@ -307,7 +301,9 @@ npm run dev                    # http://localhost:5000
 </details>
 
 <details>
-<summary><b>Admin Web Setup</b></summary>
+<summary><strong>Admin Web Setup</strong></summary>
+
+<br/>
 
 ```bash
 cd admin-web
@@ -319,7 +315,9 @@ npm run dev                    # http://localhost:3001
 </details>
 
 <details>
-<summary><b>Mobile App Setup</b></summary>
+<summary><strong>Mobile App Setup</strong></summary>
+
+<br/>
 
 ```bash
 cd salon-app
@@ -331,7 +329,7 @@ flutter run                    # launches on connected device/emulator
 
 </details>
 
-<br/>
+---
 
 ## 📊 Business Logic
 
@@ -353,15 +351,15 @@ flutter run                    # launches on connected device/emulator
                             📧 Reminder at 3hrs
 ```
 
-<br/>
+---
 
 ## 🗺️ Roadmap
 
 | Status | Feature |
-|---|---|
+|:------:|:--------|
 | ✅ | Core booking system |
 | ✅ | Email OTP verification |
-| ✅ | RBAC (user/admin/owner) |
+| ✅ | RBAC (user / admin / owner) |
 | ✅ | CI/CD → Google Play |
 | ✅ | CI/CD → AWS EC2 (Docker) |
 | ✅ | CI/CD → Vercel |
@@ -373,12 +371,12 @@ flutter run                    # launches on connected device/emulator
 | 🔜 | Multi-language support |
 | 🔜 | Advanced analytics |
 
-<br/>
+---
 
 ## 📄 Documentation
 
 | Document | Description |
-|---|---|
+|:---------|:------------|
 | [Technical Decisions](docs/TECHNICAL_DECISIONS.md) | Why Stripe, EC2 vs Lambda, PostgreSQL, S3, and more |
 | [CI/CD Blog](CICD_GOOGLE_PLAY_BLOG.md) | Step-by-step: GitHub Actions → Google Play |
 | [Architecture](ARCHITECTURE.md) | System design diagrams |
@@ -387,17 +385,15 @@ flutter run                    # launches on connected device/emulator
 | [Troubleshooting](TROUBLESHOOTING_CONNECTION.md) | Common issues and fixes |
 | [Deployment Guide](DEPLOYMENT.md) | Production deployment instructions |
 
-<br/>
-
 ---
 
 <div align="center">
 
-### Built by [Aztrosys](https://github.com/binasad/queen-s-marry)
+**Built by [Aztrosys](https://github.com/binasad/queen-s-marry)**
 
 ![MIT License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)
 
-**⭐ Star this repository if you find it useful!**
+⭐ **Star this repository if you find it useful!**
 
 </div>
