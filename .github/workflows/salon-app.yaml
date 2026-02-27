@@ -19,10 +19,20 @@ jobs:
       run:
         working-directory: salon-app
 
+    env:
+      GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=512m"
+      JAVA_OPTS: -Xmx4096m
+
     steps:
       # ── Checkout ───────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
+
+      # ── Increase swap (prevents OOM on 7 GB runners) ──────
+      - name: Increase swap space
+        uses: actionhippie/swap-space@v1
+        with:
+          size: 8G
 
       # ── Java 17 (required by Gradle / AGP) ────────────────
       - name: Set up Java 17
