@@ -31,7 +31,7 @@ class _AdminAppointmentsListScreenState
     // Listen to appointment events for realtime updates
     wsService.appointmentCreatedStream.listen((data) {
       if (mounted) {
-        debugPrint('📅 New appointment created: $data');
+        debugPrint('📅 New appointment createed: $data');
         setState(() {
           // Trigger rebuild to show new appointment
         });
