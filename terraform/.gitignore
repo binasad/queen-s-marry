@@ -6,6 +6,7 @@ terraform.tfvars
 *.tfplan
 crash.*
 override.tf
+.salon-app/keystore_base64.txt
 override.tf.json
 *_override.tf
 *_override.tf.json
