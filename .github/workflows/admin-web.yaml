@@ -28,18 +28,16 @@ jobs:
         run: npm ci
         working-directory: ./admin-web
 
-      # Pull Vercel Environment Information (run in admin-web folder)
+      # Pull Vercel Environment Information (run from repo root; Vercel rootDirectory is already set to admin-web)
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token ${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./admin-web
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      # Build Project Artifacts (Next.js build via Vercel CLI)
+      # Build Project Artifacts (Next.js build via Vercel CLI, from repo root)
       - name: Build Project Artifacts
         run: vercel build --prod --token ${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./admin-web
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -47,7 +45,6 @@ jobs:
       # Deploy to Vercel
       - name: Deploy to Vercel
         run: vercel deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./admin-web
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
