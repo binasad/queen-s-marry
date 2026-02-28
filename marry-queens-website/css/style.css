@@ -403,7 +403,7 @@ body {
 
 .btn-gradient {
   background: linear-gradient(135deg, #ff758c, #ff7eb3, #9d50bb);
-  color:;
+  color: #fff;
   border: none;
   padding: 10px 25px;
   border-radius: 50px;

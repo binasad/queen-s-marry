@@ -1,0 +1,26 @@
+name: Merry Queens Website CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'marry-queens-website/**'
+
+jobs:
+  deploy-to-vercel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel
+
+      # Deploy static site (no build step)
+      - name: Deploy to Vercel
+        run: |
+          cd marry-queens-website
+          vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.MARRY_QUEENS_WEBSITE_PROJECT_ID }}

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Update base URL in sitemap.xml after deployment
+Sitemap: https://marry-queens-website.vercel.app/sitemap.xml

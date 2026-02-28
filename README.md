@@ -67,13 +67,15 @@
 ```
 Aztrosys/
 ├── salon-app/              # 📱 Flutter mobile app (user-facing)
+├── marry-queens-website/   # 🌐 Static marketing site (Bootstrap)
 ├── backend/                # ⚙️ Node.js REST API + PostgreSQL
 ├── admin-web/              # 🌐 Next.js admin dashboard
 ├── terraform/              # ☁️ AWS infrastructure as code
 ├── .github/workflows/      # 🤖 CI/CD pipelines
 │   ├── salon-app.yaml      #    → Flutter → Google Play
 │   ├── backend.yaml        #    → Docker → EC2
-│   └── admin-web.yaml      #    → Vercel
+│   ├── admin-web.yaml      #    → Vercel
+│   └── marry-queens-website.yaml  # → Vercel (static)
 └── docs/                   # 📖 Technical documentation
 ```
 
