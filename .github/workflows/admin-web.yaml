@@ -24,26 +24,33 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel
 
-      # Pull Vercel Environment Information
-      # This links your local build to your Vercel project
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./admin-web
+
+      # Pull Vercel Environment Information (run from admin-web so .vercel and build paths resolve correctly)
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          cd admin-web
+          vercel pull --yes --environment=production --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      # Build Project Artifacts
-      # Next.js build happens here using the pulled environment variables
+      # Build Project Artifacts (must run from admin-web to avoid admin-web/admin-web path doubling)
       - name: Build Project Artifacts
-        run: vercel build --prod --token ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          cd admin-web
+          vercel build --prod --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       # Deploy to Vercel
-      # Deploys the prebuilt artifacts to the production domain
       - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          cd admin-web
+          vercel deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
