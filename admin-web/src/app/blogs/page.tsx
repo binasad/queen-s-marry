@@ -35,7 +35,7 @@ export default function BlogsPage() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  console.log('[Merry Queen Admin] BlogsPage rendered g');
+  console.log('[Merry Queen Admin] BlogsPage rendered gg');
 
   const loadBlogs = async () => {
     try {
