@@ -1,0 +1,7 @@
+{
+  "//": "Ensure Vercel treats this as a Next.js app and uses the correct build output directory.",
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".vercel/output"
+}
+
