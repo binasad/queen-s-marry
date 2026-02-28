@@ -26,6 +26,8 @@ export default function ProfilePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  console.log('[Merry Queen Admin] ProfilePage rendered');
+
   useEffect(() => {
     loadProfile();
   }, []);
