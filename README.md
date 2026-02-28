@@ -382,6 +382,7 @@ flutter run                    # launches on connected device/emulator
 | [Architecture](ARCHITECTURE.md) | System design diagrams |
 | [RBAC Guide](RBAC_IMPLEMENTATION_GUIDE.md) | Role-based access control implementation |
 | [Backend API Reference](backend/API_REFERENCE.md) | Detailed endpoint documentation |
+| [Merry Queen Privacy Policy](salon-app/PRIVACY_POLICY.md) | How the mobile app collects, uses, and shares data |
 | [Troubleshooting](TROUBLESHOOTING_CONNECTION.md) | Common issues and fixes |
 | [Deployment Guide](DEPLOYMENT.md) | Production deployment instructions |
 
