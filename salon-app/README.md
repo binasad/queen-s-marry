@@ -1,6 +1,12 @@
-# salon
+# Merry Queen
 
 A new Flutter project.
+
+## Privacy Policy
+
+See `PRIVACY_POLICY.md`:
+
+- [Merry Queen Privacy Policy](PRIVACY_POLICY.md)
 
 ## Getting Started
 
