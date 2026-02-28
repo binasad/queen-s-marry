@@ -6,4 +6,5 @@
     <!-- Splash / intro gradient -->
     <color name="splash_pink_light">#FFF48FB1</color>
     <color name="splash_pink">#FFE91E63</color>
+	<color name="ic_launcher_background">#FFFFFF</color>
 </resources>

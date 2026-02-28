@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.salon"> <!-- Make sure this matches your app ID -->
+    package="com.aztrosys.merryqueen">
 
     <!-- Needed for internet access -->
     <uses-permission android:name="android.permission.INTERNET"/>

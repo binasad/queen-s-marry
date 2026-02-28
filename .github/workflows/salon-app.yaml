@@ -2,14 +2,112 @@ name: Salon App CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'salon-app/**' # Only triggers if files in the salon-app folder change
+      - 'salon-app/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'salon-app/**'
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build-android:
+    name: Build Android (APK + AAB)
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    defaults:
+      run:
+        working-directory: salon-app
 
-      # Add your build and deployment steps for salon-app here
+    env:
+      GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=512m"
+      JAVA_OPTS: -Xmx4096m
+
+    steps:
+      # ── Checkout ───────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── Increase swap (prevents OOM on 7 GB runners) ──────
+      - name: Increase swap space
+        uses: actionhippie/swap-space@v1
+        with:
+          size: 8G
+
+      # ── Java 17 (required by Gradle / AGP) ────────────────
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # ── Flutter SDK ────────────────────────────────────────
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # ── Write .env ────────────────────────────────────────
+      - name: Create .env
+        run: |
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
+
+      # ── Decode signing keystore ────────────────────────────
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/merryqueen-release.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties << 'EOF'
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=merryqueen-release.jks
+          EOF
+
+      # ── Dependencies ───────────────────────────────────────
+      - name: Install dependencies
+        run: flutter pub get
+
+      # ── Auto-increment versionCode (Play Store needs unique codes) ──
+      - name: Set build number
+        run: |
+          BUILD_NUMBER=${{ github.run_number }}
+          echo "Using versionCode=$BUILD_NUMBER"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+
+      # ── Build APK ──────────────────────────────────────────
+      - name: Build release APK
+        run: flutter build apk --release --build-number=${{ env.BUILD_NUMBER }}
+
+      # ── Build AAB (App Bundle for Play Store) ──────────────
+      - name: Build release App Bundle
+        run: flutter build appbundle --release --build-number=${{ env.BUILD_NUMBER }}
+
+      # ── Upload artifacts ───────────────────────────────────
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: salon-app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: salon-app/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      # ── Publish to Google Play (internal testing) ──────────
+      - name: Publish to Google Play
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.aztrosys.merryqueen
+          releaseFiles: salon-app/build/app/outputs/bundle/release/app-release.aab
+          track: internal
+          status: draft
