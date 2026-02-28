@@ -114,6 +114,8 @@ Aztrosys/
 | HTTP Client | **Axios** |
 | Deployment | **Vercel** |
 
+**Production admin dashboard**: [queen-s-marry.vercel.app](https://queen-s-marry.vercel.app/)
+
 ---
 
 ## ✅ Features
@@ -379,6 +381,7 @@ flutter run                    # launches on connected device/emulator
 |:---------|:------------|
 | [Technical Decisions](docs/TECHNICAL_DECISIONS.md) | Why Stripe, EC2 vs Lambda, PostgreSQL, S3, and more |
 | [CI/CD Blog](CICD_GOOGLE_PLAY_BLOG.md) | Step-by-step: GitHub Actions → Google Play |
+| [Admin Web CI/CD to Vercel](ADMIN_WEB_VERCEL_CICD_BLOG.md) | How we wired GitHub Actions → Vercel and debugged path/output issues |
 | [Architecture](ARCHITECTURE.md) | System design diagrams |
 | [RBAC Guide](RBAC_IMPLEMENTATION_GUIDE.md) | Role-based access control implementation |
 | [Backend API Reference](backend/API_REFERENCE.md) | Detailed endpoint documentation |
