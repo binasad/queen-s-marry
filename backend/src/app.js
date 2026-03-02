@@ -118,7 +118,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
   skip: (req) => {
     const origin = req.headers.origin || '';
-    return origin === env.adminWebUrl || origin.endsWith('.vercel.app') || (env.isDevelopment && origin.includes('localhost'));
+    return origin ===  env.adminWebUrl || origin.endsWith('.vercel.app') || (env.isDevelopment && origin.includes('localhost'));
   },
   handler: (req, res) => res.status(429).json({ success: false, message: 'Too many requests.' }),
 });

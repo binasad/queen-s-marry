@@ -238,8 +238,6 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
                           height: 44,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                            cacheExtent: 200,
                             itemCount: _applicableOffers.length,
                             separatorBuilder: (_, __) => const SizedBox(width: 10),
                             itemBuilder: (context, i) {
@@ -743,9 +741,11 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
       height: 200,
 
       child: ListView.builder(
+
         scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        cacheExtent: 300,
+
+        physics: const BouncingScrollPhysics(),
+
         itemCount: _relatedServices.length,
 
         itemBuilder: (context, index) {

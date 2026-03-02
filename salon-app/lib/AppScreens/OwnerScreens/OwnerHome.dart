@@ -12,8 +12,6 @@ import 'OwnerDrawer.dart';
 import '../../services/user_service.dart';
 import '../../providers/auth_provider.dart' as app_auth;
 import '../../services/api_service.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../widgets/cached_image.dart';
 class OwnerHome extends StatefulWidget {
   const OwnerHome({super.key});
 
@@ -330,17 +328,39 @@ class _OwnerHomeState extends State<OwnerHome> {
                   ),
                 );
               },
-              child: profile.isNotEmpty
-                  ? CachedCircleImage(
-                      imageUrl: profile,
-                      radius: 20,
-                      placeholderAsset: 'assets/profile.jpg',
-                    )
-                  : CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.grey[200],
-                      backgroundImage: const AssetImage('assets/profile.jpg'),
-                    ),
+              child: ClipOval(
+                child: Image.network(profile,
+                  fit: BoxFit.cover,
+                  width: 40, // diameter = radius * 2
+                  height: 40,
+
+                  loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                            (loadingProgress.expectedTotalBytes ?? 1)
+                            : null,
+                      ),
+                    );
+                  },
+                  // جب error آئے
+                  errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                    return Image.asset("assets/profile.jpg",
+                      fit: BoxFit.cover,
+                      width: 90, // diameter = radius * 2
+                      height: 90,
+                    );
+                  },
+                ),
+                // Image.asset(
+                //   "assets/profile.jpg",
+                //   fit: BoxFit.cover,
+                //   width: 90, // diameter = radius * 2
+                //   height: 90,
+                // ),
+              ),
             )
 
           ],
@@ -402,8 +422,6 @@ class _OwnerHomeState extends State<OwnerHome> {
                 height: 160,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                  cacheExtent: 300,
                   itemCount: filteredExperts.length + 2, // +1 dummy, +1 add card
                   separatorBuilder: (_, __) => SizedBox(width: 16),
                   itemBuilder: (context, index) {
@@ -470,8 +488,8 @@ class _OwnerHomeState extends State<OwnerHome> {
     ImageProvider backgroundImage;
 
     if (imagePath.startsWith('http')) {
-      // Network image (cached)
-      backgroundImage = CachedNetworkImageProvider(imagePath);
+      // Network image
+      backgroundImage = NetworkImage(imagePath);
     } else if (imagePath.startsWith('/') || imagePath.contains(':\\')) {
       // Local file path on device
       backgroundImage = FileImage(File(imagePath));
@@ -529,8 +547,8 @@ class _OwnerHomeState extends State<OwnerHome> {
     ImageProvider backgroundImage;
 
     if (imagePath.startsWith('http')) {
-      // For network URLs (cached)
-      backgroundImage = CachedNetworkImageProvider(imagePath);
+      // For network URLs
+      backgroundImage = NetworkImage(imagePath);
     } else if (imagePath.startsWith('/') || imagePath.contains(':\\')) {
       // For absolute file paths on device
       backgroundImage = FileImage(File(imagePath));

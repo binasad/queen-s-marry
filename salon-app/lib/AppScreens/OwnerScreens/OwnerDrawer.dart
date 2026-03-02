@@ -232,7 +232,7 @@ class _OwnerDrawerState extends State<OwnerDrawer> {
                                     );
                                   }})
                                   .onError((error, stack) {
-                                    debugPrint(error.toString());
+                                    print(error.toString());
                                   });
                             },
                             style: ElevatedButton.styleFrom(

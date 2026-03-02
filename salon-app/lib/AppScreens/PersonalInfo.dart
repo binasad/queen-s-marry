@@ -26,7 +26,7 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
   DateTime? selectedDate;
   String phone = "";
   String address = "";
-  String gender = "male";
+  String gender = "Male";
   File? profileImage;
   bool isLoading = true;
 
@@ -48,7 +48,7 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
         userEmail = user['email'] ?? "";
         phone = user['phone'] ?? "";
         address = user['address'] ?? "";
-        gender = (user['gender']?.toString() ?? 'male').toLowerCase();
+        gender = user['gender'] ?? "Male";
         profile = user['profile_image_url'] ?? "";
         isLoading = false;
       });
@@ -69,19 +69,14 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
     try {
       setState(() => isLoading = true);
 
-      final data = await UserService().updateProfile(
+      await UserService().updateProfile(
         name: userName,
         phone: phone,
         address: address,
-        gender: gender.toLowerCase(),
+        gender: gender,
       );
 
       if (mounted) {
-        final updatedUser = data['user'] as Map<String, dynamic>?;
-        if (updatedUser != null) {
-          final authProvider = provider_package.Provider.of<AuthProvider>(context, listen: false);
-          authProvider.updateUserProfile(updatedUser);
-        }
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Profile updated successfully')));
@@ -157,7 +152,7 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
   }
 
   Future<void> _editGender() async {
-    String tempGender = gender.toLowerCase();
+    String tempGender = gender;
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -169,7 +164,7 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
             children: [
               RadioListTile<String>(
                 title: const Text("Male"),
-                value: "male",
+                value: "Male",
                 groupValue: tempGender,
                 onChanged: (val) {
                   setInnerState(() => tempGender = val!);
@@ -177,7 +172,7 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
               ),
               RadioListTile<String>(
                 title: const Text("Female"),
-                value: "female",
+                value: "Female",
                 groupValue: tempGender,
                 onChanged: (val) {
                   setInnerState(() => tempGender = val!);
@@ -185,7 +180,7 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
               ),
               RadioListTile<String>(
                 title: const Text("Other"),
-                value: "other",
+                value: "Other",
                 groupValue: tempGender,
                 onChanged: (val) {
                   setInnerState(() => tempGender = val!);
@@ -386,7 +381,7 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.person_outline),
-                  title: Text("Gender: ${gender.isNotEmpty ? gender[0].toUpperCase() + gender.substring(1) : ''}"),
+                  title: Text("Gender: $gender"),
                   trailing: const Icon(Icons.edit_outlined),
                   onTap: _editGender,
                 ),
