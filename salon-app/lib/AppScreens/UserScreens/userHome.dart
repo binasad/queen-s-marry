@@ -22,6 +22,7 @@ import 'AppointmentBooking.dart';
 import 'Course Screens/CourseDetails.dart';
 import 'Course Screens/CoursesScreen.dart';
 import 'UserNotifications.dart';
+import '../PersonalInfo.dart';
 import '../../services/course_service.dart';
 import '../../services/api_service.dart';
 import '../../providers/auth_provider.dart' as app_auth;
@@ -412,7 +413,14 @@ class _UserHomeState extends ConsumerState<UserHome>
         child: Row(
           children: [
             GestureDetector(
-              onTap: () => Scaffold.of(context).openDrawer(),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const UserPersonalInfo(),
+                  ),
+                );
+              },
               child: profile.isNotEmpty
                   ? CachedCircleImage(imageUrl: profile, radius: 24)
                   : CircleAvatar(

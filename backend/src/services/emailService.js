@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
+const APP_NAME = process.env.APP_NAME || 'Merry Queen';
+
 class EmailService {
   constructor() {
     this.transporter = nodemailer.createTransporter({
@@ -20,7 +22,7 @@ class EmailService {
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: email,
-      subject: 'Verify Your Email - Salon App',
+      subject: `Verify Your Email - ${APP_NAME}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -37,11 +39,11 @@ class EmailService {
         <body>
           <div class="container">
             <div class="header">
-              <h1>Welcome to Salon App!</h1>
+              <h1>Welcome to ${APP_NAME}!</h1>
             </div>
             <div class="content">
               <p>Hi ${name},</p>
-              <p>Thank you for registering with Salon App. To complete your registration, please verify your email address by clicking the button below:</p>
+              <p>Thank you for registering with ${APP_NAME}. To complete your registration, please verify your email address by clicking the button below:</p>
               <div style="text-align: center;">
                 <a href="${verificationUrl}" class="button">Verify Email Address</a>
               </div>
@@ -49,10 +51,10 @@ class EmailService {
               <p style="word-break: break-all; color: #666;">${verificationUrl}</p>
               <p>This link will expire in 24 hours.</p>
               <p>If you didn't create this account, please ignore this email.</p>
-              <p>Best regards,<br>Salon App Team</p>
+              <p>Best regards,<br>${APP_NAME} Team</p>
             </div>
             <div class="footer">
-              <p>© 2026 Salon App. All rights reserved.</p>
+              <p>© 2026 ${APP_NAME}. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -73,7 +75,7 @@ class EmailService {
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: email,
-      subject: 'Your Email Verification Code - Salon App',
+      subject: `Your Email Verification Code - ${APP_NAME}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -107,17 +109,17 @@ class EmailService {
             </div>
             <div class="content">
               <p>Hi ${name},</p>
-              <p>Thank you for registering with Salon App. To complete your registration, please enter the verification code below:</p>
+              <p>Thank you for registering with ${APP_NAME}. To complete your registration, please enter the verification code below:</p>
               <div class="otp-box">${otp}</div>
               <p style="text-align: center; color: #666;">This code will expire in 15 minutes</p>
               <div class="note">
-                <strong>⚠ Security Note:</strong> Never share this code with anyone. Salon App staff will never ask for your verification code.
+                <strong>⚠ Security Note:</strong> Never share this code with anyone. ${APP_NAME} staff will never ask for your verification code.
               </div>
               <p>If you didn't create this account, please ignore this email.</p>
-              <p>Best regards,<br>Salon App Team</p>
+              <p>Best regards,<br>${APP_NAME} Team</p>
             </div>
             <div class="footer">
-              <p>© 2026 Salon App. All rights reserved.</p>
+              <p>© 2026 ${APP_NAME}. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -140,7 +142,7 @@ class EmailService {
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: email,
-      subject: 'Reset Your Password - Salon App',
+      subject: `Reset Your Password - ${APP_NAME}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -162,7 +164,7 @@ class EmailService {
             </div>
             <div class="content">
               <p>Hi ${name},</p>
-              <p>We received a request to reset your password for your Salon App account. Click the button below to reset it:</p>
+              <p>We received a request to reset your password for your ${APP_NAME} account. Click the button below to reset it:</p>
               <div style="text-align: center;">
                 <a href="${resetUrl}" class="button">Reset Password</a>
               </div>
@@ -171,10 +173,10 @@ class EmailService {
               <div class="warning">
                 <strong>⚠️ Security Notice:</strong> This link will expire in 1 hour. If you didn't request a password reset, please ignore this email and your password will remain unchanged.
               </div>
-              <p>Best regards,<br>Salon App Team</p>
+              <p>Best regards,<br>${APP_NAME} Team</p>
             </div>
             <div class="footer">
-              <p>© 2026 Salon App. All rights reserved.</p>
+              <p>© 2026 ${APP_NAME}. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -197,7 +199,7 @@ class EmailService {
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: email,
-      subject: 'Appointment Confirmation - Salon App',
+      subject: `Appointment Confirmation - ${APP_NAME}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -239,10 +241,10 @@ class EmailService {
                 </div>
               </div>
               <p>We look forward to seeing you!</p>
-              <p>Best regards,<br>Salon App Team</p>
+              <p>Best regards,<br>${APP_NAME} Team</p>
             </div>
             <div class="footer">
-              <p>© 2026 Salon App. All rights reserved.</p>
+              <p>© 2026 ${APP_NAME}. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -265,7 +267,7 @@ class EmailService {
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: email,
-      subject: 'Appointment Reminder - Salon App',
+      subject: `Appointment Reminder - ${APP_NAME}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -292,10 +294,10 @@ class EmailService {
                 <p><strong>${date}</strong> at <strong>${time}</strong></p>
               </div>
               <p>We look forward to seeing you!</p>
-              <p>Best regards,<br>Salon App Team</p>
+              <p>Best regards,<br>${APP_NAME} Team</p>
             </div>
             <div class="footer">
-              <p>© 2026 Salon App. All rights reserved.</p>
+              <p>© 2026 ${APP_NAME}. All rights reserved.</p>
             </div>
           </div>
         </body>

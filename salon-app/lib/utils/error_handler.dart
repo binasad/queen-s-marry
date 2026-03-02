@@ -4,6 +4,8 @@ import '../services/api_service.dart';
 import 'guest_guard.dart';
 
 class ErrorHandler {
+  static const Color _brandPink = Color(0xFFE91E63);
+
   static String getMessage(dynamic error) {
     // DioException may wrap ApiException in its error property
     if (error is DioException && error.error is ApiException) {
@@ -11,15 +13,15 @@ class ErrorHandler {
     }
     if (error is ApiException) {
       // Return the actual message from backend first
-      if (error.message.isNotEmpty && error.message != 'Unknown error') {
-        return error.message;
-      }
-
       // Fall back to status code messages
       switch (error.statusCode) {
         case 400:
           return 'Invalid request. Please check your input.';
         case 401:
+          final msg = error.message.toLowerCase();
+          if (msg.contains('authentication') || msg.contains('credentials')) {
+            return 'Your session has expired or no authentication was provided.\n\nPlease log in again to continue.';
+          }
           return 'Invalid email or password.';
         case 403:
           return 'You do not have permission to perform this action.';
@@ -30,7 +32,10 @@ class ErrorHandler {
         case 500:
           return 'Server error. Please try again later.';
         default:
-          return error.message;
+          if (error.message.isNotEmpty && error.message != 'Unknown error') {
+            return error.message;
+          }
+          return 'An unexpected error occurred.';
       }
     }
     // DioException without wrapped ApiException (e.g. from other Dio usage)
@@ -78,19 +83,69 @@ class ErrorHandler {
       return true;
     }
 
-    // Show regular error snackbar
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(getMessage(error)), backgroundColor: Colors.red),
-      );
-    }
+    await _showThemedDialog(
+      context,
+      title: 'Something went wrong',
+      message: getMessage(error),
+    );
     return false;
   }
 
   /// Legacy sync version - use async show() for guest restriction handling
   static void showSync(BuildContext context, dynamic error) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(getMessage(error)), backgroundColor: Colors.red),
+    _showThemedDialog(
+      context,
+      title: 'Something went wrong',
+      message: getMessage(error),
+    );
+  }
+
+  /// Show a simple themed error/info dialog with app branding.
+  static Future<void> showMessage(
+    BuildContext context, {
+    required String message,
+    String title = 'Oops',
+  }) async {
+    await _showThemedDialog(context, title: title, message: message);
+  }
+
+  static Future<void> _showThemedDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) async {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Row(
+          children: [
+            const Icon(Icons.error_outline, color: _brandPink),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: _brandPink,
+            ),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 }

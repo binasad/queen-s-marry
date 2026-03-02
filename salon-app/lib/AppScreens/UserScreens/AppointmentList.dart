@@ -5,6 +5,7 @@ import '../../widgets/skeleton_loader.dart';
 import '../../services/appointment_service.dart';
 import '../../services/websocket_service.dart';
 import '../../utils/guest_guard.dart';
+import '../../utils/error_handler.dart';
 
 class AppointmentsListScreen extends StatefulWidget {
   final VoidCallback? onRefresh;
@@ -118,9 +119,13 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
       print('Error loading appointments: $e');
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = ErrorHandler.getMessage(e);
           if (!silent) _loading = false;
         });
+        if (!silent) {
+          // Show a themed popup so the user understands what happened (e.g. 429 rate limit)
+          await ErrorHandler.show(context, e, guestActionDescription: 'view your bookings');
+        }
       }
     }
   }
@@ -231,12 +236,7 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed to delete appointment: ${e.toString()}"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        await ErrorHandler.show(context, e, guestActionDescription: 'delete appointments');
       }
     }
   }
@@ -388,6 +388,9 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
                   final status = a['status']?.toString() ?? 'reserved';
                   final appointmentId = a['id']?.toString() ?? '';
                   final price = a['total_price']?.toString() ?? '0';
+                  final paymentStatus =
+                      a['payment_status']?.toString().toLowerCase() ?? 'unpaid';
+                  final bool isPaid = paymentStatus == 'paid';
 
                   return Dismissible(
                     key: Key(appointmentId),
@@ -457,14 +460,7 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
                         }
                       } catch (e) {
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Failed to delete: ${e.toString()}",
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          await ErrorHandler.show(context, e, guestActionDescription: 'delete appointments');
                           // Reload to restore the item if delete failed
                           _loadAppointments();
                         }
@@ -516,29 +512,56 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(status),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  status.toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _getStatusColor(status),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      status.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: paymentStatus == 'paid'
+                                          ? Colors.green.shade600
+                                          : Colors.grey.shade400,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      paymentStatus.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                           isThreeLine: true,
                           trailing:
-                              (status == 'reserved' || status == 'confirmed') &&
+                              !isPaid &&
+                                      (status == 'reserved' ||
+                                          status == 'confirmed') &&
                                   status != 'cancelled' &&
                                   status != 'completed'
                               ? TextButton(

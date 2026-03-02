@@ -306,29 +306,27 @@ class _PremiumCourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Card(
       margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(color: const Color(0xFFFF0068).withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10)),
-        ],
       ),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(28),
             child: Column(
               children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                // Course hero image with 3:2 aspect ratio
+                AspectRatio(
+                  aspectRatio: 3 / 2,
                   child: CachedImageWidget(
                     imageUrl: course['image'] ?? '',
-                    height: 180,
                     width: double.infinity,
+                    height: double.infinity,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -340,12 +338,32 @@ class _PremiumCourseCard extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(child: Text(course['title'], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900))),
-                          Text("PKR ${course['price']}", style: const TextStyle(color: Color(0xFFFF0068), fontWeight: FontWeight.bold)),
+                          Expanded(
+                            child: Text(
+                              course['title'],
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            "PKR ${course['price']}",
+                            style: const TextStyle(
+                              color: Color(0xFFFF0068),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Text(course['duration'], style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      Text(
+                        course['duration'],
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),

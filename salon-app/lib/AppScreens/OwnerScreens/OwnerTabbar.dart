@@ -104,7 +104,7 @@ class _OwnerBottomTabBarState extends State<OwnerBottomTabBar> {
               // ),
               BottomNavigationBarItem(
                 icon: Icon(CupertinoIcons.list_number),
-                label: "List",
+                label: "Bookings",
               ),
 
               BottomNavigationBarItem(
