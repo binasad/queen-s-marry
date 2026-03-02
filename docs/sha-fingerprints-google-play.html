@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHA Fingerprints & Google Play Console — The Confusion That Breaks Every Android Dev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0e0e0e;
+    --paper: #f5f0e8;
+    --accent: #e8380d;
+    --accent2: #1a6b3c;
+    --muted: #6b6560;
+    --code-bg: #1a1a1a;
+    --code-text: #e8d5b0;
+    --border: #d4cfc6;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 20px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative;
+    padding: 80px 0 60px;
+    border-bottom: 2px solid var(--ink);
+    overflow: hidden;
+  }
+
+  .header-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px);
+    opacity: 0.4;
+  }
+
+  .header-inner {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: #fff;
+    padding: 4px 12px;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+    font-family: 'Crimson Pro', serif;
+    font-weight: 300;
+  }
+
+  .meta {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .meta span::before { content: '— '; }
+
+  /* ── Article ── */
+  article {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 60px 32px 100px;
+  }
+
+  .lead {
+    font-size: 1.25em;
+    font-style: italic;
+    color: #333;
+    border-left: 4px solid var(--accent);
+    padding-left: 24px;
+    margin-bottom: 48px;
+    line-height: 1.6;
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 52px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 32px 0 10px;
+    color: var(--accent2);
+  }
+
+  p { margin-bottom: 20px; }
+
+  strong { font-weight: 600; }
+
+  em { font-style: italic; }
+
+  a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ── Pull Quote ── */
+  .pull-quote {
+    margin: 48px -32px;
+    padding: 32px 40px;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 1.35em;
+    font-style: italic;
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .pull-quote::before {
+    content: '\201C';
+    font-size: 6rem;
+    color: var(--accent);
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    line-height: 1;
+    font-family: Georgia, serif;
+  }
+
+  .pull-quote p { margin: 0; padding-left: 40px; }
+
+  /* ── Code Block ── */
+  .code-block {
+    background: var(--code-bg);
+    color: var(--code-text);
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.78em;
+    line-height: 1.65;
+    padding: 28px 32px;
+    margin: 28px 0;
+    border-radius: 2px;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .code-block .label {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #666;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .code-block .comment { color: #666; }
+  .code-block .key { color: #88c0d0; }
+  .code-block .val { color: #a3be8c; }
+  .code-block .step { color: var(--accent); font-weight: bold; }
+
+  /* ── Info Box ── */
+  .info-box {
+    border: 1.5px solid var(--accent2);
+    padding: 24px 28px;
+    margin: 32px 0;
+    position: relative;
+  }
+
+  .info-box .box-label {
+    position: absolute;
+    top: -12px;
+    left: 16px;
+    background: var(--paper);
+    padding: 0 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .info-box p { margin: 0; font-size: 0.95em; }
+
+  /* ── Warning Box ── */
+  .warn-box {
+    border: 1.5px solid var(--accent);
+    padding: 24px 28px;
+    margin: 32px 0;
+    position: relative;
+    background: #fff5f3;
+  }
+
+  .warn-box .box-label {
+    position: absolute;
+    top: -12px;
+    left: 16px;
+    background: var(--paper);
+    padding: 0 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .warn-box p { margin: 0; font-size: 0.95em; }
+
+  /* ── Flow Diagram ── */
+  .flow {
+    margin: 36px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .flow-step:last-child { border-bottom: none; }
+
+  .flow-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 800;
+    background: var(--ink);
+    color: var(--paper);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .flow-step.accent .flow-num { background: var(--accent); }
+  .flow-step.green .flow-num { background: var(--accent2); }
+
+  .flow-step p { margin: 0; font-size: 0.95em; }
+  .flow-step strong { font-family: 'Syne', sans-serif; font-size: 0.85em; }
+
+  /* ── Two Column ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 28px 0;
+  }
+
+  .col-card {
+    padding: 20px;
+    border: 1.5px solid var(--border);
+  }
+
+  .col-card h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .col-card.bad h4 { color: var(--accent); }
+  .col-card.good h4 { color: var(--accent2); }
+
+  .col-card p { margin: 0; font-size: 0.9em; line-height: 1.6; }
+
+  /* ── Checklist ── */
+  .checklist { list-style: none; margin: 20px 0 28px; }
+  .checklist li {
+    padding: 8px 0 8px 32px;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95em;
+  }
+  .checklist li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--accent2);
+    font-weight: 700;
+  }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 2px solid var(--ink);
+    padding: 40px 32px;
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: gap;
+    gap: 16px;
+  }
+
+  footer p {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .author-tag {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  header .header-inner { animation: fadeUp 0.6s ease both; }
+  article { animation: fadeUp 0.6s 0.15s ease both; }
+
+  @media (max-width: 600px) {
+    .pull-quote { margin: 40px -16px; padding: 28px 24px; }
+    .two-col { grid-template-columns: 1fr; }
+    h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-bg"></div>
+  <div class="header-inner">
+    <div class="tag">Android Dev · Google Play · Firebase</div>
+    <h1>Why Your Google Sign-In Breaks in Production<br><em>— and how SHA fingerprints actually work</em></h1>
+    <div class="meta">
+      <span>Saad Bin Asad</span>
+      <span>March 2026</span>
+      <span>8 min read</span>
+    </div>
+  </div>
+</header>
+
+<article>
+
+  <p class="lead">
+    You tested Google Sign-In in debug mode — it worked perfectly. You uploaded your app to the Play Store. Now it's broken. No error message that makes sense. Just silent failure. This is one of the most common traps in Android development, and it comes down to one misunderstood concept: SHA fingerprints.
+  </p>
+
+  <h2>The Problem Nobody Explains Clearly</h2>
+
+  <p>When developers set up Firebase or Google OAuth for their Android app, they're told to "add the SHA fingerprint." Simple enough. But there are actually <strong>two completely different SHA fingerprints</strong> in play when you use Google Play — and using the wrong one is what silently breaks authentication in production.</p>
+
+  <p>To understand why, you need to understand what happens to your APK between the moment you upload it and when a user downloads it.</p>
+
+  <div class="pull-quote">
+    <p>Google Play re-signs your app with its own managed key before delivering it to users. Your original signature is gone.</p>
+  </div>
+
+  <h2>Two Keys. Two SHAs. One Big Confusion.</h2>
+
+  <p>When you enroll in Google Play App Signing (which is now mandatory for new apps), two separate cryptographic keys exist for your app:</p>
+
+  <div class="two-col">
+    <div class="col-card bad">
+      <h4>⬆ Upload Key</h4>
+      <p>The key you use to sign your AAB/APK before uploading to Play Console. Google uses this to verify <em>you</em> are the one uploading. After verification, Google strips this signature.</p>
+    </div>
+    <div class="col-card good">
+      <h4>📦 App Signing Key</h4>
+      <p>Google's own managed key that re-signs your app before delivery to users. This is the signature users' devices actually see. This is what Firebase and OAuth need to trust.</p>
+    </div>
+  </div>
+
+  <p>The SHA fingerprint that matters for <strong>Firebase, Google Maps, and OAuth</strong> is the one from the <strong>App Signing Key</strong> — not the Upload Key. Most developers add the Upload Key SHA and wonder why production auth is broken.</p>
+
+  <h2>Where to Find the Correct SHA in Play Console</h2>
+
+  <p>Here is exactly where to navigate:</p>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <div>
+        <p><strong>Open Google Play Console</strong> and select your app</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <div>
+        <p><strong>Left sidebar → Release → Setup → App integrity</strong></p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <div>
+        <p>In the <em>App integrity</em> screen, scroll to the <strong>"Play app signing"</strong> section and click on it — it's a clickable row, not just a label</p>
+      </div>
+    </div>
+    <div class="flow-step accent">
+      <div class="flow-num">4</div>
+      <div>
+        <p>You'll see two certificate sections. Copy the <strong>SHA-1 and SHA-256 from "App signing key certificate"</strong> — this is the one you need</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">5</div>
+      <div>
+        <p>Also note the <strong>"Upload key certificate"</strong> SHA-1 — you'll need this for local development</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <div class="box-label">⚠ Common Mistake</div>
+    <p>The <em>App integrity</em> overview page (the one listing Play Integrity API, Automatic Protection, etc.) does <strong>not</strong> show the certificate fingerprints. You must click through to the App Signing sub-page to find them.</p>
+  </div>
+
+  <h2>Where to Paste the SHAs</h2>
+
+  <h3>Firebase Console</h3>
+
+  <div class="flow">
+    <div class="flow-step green">
+      <div class="flow-num">→</div>
+      <div><p>Firebase Console <strong>→ Project Settings → Your Apps → SHA certificate fingerprints → Add fingerprint</strong></p></div>
+    </div>
+  </div>
+
+  <p>Add <strong>both</strong> fingerprints here:</p>
+
+  <ul class="checklist">
+    <li>SHA-1 from <strong>App signing key certificate</strong> (for production)</li>
+    <li>SHA-1 from <strong>Upload key certificate</strong> (for local debug builds)</li>
+    <li>SHA-256 from <strong>App signing key certificate</strong> (required for some Firebase features)</li>
+  </ul>
+
+  <h3>Google Cloud Console (OAuth)</h3>
+
+  <div class="flow">
+    <div class="flow-step green">
+      <div class="flow-num">→</div>
+      <div><p>Google Cloud Console <strong>→ APIs & Services → Credentials → OAuth 2.0 Client ID (Android) → Edit → SHA-1 certificate fingerprint</strong></p></div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <span class="label">fingerprint reference</span>
+<span class="comment"># Production (from App signing key certificate in Play Console)</span>
+<span class="key">SHA-1</span>  <span class="val">AB:CD:EF:12:34:...  ← paste here into Firebase + OAuth</span>
+<span class="key">SHA-256</span> <span class="val">12:AB:CD:EF:...    ← paste here into Firebase</span>
+
+<span class="comment"># Local dev (from Upload key certificate in Play Console)</span>
+<span class="key">SHA-1</span>  <span class="val">FF:AA:BB:CC:...    ← also add to Firebase for debug builds</span>
+  </div>
+
+  <h2>Why Your Debug Build Works But Production Doesn't</h2>
+
+  <p>When you run your app locally via Android Studio, it's signed with your <strong>local debug keystore</strong> (found at <code>~/.android/debug.keystore</code>). Firebase recognizes this because you added the debug SHA at setup time.</p>
+
+  <p>But when a user downloads your app from the Play Store, it's signed by <strong>Google's App Signing Key</strong> — a completely different fingerprint. Firebase and Google's OAuth service see an unknown signature and reject authentication silently.</p>
+
+  <p>This is why the fix has nothing to do with your code. You haven't done anything wrong in the app itself. The missing piece is simply <strong>registering Google's signing key SHA with Firebase and OAuth</strong>.</p>
+
+  <h2>The Complete Fix — Step by Step</h2>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <div><p>Go to <strong>Play Console → App integrity → Play app signing</strong> and copy both the App signing key SHA-1 and SHA-256</p></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <div><p>Open <strong>Firebase Console → Project Settings → Your App</strong> and add the SHA-1 and SHA-256. Download the updated <code>google-services.json</code></p></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <div><p>Replace the old <code>google-services.json</code> in your project's <code>app/</code> directory</p></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <div><p>If using Google Sign-In via OAuth, update your <strong>OAuth 2.0 Android Client ID</strong> in Google Cloud Console with the same SHA-1</p></div>
+    </div>
+    <div class="flow-step accent">
+      <div class="flow-num">5</div>
+      <div><p>Build a new release AAB, upload to Play Console, and test via <strong>Internal Testing</strong> track before pushing to production</p></div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="box-label">💡 Pro Tip</div>
+    <p>Changes to Firebase SHA fingerprints take effect immediately — you don't need to re-publish your app. But if you updated OAuth credentials, allow a few minutes for Google's servers to propagate the change.</p>
+  </div>
+
+  <h2>Summary</h2>
+
+  <p>The confusion is understandable — Google Play Console's interface buries the signing certificate details, and the distinction between "upload key" and "app signing key" is rarely explained up front. But once you understand the flow, the fix is straightforward:</p>
+
+  <ul class="checklist">
+    <li>Google Play re-signs your app before delivery — your upload key SHA is not what users' devices see</li>
+    <li>The correct SHA lives in Play Console → App integrity → Play app signing → App signing key certificate</li>
+    <li>Add this SHA (not your upload key SHA) to Firebase and Google Cloud OAuth</li>
+    <li>Add both SHAs to Firebase so both debug and production builds work</li>
+    <li>Download the updated google-services.json after adding new fingerprints</li>
+  </ul>
+
+  <p>This single misunderstanding wastes hours for developers every day. Now you know exactly where to look and what to do.</p>
+
+</article>
+
+<footer>
+  <p>© 2026 Saad Bin Asad · DevOps & Release Engineer</p>
+  <span class="author-tag">medium.com/@saadbinasadaarbi1</span>
+</footer>
+
+</body>
+</html>
+

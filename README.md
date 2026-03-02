@@ -20,7 +20,7 @@
 
 <br/>
 
-[📖 Technical Decisions](docs/TECHNICAL_DECISIONS.md) &nbsp;·&nbsp; [🚀 CI/CD Blog](CICD_GOOGLE_PLAY_BLOG.md) &nbsp;·&nbsp; [📐 Architecture](ARCHITECTURE.md)
+[📖 Technical Decisions](docs/TECHNICAL_DECISIONS.md) &nbsp;·&nbsp; [🚀 CI/CD Blog](CICD_GOOGLE_PLAY_BLOG.md) &nbsp;·&nbsp; [🔑 Google Sign-In & SHA Fingerprints](docs/sha-fingerprints-google-play.html) &nbsp;·&nbsp; [📐 Architecture](ARCHITECTURE.md)
 
 </div>
 

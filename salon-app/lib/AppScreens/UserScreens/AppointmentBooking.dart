@@ -520,8 +520,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        cacheExtent: 300,
+        physics: const BouncingScrollPhysics(),
         itemCount: _dates.length,
         itemBuilder: (context, index) {
           final isSelected = _selectedDateIndex == index;

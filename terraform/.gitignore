@@ -1,5 +1,8 @@
 .terraform/
 *.tfstate
+*.terra-key-ec2
+terra-key-ec2
+terra-key-ec2.pub
 *.tfstate.*
 .terraform.lock.hcl
 terraform.tfvars
