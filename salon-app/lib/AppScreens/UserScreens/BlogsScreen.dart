@@ -160,28 +160,36 @@ class _BlogCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 24),
-      elevation: 4,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: InkWell(
         onTap: () => _showFullBlog(context),
+        borderRadius: BorderRadius.circular(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image with Hero Transition (3:2 aspect ratio)
+            // Image with Hero Transition
             Hero(
               tag: 'blog-img-${blog.id}',
-              child: AspectRatio(
-                aspectRatio: 3 / 2,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 child: CachedImageWidget(
                   imageUrl: blog.imageUrl ?? '',
+                  height: 220,
                   width: double.infinity,
-                  height: double.infinity,
                   fit: BoxFit.cover,
+                  placeholderAsset: 'assets/logo.png',
                 ),
               ),
             ),

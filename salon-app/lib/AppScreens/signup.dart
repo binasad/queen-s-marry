@@ -24,36 +24,6 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  /// Returns a detailed error message if the password is weak, otherwise null.
-  String? _validatePasswordStrength(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required.';
-    }
-
-    final password = value.trim();
-    final issues = <String>[];
-
-    if (password.length < 8) {
-      issues.add('• At least 8 characters');
-    }
-    if (!RegExp(r'[A-Z]').hasMatch(password)) {
-      issues.add('• At least one uppercase letter (A–Z)');
-    }
-    if (!RegExp(r'[a-z]').hasMatch(password)) {
-      issues.add('• At least one lowercase letter (a–z)');
-    }
-    if (!RegExp(r'\d').hasMatch(password)) {
-      issues.add('• At least one number (0–9)');
-    }
-    if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-]').hasMatch(password)) {
-      issues.add('• At least one symbol (e.g. ! @ # \$ %)');
-    }
-
-    if (issues.isEmpty) return null;
-
-    return 'Your password is not strong enough. Please make sure it includes:\n\n${issues.join('\n')}';
-  }
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -67,26 +37,6 @@ class _SignupScreenState extends State<SignupScreen> {
   // --- 1. SIGNUP LOGIC (Fixed Getter Error) ---
   Future<void> _signup() async {
     if (_isLoading) return;
-
-    // Strong password check with clear popup for the user
-    final passwordError = _validatePasswordStrength(_passwordController.text);
-    if (passwordError != null) {
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Weak Password'),
-          content: Text(passwordError),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
@@ -223,19 +173,7 @@ class _SignupScreenState extends State<SignupScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
         contentPadding: const EdgeInsets.symmetric(vertical: 18),
       ),
-      validator: (val) {
-        if (val == null || val.isEmpty) {
-          return "Required field";
-        }
-        if (isPassword) {
-          // For inline error, show a concise rule summary instead of the full popup text
-          final error = _validatePasswordStrength(val);
-          if (error != null) {
-            return "Use 8+ chars with upper, lower, number & symbol.";
-          }
-        }
-        return null;
-      },
+      validator: (val) => val == null || val.isEmpty ? "Required field" : null,
     );
   }
 

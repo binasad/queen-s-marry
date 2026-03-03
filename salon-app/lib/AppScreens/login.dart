@@ -11,7 +11,6 @@ import '../services/push_notification_service.dart';
 import 'OwnerScreens/OwnerTabbar.dart';
 import 'UserScreens/userTabbar.dart';
 import 'signup.dart';
-import '../utils/error_handler.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -110,7 +109,13 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         if (mounted) {
-          await ErrorHandler.show(context, e);
+          _showCustomSnackBar(
+            message: e.toString().contains('401')
+                ? 'Invalid email or password'
+                : 'Login failed. Try again.',
+            isError: true,
+            icon: Icons.error_outline,
+          );
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);

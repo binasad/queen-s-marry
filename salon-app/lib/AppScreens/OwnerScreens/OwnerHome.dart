@@ -314,7 +314,7 @@ class _OwnerHomeState extends State<OwnerHome> {
                             color: Colors.black, fontWeight: FontWeight.bold)),
                   ],
                 ),
-                Text("Welcome to Merry Queen Salon",
+                Text("Welcome to Queen's Marry Salon",
                     style: TextStyle(color: Colors.black, fontSize: 14)),
               ],
             ),

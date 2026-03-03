@@ -77,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Marry Queens',
+                    'Queen's Marry',
                     style: TextStyle(
                       fontSize: 32,
                       color: Colors.black,

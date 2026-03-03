@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -19,7 +18,7 @@ class PushNotificationService {
       FlutterLocalNotificationsPlugin();
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'default',
-    'Merry Queen Notifications',
+    "Queen's Marry Notifications",
     description: 'Appointment reminders and updates',
     importance: Importance.max,
     playSound: true,
@@ -159,7 +158,7 @@ class PushNotificationService {
 
     await _localNotifications.show(
       message.hashCode,
-      message.notification?.title ?? 'Merry Queen',
+      message.notification?.title ?? "Queen's Marry",
       message.notification?.body ?? '',
       details,
     );
