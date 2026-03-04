@@ -78,6 +78,7 @@ dependencies:
   flutter_stripe: ^12.3.0
   flutter_dotenv: ^6.0.0
   slider_button: ^3.1.0
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

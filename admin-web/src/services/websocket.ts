@@ -26,6 +26,9 @@ class WebSocketService {
   public onAppointmentDeleted?: (data: any) => void;
   public onAppointmentsUpdated?: (data: any) => void;
 
+  // Payment event callbacks
+  public onPaymentsUpdated?: (data: any) => void;
+
   constructor() {
     this.initializeSocket();
   }
@@ -62,114 +65,100 @@ class WebSocketService {
       this.handleReconnect();
     });
 
+    // Helper to safely call a callback without crashing the socket service
+    const safeCall = (name: string, fn?: (data: any) => void, data?: any) => {
+      if (!fn) return;
+      try {
+        fn(data);
+      } catch (err) {
+        console.error(`WebSocket callback error [${name}]:`, err);
+      }
+    };
+
     // Service events
     this.socket.on('service-created', (data) => {
       console.log('💇 Service created via WebSocket:', data);
-      if (this.onServiceCreated) {
-        this.onServiceCreated(data);
-      }
+      safeCall('service-created', this.onServiceCreated, data);
     });
 
     this.socket.on('service-updated', (data) => {
       console.log('💇 Service updated via WebSocket:', data);
-      if (this.onServiceUpdated) {
-        this.onServiceUpdated(data);
-      }
+      safeCall('service-updated', this.onServiceUpdated, data);
     });
 
     this.socket.on('service-deleted', (data) => {
       console.log('💇 Service deleted via WebSocket:', data);
-      if (this.onServiceDeleted) {
-        this.onServiceDeleted(data);
-      }
+      safeCall('service-deleted', this.onServiceDeleted, data);
     });
 
     // Course events
     this.socket.on('course-created', (data) => {
       console.log('📚 Course created via WebSocket:', data);
-      if (this.onCourseCreated) {
-        this.onCourseCreated(data);
-      }
+      safeCall('course-created', this.onCourseCreated, data);
     });
 
     this.socket.on('course-updated', (data) => {
       console.log('📚 Course updated via WebSocket:', data);
-      if (this.onCourseUpdated) {
-        this.onCourseUpdated(data);
-      }
+      safeCall('course-updated', this.onCourseUpdated, data);
     });
 
     this.socket.on('course-deleted', (data) => {
       console.log('📚 Course deleted via WebSocket:', data);
-      if (this.onCourseDeleted) {
-        this.onCourseDeleted(data);
-      }
+      safeCall('course-deleted', this.onCourseDeleted, data);
     });
 
     this.socket.on('course-application-created', (data) => {
       console.log('📝 Course application created via WebSocket:', data);
-      if (this.onCourseApplicationCreated) {
-        this.onCourseApplicationCreated(data);
-      }
+      safeCall('course-application-created', this.onCourseApplicationCreated, data);
     });
 
     // Offer events (admin-specific)
     this.socket.on('offer-created', (data) => {
       console.log('🏷️ Offer created via WebSocket:', data);
-      if (this.onOfferCreated) {
-        this.onOfferCreated(data);
-      }
+      safeCall('offer-created', this.onOfferCreated, data);
     });
 
     this.socket.on('offer-updated', (data) => {
       console.log('🏷️ Offer updated via WebSocket:', data);
-      if (this.onOfferUpdated) {
-        this.onOfferUpdated(data);
-      }
+      safeCall('offer-updated', this.onOfferUpdated, data);
     });
 
     this.socket.on('offer-deleted', (data) => {
       console.log('🏷️ Offer deleted via WebSocket:', data);
-      if (this.onOfferDeleted) {
-        this.onOfferDeleted(data);
-      }
+      safeCall('offer-deleted', this.onOfferDeleted, data);
     });
 
     // General offers update event (broadcast to all clients)
     this.socket.on('offers-updated', (data) => {
       console.log('🏷️ Offers updated via WebSocket:', data);
-      if (this.onOffersUpdated) {
-        this.onOffersUpdated(data);
-      }
+      safeCall('offers-updated', this.onOffersUpdated, data);
     });
 
     // Appointment events
     this.socket.on('appointment-created', (data) => {
       console.log('📅 Appointment created via WebSocket:', data);
-      if (this.onAppointmentCreated) {
-        this.onAppointmentCreated(data);
-      }
+      safeCall('appointment-created', this.onAppointmentCreated, data);
     });
 
     this.socket.on('appointment-updated', (data) => {
       console.log('📅 Appointment updated via WebSocket:', data);
-      if (this.onAppointmentUpdated) {
-        this.onAppointmentUpdated(data);
-      }
+      safeCall('appointment-updated', this.onAppointmentUpdated, data);
     });
 
     this.socket.on('appointment-deleted', (data) => {
       console.log('📅 Appointment deleted via WebSocket:', data);
-      if (this.onAppointmentDeleted) {
-        this.onAppointmentDeleted(data);
-      }
+      safeCall('appointment-deleted', this.onAppointmentDeleted, data);
     });
 
     this.socket.on('appointments-updated', (data) => {
       console.log('📅 Appointments updated via WebSocket:', data);
-      if (this.onAppointmentsUpdated) {
-        this.onAppointmentsUpdated(data);
-      }
+      safeCall('appointments-updated', this.onAppointmentsUpdated, data);
+    });
+
+    // Payment events
+    this.socket.on('payments-updated', (data) => {
+      console.log('💳 Payments updated via WebSocket:', data);
+      safeCall('payments-updated', this.onPaymentsUpdated, data);
     });
   }
 

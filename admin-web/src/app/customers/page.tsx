@@ -43,8 +43,9 @@ export default function CustomersPage() {
       else if (roleFilter !== 'all') params.role = roleFilter;
 
       const res = await usersAPI.getAll(params);
-      setCustomers(res.data.data.users || []);
-      setPagination(res.data.data.pagination || pagination);
+      const responseData = res?.data?.data;
+      setCustomers(responseData?.users || []);
+      setPagination(responseData?.pagination || pagination);
     } catch (error: any) {
       console.error('Failed to load customers:', error);
       toast.error(error.response?.data?.message || 'Failed to load customers');
