@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui'; // Added for ImageFilter if you uncomment the blur
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../utils/route_animations.dart';
@@ -16,7 +17,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   void didChangeDependencies() {
-    // Precache heavy images early to avoid jank when navigating.
     precacheImage(const AssetImage('assets/background.png'), context);
     super.didChangeDependencies();
   }
@@ -25,12 +25,11 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
-    // Wait for 3 seconds then navigate to LoginOption with a smooth fade.
     _splashTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
-        Navigator.of(
-          context,
-        ).pushReplacement(fadeThroughRoute(const LoginOption()));
+        Navigator.of(context).pushReplacement(
+          fadeThroughRoute(const LoginOption()),
+        );
       }
     });
   }
@@ -46,6 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       body: Stack(
         children: [
+          // Background Image
           Opacity(
             opacity: 0.8,
             child: Image.asset(
@@ -55,47 +55,41 @@ class _SplashScreenState extends State<SplashScreen> {
               height: double.infinity,
             ),
           ),
-          // BackdropFilter(
-          //   filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3), // control blur strength
-          //   child: Container(
-          //     color: Colors.white.withOpacity(0.5), // transparent layer to apply blur
-          //   ),
-          // ),
-          Container(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Hero(
-                    tag: 'app_logo',
-                    child: Lottie.asset(
-                      'assets/WomanHair.json',
-                      width: 250,
-                      height: 250,
-                      fit: BoxFit.contain,
-                    ),
+          
+          // Content
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Hero(
+                  tag: 'app_logo',
+                  child: Lottie.asset(
+                    'assets/WomanHair.json',
+                    width: 250,
+                    height: 250,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Queen's Marry',
-                    style: TextStyle(
-                      fontSize: 32,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontStyle: FontStyle.italic,
-                    ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Queen's Marry", // Fixed: Used double quotes to allow the apostrophe
+                  style: TextStyle(
+                    fontSize: 32,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
                   ),
-                  Text(
-                    "Beauty Salon",
-                    style: TextStyle(
-                      fontSize: 32,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontStyle: FontStyle.italic,
-                    ),
+                ),
+                const Text(
+                  "Beauty Salon",
+                  style: TextStyle(
+                    fontSize: 32,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],

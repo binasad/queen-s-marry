@@ -42,7 +42,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, String>> _pages = [
     {
-      "title": "Marry Queen",
+      "title": "Queen's Marry",
       "description": "Choose your service, select a stylist, and book in seconds.",
       "asset": "assets/bride.png",
       "type": "image"

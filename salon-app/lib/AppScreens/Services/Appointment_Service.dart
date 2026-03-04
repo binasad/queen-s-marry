@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart'; // Required for debugPrint
-import 'api_service.dart';
+import '../../services/api_service.dart';
 
 class AppointmentService {
   final ApiService _api = ApiService();
