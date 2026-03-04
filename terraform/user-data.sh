@@ -36,15 +36,15 @@ rm -f /etc/nginx/sites-enabled/default
 
 # Write the Nginx reverse-proxy config
 cat > /etc/nginx/sites-available/salon-api << 'NGINX'
-# ---------- CORS origin map ----------
-map $http_origin $cors_origin {
-    default "";
-    "~^https://[a-z0-9-]+\.vercel\.app$"              $http_origin;
-    "~^https://aztrosyssalonappapi\.ddns\.net$"        $http_origin;
-    "~^http://localhost(:[0-9]+)?$"                    $http_origin;
-    "~^http://127\.0\.0\.1(:[0-9]+)?$"                $http_origin;
-    "~^http://10\.\d+\.\d+\.\d+(:[0-9]+)?$"          $http_origin;
-    "~^http://192\.168\.\d+\.\d+(:[0-9]+)?$"          $http_origin;
+# Block PHP scanners and common exploit paths
+map $uri $is_bad_request {
+    default      0;
+    ~*\.php$     1;
+    ~*eval-stdin 1;
+    ~*wp-admin   1;
+    ~*wp-login   1;
+    ~*/etc/passwd 1;
+    ~*union.*select 1;
 }
 
 # ---------- WebSocket upgrade map ----------
@@ -57,48 +57,36 @@ server {
     listen 80;
     server_name aztrosyssalonappapi.ddns.net;
 
-    # --- CORS preflight (handled by Nginx so it always responds) ---
-    location / {
-        if ($request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin'      $cors_origin always;
-            add_header 'Access-Control-Allow-Methods'     'GET, POST, PUT, DELETE, OPTIONS, PATCH' always;
-            add_header 'Access-Control-Allow-Headers'     'Content-Type, Authorization, Accept' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-            add_header 'Access-Control-Max-Age'           86400;
-            add_header 'Content-Length'                    0;
-            return 204;
-        }
+    client_max_body_size 10m;
 
+    # Drop bad requests silently (no response = wastes attacker's time)
+    if ($is_bad_request) { return 444; }
+
+    location / {
         proxy_pass         http://127.0.0.1:5000;
         proxy_http_version 1.1;
-
-        # WebSocket support
-        proxy_set_header Upgrade    $http_upgrade;
-        proxy_set_header Connection $connection_upgrade;
-
-        # Standard proxy headers
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        $connection_upgrade;
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Origin            $http_origin;
-
-        proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 86400s;   # keep WS connections alive
+        proxy_cache_bypass                 $http_upgrade;
+        proxy_read_timeout                 86400s;
     }
 
-    # --- Socket.IO explicit location (belt-and-suspenders) ---
     location /socket.io/ {
         proxy_pass         http://127.0.0.1:5000/socket.io/;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade    $http_upgrade;
-        proxy_set_header Connection $connection_upgrade;
-        proxy_set_header Host       $host;
-        proxy_set_header X-Real-IP  $remote_addr;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        $connection_upgrade;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 86400s;
+        proxy_cache_bypass                 $http_upgrade;
+        proxy_read_timeout                 86400s;
     }
 }
 NGINX

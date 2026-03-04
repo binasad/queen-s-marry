@@ -36,13 +36,8 @@ resource "aws_security_group" "my_security_group" {
     description = "HTTP"
   }
 
-  ingress {
-    from_port   = 5000
-    to_port     = 5000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Backend API"
-  }
+  # Port 5000 is intentionally NOT exposed publicly.
+  # Nginx (port 443/80) proxies to localhost:5000 internally.
 
   ingress {
     from_port   = 443

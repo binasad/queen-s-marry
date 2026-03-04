@@ -63,7 +63,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     // Allow local development (localhost, 127.0.0.1, Android emulator 10.0.2.2, local network)
-    if (env.isDevelopment && (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://10.0.2.2') || origin.startsWith('http://10.') || origin.startsWith('http://192.168.'))) {
+    if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://10.0.2.2') || origin.startsWith('http://10.') || origin.startsWith('http://192.168.')) {
       return callback(null, true);
     }
 
@@ -118,7 +118,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
   skip: (req) => {
     const origin = req.headers.origin || '';
-    return origin ===  env.adminWebUrl || origin.endsWith('.vercel.app') || (env.isDevelopment && origin.includes('localhost'));
+    return origin === env.adminWebUrl || origin.endsWith('.vercel.app') || origin.includes('localhost');
   },
   handler: (req, res) => res.status(429).json({ success: false, message: 'Too many requests.' }),
 });
