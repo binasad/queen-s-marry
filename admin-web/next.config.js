@@ -2,9 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    // Local dev + production (uncomment when using deployed backend)
-    domains: ['localhost'],
-    // domains: ['localhost', '44.215.209.41'],
+    domains: [
+      'localhost',
+      'aztrosyssalonappapi.ddns.net',
+      'salon-app-assets-queensmarry-2026.s3.us-east-1.amazonaws.com',
+    ],
   },
   async rewrites() {
     // Production backend – hard-coded so rewrites always resolve to an absolute URL,

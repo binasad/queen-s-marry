@@ -184,7 +184,10 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                           final courseId = courseData['id']?.toString() ?? '';
                           final isFav = _favoriteCourseIds.contains(courseId);
                           final isLoadingFav = _favoriteLoading[courseId] ?? false;
-                          return AnimationConfiguration.staggeredList(
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 600),
+                              child: AnimationConfiguration.staggeredList(
                             position: index,
                             duration: const Duration(milliseconds: 600),
                             child: SlideAnimation(
@@ -277,7 +280,7 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                                 ),
                               ),
                             ),
-                          );
+                          )));
                         },
                       ),
                     ),

@@ -31,19 +31,15 @@ class WebSocketService {
   }
 
   private initializeSocket() {
-    // When running on Vercel (NEXT_PUBLIC_BACKEND_URL is set), connect through
-    // the same-origin rewrite proxy to avoid CORS issues.  The Next.js rewrite
-    // in next.config.js already forwards /socket.io/* to the backend.
-    const isVercel = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
-    const backendUrl = isVercel
-      ? undefined                                                     // same-origin → uses Vercel rewrite
-      : (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000');
+    // Always connect directly to the backend.
+    // Vercel serverless rewrites cannot upgrade HTTP → WebSocket, so the
+    // same-origin proxy approach does not work for socket.io.
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
-    this.socket = io(backendUrl as string, {
-      transports: ['websocket'],
+    this.socket = io(backendUrl, {
+      transports: ['websocket', 'polling'],
       timeout: 5000,
       forceNew: true,
-      ...(isVercel && { path: '/socket.io' }),                        // explicit path for same-origin
     });
 
     this.setupEventListeners();

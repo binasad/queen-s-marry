@@ -12,13 +12,32 @@ const PORT = env.port;
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.IO with permissive CORS for mobile apps
+const socketAllowedOrigins = [
+  env.adminWebUrl,
+  'https://queen-s-marry.vercel.app',
+  'https://queen-s-marry-saadbinasaddeveloper.vercel.app',
+].filter(Boolean);
+
+// Initialize Socket.IO with CORS support for web + mobile clients
 const io = new Server(server, {
   cors: {
-    origin: ['https://queen-s-marry.vercel.app', 'http://localhost:3000', process.env.ADMIN_WEB_URL], // Allow all origins including mobile apps
-    methods: ["GET", "POST"],
-    credentials: true
-  }
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+        return callback(null, true);
+      }
+
+      if (origin.endsWith('.vercel.app') || socketAllowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log('❌ Blocking Socket.IO origin:', origin);
+      return callback(new Error('Not allowed by Socket.IO CORS'));
+    },
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
 });
 
 // Socket.IO connection handling
