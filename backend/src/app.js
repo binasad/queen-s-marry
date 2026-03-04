@@ -127,7 +127,12 @@ app.use('/api/', limiter);
 // --- Static Files ---
 const uploadsDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-app.use(`/api/${API_VERSION}/uploads`, express.static(uploadsDir));
+// Override Helmet's default Cross-Origin-Resource-Policy: same-origin so that
+// cross-origin pages (admin, mobile) can load uploaded images in <img> tags.
+app.use(`/api/${API_VERSION}/uploads`, (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(uploadsDir));
 
 // --- Utility Routes ---
 app.get('/', (req, res) => res.json({ success: true, message: 'Salon Booking API', version: API_VERSION }));

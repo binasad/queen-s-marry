@@ -6,6 +6,7 @@ const nextConfig = {
       'localhost',
       'aztrosyssalonappapi.ddns.net',
       'salon-app-assets-queensmarry-2026.s3.us-east-1.amazonaws.com',
+      'd1vkudmp7ebh7p.cloudfront.net',
     ],
   },
   async rewrites() {
