@@ -2,7 +2,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
 
-// Marry Queen Firebase config
+// Queen's Marry Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCuZHbiZlBfJmqFFHUkkIcipOS0WhmAfVM",
   authDomain: "marry-queen.firebaseapp.com",

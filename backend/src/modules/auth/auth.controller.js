@@ -408,8 +408,9 @@ class AuthController {
         const newAttempts = (user.failed_login_attempts || 0) + 1;
         let lockoutUntil = null;
 
-        if (newAttempts >= 3) {
-          lockoutUntil = new Date(Date.now() + 30 * 1000);
+        // Allow up to 5 failed attempts, then lock account for 2 minutes
+        if (newAttempts >= 5) {
+          lockoutUntil = new Date(Date.now() + 2 * 60 * 1000);
         }
 
         await query(
@@ -420,7 +421,7 @@ class AuthController {
         return res.status(401).json({
           success: false,
           message: 'Invalid email or password.',
-          attemptsRemaining: Math.max(0, 3 - newAttempts),
+          attemptsRemaining: Math.max(0, 5 - newAttempts),
         });
       }
 
