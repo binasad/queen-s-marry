@@ -49,38 +49,41 @@ const About = () => {
 
       {/* ── About Content ── */}
       <section className="about-salon py-5 bg-white">
-        <div className="container overflow-hidden">
-          <div className="row align-items-stretch g-5 py-5">
-            <div className="col-lg-5">
-              <div className="position-relative h-100">
+        <div className="container">
+          <div className="row align-items-center g-5 py-4">
+            {/* Image Side */}
+            <div className="col-lg-6">
+              <div className="position-relative">
                 <img
                   src="/images/photoshot.jpg"
                   alt="Our Salon"
-                  className="img-fluid rounded-4 shadow-lg w-100 h-100"
-                  style={{ objectFit: 'cover', minHeight: '500px' }}
+                  className="img-fluid rounded-4 shadow-lg w-100"
+                  style={{ objectFit: 'cover', height: '550px' }}
                 />
-                <div className="experience-badge position-absolute bottom-0 end-0 bg-white p-3 rounded-start shadow">
-                  <h3 className="text-gradient fw-bold mb-0">10+</h3>
-                  <p className="text-muted mb-0 small">Years Experience</p>
+                <div className="experience-badge position-absolute bottom-0 end-0 bg-white p-3 p-md-4 rounded-start shadow-lg" style={{ transform: 'translate(15px, -20px)' }}>
+                  <h3 className="text-gradient fw-bold mb-0 display-6">10+</h3>
+                  <p className="text-muted fw-semibold mb-0">Years Experience</p>
                 </div>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column justify-content-center">
+
+            {/* Content Side */}
+            <div className="col-lg-6 ps-lg-5">
               <h6 className="text-uppercase text-gradient fw-bold mb-2">Our Story</h6>
               <h2 className="display-5 fw-bold mb-4">About Merry Queens Salon</h2>
-              <p className="lead text-muted mb-4">
+              <p className="lead text-muted mb-4 pe-lg-4">
                 At <strong>Merry Queens Salon</strong>, we believe beauty is more than looks —
                 it's confidence. Our expert stylists, warm ambiance, and top-quality products
                 ensure every visit is a refreshing experience. Whether it's a simple trim,
                 a bold makeover, or a relaxing spa treatment, we're here to make you shine.
               </p>
-              <ul className="list-unstyled mb-4">
-                <li className="mb-2"><i className="bi bi-check-circle-fill text-gradient me-2" /> Professional &amp; Certified Stylists</li>
-                <li className="mb-2"><i className="bi bi-check-circle-fill text-gradient me-2" /> Premium Quality Products Only</li>
-                <li className="mb-2"><i className="bi bi-check-circle-fill text-gradient me-2" /> Relaxing &amp; Luxurious Environment</li>
-                <li className="mb-2"><i className="bi bi-check-circle-fill text-gradient me-2" /> 10+ Years of Trusted Service</li>
+              <ul className="list-unstyled mb-5">
+                <li className="mb-3 fs-5"><i className="bi bi-check2-circle text-gradient me-3 fs-4 align-middle" /> Professional &amp; Certified Stylists</li>
+                <li className="mb-3 fs-5"><i className="bi bi-check2-circle text-gradient me-3 fs-4 align-middle" /> Premium Quality Products Only</li>
+                <li className="mb-3 fs-5"><i className="bi bi-check2-circle text-gradient me-3 fs-4 align-middle" /> Relaxing &amp; Luxurious Environment</li>
+                <li className="mb-3 fs-5"><i className="bi bi-check2-circle text-gradient me-3 fs-4 align-middle" /> 10+ Years of Trusted Service</li>
               </ul>
-              <Link to="/services" className="btn btn-gradient px-4 py-2 rounded-pill">
+              <Link to="/services" className="btn btn-gradient btn-lg px-5 py-3 rounded-pill shadow-sm">
                 Explore Our Services <i className="bi bi-arrow-right ms-2" />
               </Link>
             </div>
