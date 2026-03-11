@@ -55,6 +55,7 @@ const allowedOrigins = [
   env.adminWebUrl,
   'https://admin-web-navy-three.vercel.app',
   'https://aztrosyssalonappapi.ddns.net',
+  'http://localhost:5173', // React Vite default port
 ].filter(Boolean);
 
 const corsOptions = {

@@ -1,151 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Appointment - Merry Queens Salon</title>
-  <meta name="description" content="Book your appointment at Merry Queens Salon. Choose service, stylist, and preferred time online.">
+  <meta name="description"
+    content="Book your appointment at Merry Queens Salon. Choose service, stylist, and preferred time online.">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 
 </head>
+
 <body>
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container">
-    <a class="navbar-brand" href="index.html">
-      <img src="images/logo.png" alt="Logo" style="height:50px;">
-      Merry Queens Salon
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-        <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
-        <li class="nav-item"><a class="nav-link" href="courses.html">Courses</a></li>
-        <li class="nav-item"><a class="nav-link" href="services.html">Services</a></li>
-        <li class="nav-item"><a class="nav-link" href="deals.html">Deals/Offers</a></li>
-        <li class="nav-item"><a class="nav-link active" href="appointments.html">Book Appointment</a></li>
-      </ul>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">
+        <img src="images/logo.png" alt="Logo" style="height:50px;">
+        Merry Queens Salon
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="courses.html">Courses</a></li>
+          <li class="nav-item"><a class="nav-link" href="services.html">Services</a></li>
+          <li class="nav-item"><a class="nav-link" href="deals.html">Deals/Offers</a></li>
+          <li class="nav-item"><a class="nav-link active" href="appointments.html">Book Appointment</a></li>
+        </ul>
+      </div>
     </div>
-  </div>
-</nav>
+  </nav>
 
-<!-- Hero Section -->
-<section class="hero-appointment position-relative">
-  <img src="images/salon-interior.jpg" alt="Appointment Background" class="hero-bg">
-  <div class="hero-text">
-    <h1>Book Your Appointment</h1>
-    <p>Choose your service, preferred stylist, and date/time</p>
-    <a href="#appointment-form" class="btn btn-gradient btn-lg">Book Now</a>
-  </div>
-</section>
-<!-- Appointment Form Section -->
-<section class="appointment-section" id="appointment-form">
-  <div class="appointment-card">
-    <h2 class="text-center mb-4">Appointment Form</h2>
+  <!-- Hero Section -->
+  <section class="hero-appointment position-relative">
+    <img src="images/salon-interior.jpg" alt="Appointment Background" class="hero-bg">
+    <div class="hero-text">
+      <h1>Book Your Appointment</h1>
+      <p>Choose your service, preferred stylist, and date/time</p>
+      <a href="#appointment-form" class="btn btn-gradient btn-lg">Book Now</a>
+    </div>
+  </section>
+  <!-- Appointment Form Section -->
+  <section class="appointment-section" id="appointment-form">
+    <div class="appointment-card">
+      <h2 class="text-center mb-4">Appointment Form</h2>
 
-    <form>
-      <div class="mb-3">
-        <label class="form-label">Full Name</label>
-        <input type="text" class="form-control" placeholder="Enter your name">
+      <!-- Success Message Container (Hidden by Default) -->
+      <div id="successMessage" class="success-message p-4 text-center mt-3" style="display: none; background: #e91e63; color: #fff; border-radius: 10px;">
+        <i class="bi bi-check-circle-fill text-white" style="font-size: 3rem;"></i>
+        <h3 class="mt-3 text-white">Booking Confirmed!</h3>
+        <p class="text-white mb-0">Thank you. We'll send you an SMS with the details shortly.</p>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Service</label>
-        <select class="form-select">
-          <option selected>Select a service</option>
-          <option>Haircut</option>
-          <option>Facial</option>
-          <option>Makeup</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Preferred Date</label>
-        <input type="date" class="form-control">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Preferred Time</label>
-        <input type="time" class="form-control">
-      </div>
-      <button type="submit" class="btn btn-gradient w-100">Submit</button>
-    </form>
-  </div>
-</section>
-<!-- Footer -->
-<footer>
-  <div class="container">
-    <div class="row">
-      <!-- Logo -->
-      <div class="col-md-4 footer-logo mb-4">
-        <img src="images/logo.png" alt="logo">
-        <h5>Queen's Marry</h5>
-      </div>
-      <!-- Address -->
-      <div class="col-md-4 mb-4">
-        <h5>Address</h5>
-        <p><i class="bi bi-geo-alt"></i> I-8 Markaz Islamabad</p>
-      </div>
-      <!-- Contact -->
-      <div class="col-md-4 mb-4">
-        <h5>Contact</h5>
-        <p><i class="bi bi-telephone"></i> +92-308-5494369</p>
-        <p><i class="bi bi-envelope"></i> info@marryqueens.com</p>
-        <h5>Connect With Us</h5>
-        <div class="app-buttons">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play">
-          <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store">
+
+      <form id="bookingForm" onsubmit="handleBooking(event)">
+        <div class="mb-3">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-control" required placeholder="Enter your name">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Phone Number</label>
+          <input type="tel" class="form-control" required pattern="[0-9]{11}" placeholder="e.g. 03001234567">
+          <div class="form-text">Please enter a valid 11-digit mobile number.</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label class="form-label">Category</label>
+            <select class="form-select" id="categorySelect" required onchange="populateItems()">
+              <option value="" selected disabled>Select Category</option>
+              <option value="Service">Service</option>
+              <option value="Course">Course</option>
+              <option value="Deal">Deal/Offer</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Specific Item</label>
+            <select class="form-select" id="itemSelect" required>
+               <option value="" selected disabled>Select Item</option>
+            </select>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label class="form-label">Preferred Date</label>
+            <input type="date" class="form-control" id="bookingDate" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Preferred Time (9 AM - 9 PM)</label>
+            <input type="time" class="form-control" id="bookingTime" required min="09:00" max="21:00">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-gradient w-100 mt-3 py-2">Submit Booking Request</button>
+      </form>
+    </div>
+  </section>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <!-- Logo -->
+        <div class="col-md-4 footer-logo mb-4">
+          <img src="images/logo.png" alt="logo">
+          <h5>Queen's Marry</h5>
+        </div>
+        <!-- Address -->
+        <div class="col-md-4 mb-4">
+          <h5>Address</h5>
+          <p><i class="bi bi-geo-alt"></i> I-8 Markaz Islamabad</p>
+        </div>
+        <!-- Contact -->
+        <div class="col-md-4 mb-4">
+          <h5>Contact</h5>
+          <p><i class="bi bi-telephone"></i> +92-308-5494369</p>
+          <p><i class="bi bi-envelope"></i> info@marryqueens.com</p>
+          <h5>Connect With Us</h5>
+          <div class="app-buttons">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+              alt="Google Play">
+            <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store">
+          </div>
         </div>
       </div>
+      <div class="footer-bottom">
+        <p>Copyright ©2025 Queen's Marry. All Rights Reserved</p>
+      </div>
     </div>
-    <div class="footer-bottom">
-      <p>Copyright ©2025 Queen's Marry. All Rights Reserved</p>
-    </div>
-  </div>
-</footer>
+  </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  let currentStep = 0;
-  showStep(currentStep);
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Data for dropdowns
+    const dropdownData = {
+      "Service": [
+        "Haircut & Styling", "Hair Coloring", "Keratin Treatment", 
+        "Bridal Makeup", "Party Makeup", "Hydra Facial", "Whitening Facial",
+        "Manicure & Pedicure", "Waxing", "Massage Therapy"
+      ],
+      "Course": [
+        "Basic Course", "Advance Course", "Professional Course"
+      ],
+      "Deal": [
+        "Bridal Makeup Package", "Party Makeup", "Hair Styling"
+      ]
+    };
 
-  function showStep(n) {
-    let steps = document.getElementsByClassName("step");
-    for(let i=0;i<steps.length;i++){ steps[i].style.display="none";}
-    steps[n].style.display="block";
-    document.getElementById("prevBtn").style.display = n===0?"none":"inline-block";
-    document.getElementById("nextBtn").innerHTML = n===steps.length-1?"Submit":"Next";
-  }
-
-  function nextPrev(n) {
-    let steps = document.getElementsByClassName("step");
-    // Validation
-    let inputs = steps[currentStep].getElementsByTagName("input");
-    for(let i=0;i<inputs.length;i++){
-      if(inputs[i].hasAttribute("required") && inputs[i].value===""){
-        alert("Please fill all required fields.");
-        return false;
+    function populateItems(selectedItem = null) {
+      const category = document.getElementById('categorySelect').value;
+      const itemSelect = document.getElementById('itemSelect');
+      
+      // Clear existing options
+      itemSelect.innerHTML = '<option value="" selected disabled>Select Item</option>';
+      
+      if (category && dropdownData[category]) {
+        dropdownData[category].forEach(item => {
+          const option = document.createElement('option');
+          option.value = item;
+          option.textContent = item;
+          if (item === selectedItem) {
+            option.selected = true;
+          }
+          itemSelect.appendChild(option);
+        });
       }
     }
-    let selects = steps[currentStep].getElementsByTagName("select");
-    for(let i=0;i<selects.length;i++){
-      if(selects[i].hasAttribute("required") && selects[i].value===""){
-        alert("Please select a required option.");
-        return false;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Set minimum date to today
+      const dateInput = document.getElementById("bookingDate");
+      if (dateInput) {
+        const today = new Date().toLocaleDateString('en-CA'); // Gets YYYY-MM-DD in local timezone
+        dateInput.setAttribute("min", today);
       }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const serviceParam = urlParams.get('service');
+      const dealParam = urlParams.get('deal');
+      
+      const categorySelect = document.getElementById('categorySelect');
+      
+      if (serviceParam) {
+        // Determine if service or course
+        if (serviceParam.includes("Course")) {
+          categorySelect.value = "Course";
+        } else {
+          categorySelect.value = "Service";
+        }
+        populateItems(serviceParam);
+      } else if (dealParam) {
+        categorySelect.value = "Deal";
+        populateItems(dealParam);
+      }
+    });
+
+    function handleBooking(e) {
+      e.preventDefault();
+
+      // Validate Time
+      const timeInput = document.getElementById("bookingTime").value;
+      if (timeInput < "09:00" || timeInput > "21:00") {
+        alert("Please select a time within our business hours (9:00 AM to 9:00 PM).");
+        return;
+      }
+
+      document.getElementById("bookingForm").style.display = "none";
+      document.getElementById("successMessage").style.display = "block";
     }
-    steps[currentStep].classList.remove("active");
-    currentStep += n;
-    if(currentStep >= steps.length){
-      document.getElementById("appointment-form").style.display="none";
-      document.getElementById("successMessage").style.display="block";
-      return false;
-    }
-    showStep(currentStep);
-  }
-</script>
+  </script>
 </body>
+
 </html>

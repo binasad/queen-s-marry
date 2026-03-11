@@ -15,6 +15,12 @@ router.get(
   appointmentsController.getRecentAppointments
 );
 
+// Public routes - allow unregistered guests to book via the frontend
+router.post(
+  '/public/appointments',
+  appointmentsController.createGuestAppointment
+);
+
 // User routes - blockGuests ensures only registered users can book
 router.post(
   '/appointments',
