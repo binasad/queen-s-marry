@@ -50,14 +50,14 @@ const About = () => {
       {/* ── About Content ── */}
       <section className="about-salon py-5 bg-white">
         <div className="container overflow-hidden">
-          <div className="row align-items-center g-5 py-5">
-            <div className="col-lg-6">
-              <div className="position-relative">
+          <div className="row align-items-stretch g-5 py-5">
+            <div className="col-lg-5">
+              <div className="position-relative h-100">
                 <img
                   src="/images/photoshot.jpg"
                   alt="Our Salon"
-                  className="img-fluid rounded-4 shadow-lg w-100"
-                  style={{ objectFit: 'cover', height: '400px' }}
+                  className="img-fluid rounded-4 shadow-lg w-100 h-100"
+                  style={{ objectFit: 'cover', minHeight: '500px' }}
                 />
                 <div className="experience-badge position-absolute bottom-0 end-0 bg-white p-3 rounded-start shadow">
                   <h3 className="text-gradient fw-bold mb-0">10+</h3>
@@ -65,7 +65,7 @@ const About = () => {
                 </div>
               </div>
             </div>
-            <div className="col-lg-6">
+            <div className="col-lg-7 d-flex flex-column justify-content-center">
               <h6 className="text-uppercase text-gradient fw-bold mb-2">Our Story</h6>
               <h2 className="display-5 fw-bold mb-4">About Merry Queens Salon</h2>
               <p className="lead text-muted mb-4">
