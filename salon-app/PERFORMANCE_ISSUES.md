@@ -1,6 +1,6 @@
 # Performance & Lag Vulnerabilities Report
 
-Analysis of the Queen's Marry salon app for issues that can cause slowness or lag.
+Analysis of the Queens Saloon salon app for issues that can cause slowness or lag.
 
 ---
 

@@ -119,7 +119,7 @@ class AboutScreen extends StatelessWidget {
                       end: Alignment.bottomCenter,
                     ).createShader(bounds),
                     child: const Text(
-                      "Queen's Marry",
+                      "Queens Saloon",
                       style: TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.w800,
@@ -132,7 +132,7 @@ class AboutScreen extends StatelessWidget {
                   const SizedBox(height: 36),
                   // Description
                   Text(
-                    "At Queen's Marry, we believe every individual deserves a moment of luxury. Our team of skilled professionals specializes in crafting looks that celebrate your unique personality.",
+                    "At Queens Saloon, we believe every individual deserves a moment of luxury. Our team of skilled professionals specializes in crafting looks that celebrate your unique personality.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15.5,
