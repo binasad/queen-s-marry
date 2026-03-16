@@ -70,9 +70,9 @@ const About = () => {
             {/* Content Side */}
             <div className="col-lg-6 ps-lg-5">
               <h6 className="text-uppercase text-gradient fw-bold mb-2">Our Story</h6>
-              <h2 className="display-5 fw-bold mb-4">About Merry Queens Salon</h2>
+              <h2 className="display-5 fw-bold mb-4">About Queen's Marry Beauty Salon</h2>
               <p className="lead text-muted mb-4 pe-lg-4">
-                At <strong>Merry Queens Salon</strong>, we believe beauty is more than looks —
+                At <strong>Queen's Marry Beauty Salon</strong>, we believe beauty is more than looks —
                 it's confidence. Our expert stylists, warm ambiance, and top-quality products
                 ensure every visit is a refreshing experience. Whether it's a simple trim,
                 a bold makeover, or a relaxing spa treatment, we're here to make you shine.

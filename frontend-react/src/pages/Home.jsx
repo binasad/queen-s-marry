@@ -149,7 +149,7 @@ const Home = () => {
               </div>
             </div>
             <div className="col-lg-6">
-              <h6 className="text-uppercase text-gradient fw-bold mb-2">Welcome to Merry Queens</h6>
+              <h6 className="text-uppercase text-gradient fw-bold mb-2">Welcome to Queen's Marry Beauty Salon</h6>
               <h2 className="display-5 fw-bold mb-4">Elevating Beauty, Defy Expectations.</h2>
               <p className="lead text-muted mb-4">
                 Our expert stylists and premium products ensure every visit is a refreshing experience tailored uniquely for you.

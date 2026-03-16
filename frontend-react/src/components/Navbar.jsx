@@ -9,7 +9,7 @@ const Navbar = () => {
       <div className="container">
         <Link className="navbar-brand d-flex align-items-center" to="/">
           <img src="/images/logo.png" alt="Logo" style={{ height: '40px' }} />
-          <span className="brand-text ms-2 fw-bold text-white">Merry Queens Salon</span>
+          <span className="brand-text ms-2 fw-bold text-white">Queen's Marry Beauty Salon</span>
         </Link>
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span className="navbar-toggler-icon"></span>
