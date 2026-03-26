@@ -16,7 +16,48 @@ const Deals = () => {
             setLoading(true);
             setError('');
             const data = await getOffers();
-            setOffers(data);
+            
+            // Hardcoded deals to blend with API deals so we always have beautifully populated cards (like it was before)
+            const hardcodedDeals = [
+                {
+                    _id: 'deal-1',
+                    title: 'Bridal Package',
+                    discount_label: 'Flat 20% OFF',
+                    price: 25000,
+                    old_price: 32000,
+                    description: 'HD Bridal Makeup, Advanced Hair Styling, Premium Mehendi',
+                    image: '/images/bride.webp'
+                },
+                {
+                    _id: 'deal-2',
+                    title: 'Party Makeover',
+                    discount_label: 'Save Rs. 2000',
+                    price: 8000,
+                    old_price: 10000,
+                    description: 'Flawless Base, Soft Glam Eyes, Blowdry & Setting',
+                    image: '/images/makeup.jpeg'
+                },
+                {
+                    _id: 'deal-3',
+                    title: 'Skin Rejuvenation',
+                    discount_label: 'Best Value',
+                    price: 4500,
+                    old_price: 5500,
+                    description: 'Deep Cleansing Facial, Manicure, Pedicure',
+                    image: '/images/hydrafacial.jpg'
+                }
+            ];
+            
+            // Filter out broken API entries (e.g. ones with no price value to prevent NaN)
+            const validData = data.filter(offer => offer.price || offer.discounted_price || offer.new_price || offer.original_price);
+            
+            // If the API only has 1 or 2 valid deals, add the hardcoded ones to fill the grid up to at least 3
+            if (validData.length < 3) {
+                const combined = [...validData, ...hardcodedDeals.slice(0, Math.max(0, 3 - validData.length))];
+                setOffers(combined);
+            } else {
+                setOffers(validData);
+            }
         } catch (err) {
             console.error('Failed to load offers:', err);
             setError('Unable to load exclusive offers at the moment.');
@@ -25,7 +66,7 @@ const Deals = () => {
         }
     }
 
-    const fallbackImages = ['/images/bride.webp', '/images/makeup.jpeg', '/images/haircut.jpg'];
+    const fallbackImages = ['/images/waxing.png', '/images/massage-hero.jpeg', '/images/haircut.jpg'];
 
     return (
         <>

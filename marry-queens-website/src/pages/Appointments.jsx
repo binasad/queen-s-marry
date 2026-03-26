@@ -213,76 +213,34 @@ const Appointments = () => {
                         <div className="col-lg-8">
                             <div className="card shadow-lg border-0 rounded-4">
                                 <div className="card-body p-5">
-                                    <h3 className="fw-bold mb-4 text-center text-gradient">Your Details</h3>
-
-                                    {status.message && (
-                                        <div className={`alert ${status.type === 'error' ? 'alert-danger' : status.type === 'success' ? 'alert-success' : 'alert-info'} mb-4`} role="alert">
-                                            {status.type === 'loading' ? (
-                                                <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> {status.message}</>
-                                            ) : status.message}
+                                    <div className="text-center py-4">
+                                        <div className="mb-4">
+                                            <i className="bi bi-phone text-gradient display-1"></i>
                                         </div>
-                                    )}
-
-                                    <form id="bookingForm" onSubmit={handleSubmit}>
-                                        <div className="row g-3">
-                                            <div className="col-md-6">
-                                                <label htmlFor="name" className="form-label fw-bold">Full Name <span className="text-danger">*</span></label>
-                                                <input type="text" className="form-control px-3 py-2" id="name" value={formData.name} onChange={handleChange} required placeholder="Jane Doe" />
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label htmlFor="email" className="form-label fw-bold">Email Address</label>
-                                                <input type="email" className="form-control px-3 py-2" id="email" value={formData.email} onChange={handleChange} placeholder="jane@example.com" />
-                                            </div>
-
-                                            <div className="col-md-12">
-                                                <label htmlFor="phone" className="form-label fw-bold">Phone Number <span className="text-danger">*</span></label>
-                                                <input type="tel" className="form-control px-3 py-2" id="phone" value={formData.phone} onChange={handleChange} required placeholder="03001234567" />
-                                            </div>
-
-                                            <div className="col-md-6">
-                                                <label htmlFor="category" className="form-label fw-bold">Selection Type <span className="text-danger">*</span></label>
-                                                <select className="form-select px-3 py-2" id="category" value={formData.category} onChange={handleChange} required>
-                                                    <option value="" disabled>Choose type...</option>
-                                                    <option value="service">Individual Service</option>
-                                                    <option value="course">Training Course</option>
-                                                    <option value="deal">Special Deal/Offer</option>
-                                                </select>
-                                            </div>
-
-                                            <div className="col-md-6">
-                                                <label htmlFor="specificItem" className="form-label fw-bold">Specific Item <span className="text-danger">*</span></label>
-                                                <select className="form-select px-3 py-2" id="specificItem" value={formData.specificItem} onChange={handleChange} required disabled={!formData.category || dataLoading}>
-                                                    <option value="" disabled>
-                                                        {dataLoading ? 'Loading...' : 'Select an option...'}
-                                                    </option>
-                                                    {dropdownItems.map(item => (
-                                                        <option key={item.value} value={item.value}>{item.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
-                                            <div className="col-md-6">
-                                                <label htmlFor="date" className="form-label fw-bold">Date <span className="text-danger">*</span></label>
-                                                <input type="date" className="form-control px-3 py-2" id="date" value={formData.date} onChange={handleChange} min={minDate} required />
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label htmlFor="time" className="form-label fw-bold">Time (9 AM - 9 PM) <span className="text-danger">*</span></label>
-                                                <input type="time" className="form-control px-3 py-2" id="time" value={formData.time} onChange={handleChange} min="09:00" max="21:00" required />
-                                            </div>
-
-                                            <div className="col-12 mt-4">
-                                                <label htmlFor="notes" className="form-label fw-bold">Special Requests (Optional)</label>
-                                                <textarea className="form-control px-3 py-2" id="notes" rows="3" value={formData.notes} onChange={handleChange} placeholder="Any specific requirements or questions?"></textarea>
-                                            </div>
-
-                                            <div className="col-12 mt-4 text-center">
-                                                <button type="submit" className="btn btn-gradient btn-lg px-5 rounded-pill w-100 fw-bold" disabled={status.type === 'loading'}>
-                                                    Submit Booking Request
-                                                </button>
-                                                <p className="text-muted mt-3 small"><i className="bi bi-info-circle me-1"></i> You will receive a confirmation shortly after booking.</p>
-                                            </div>
+                                        <h2 className="fw-bold mb-3">Bookings Are Now on Our App!</h2>
+                                        <p className="lead text-muted mb-5">
+                                            For a faster, smoother, and more personalized booking experience, please download the official Queen's Marry Beauty Salon app.
+                                        </p>
+                                        <div className="d-flex justify-content-center gap-3 flex-wrap">
+                                            <a href="#" className="btn btn-dark btn-lg px-4 py-3 rounded-pill d-flex align-items-center">
+                                                <i className="bi bi-apple fs-4 me-2"></i>
+                                                <div className="text-start" style={{ lineHeight: '1.2' }}>
+                                                    <small className="d-block" style={{ fontSize: '10px' }}>Download on the</small>
+                                                    <strong className="fs-6">App Store</strong>
+                                                </div>
+                                            </a>
+                                            <a href="#" className="btn btn-dark btn-lg px-4 py-3 rounded-pill d-flex align-items-center">
+                                                <i className="bi bi-google-play fs-4 me-2"></i>
+                                                <div className="text-start" style={{ lineHeight: '1.2' }}>
+                                                    <small className="d-block" style={{ fontSize: '10px' }}>GET IT ON</small>
+                                                    <strong className="fs-6">Google Play</strong>
+                                                </div>
+                                            </a>
                                         </div>
-                                    </form>
+                                        <p className="mt-5 text-muted small">
+                                            Questions? Call us at <strong>+92-308-5494369</strong>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
