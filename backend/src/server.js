@@ -14,6 +14,7 @@ const server = http.createServer(app);
 
 const socketAllowedOrigins = [
   env.adminWebUrl,
+  'https://queen-s-marry.vercel.app',
   'https://queen-s-marry-saadbinasaddeveloper.vercel.app',
 ].filter(Boolean);
 
@@ -23,7 +24,7 @@ const io = new Server(server, {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
 
-      if (env.isDevelopment && (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1'))) {
+      if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
         return callback(null, true);
       }
 
@@ -31,7 +32,7 @@ const io = new Server(server, {
         return callback(null, true);
       }
 
-      console.log('❌ Blocking Socket.IO origiin:', origin);
+      console.log('❌ Blocking Socket.IO origin:', origin);
       return callback(new Error('Not allowed by Socket.IO CORS'));
     },
     methods: ['GET', 'POST'],
