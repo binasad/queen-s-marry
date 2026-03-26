@@ -53,8 +53,7 @@ app.use(helmet({
 const allowedOrigins = [
   env.frontendUrl,
   env.adminWebUrl,
-  'https://admin-web-navy-three.vercel.app',
-  'https://aztrosyssalonappapi.ddns.net',
+  env.backendUrl,
   'http://localhost:5173', // React Vite default port
 ].filter(Boolean);
 
