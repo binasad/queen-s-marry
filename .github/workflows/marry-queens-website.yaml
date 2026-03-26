@@ -13,10 +13,25 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: marry-queens-website/package-lock.json
+
+      - name: Create .env with backend URL
+        run: echo "VITE_API_BASE_URL=${{ secrets.BACKEND_URL }}" > marry-queens-website/.env
+
+      - name: Install dependencies
+        run: cd marry-queens-website && npm ci
+
+      - name: Build
+        run: cd marry-queens-website && npm run build
+
       - name: Install Vercel CLI
         run: npm install --global vercel
 
-      # Deploy static site (no build step)
       - name: Deploy to Vercel
         run: |
           cd marry-queens-website

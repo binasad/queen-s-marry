@@ -1,185 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Merry Queens Salon | Beauty & Wellness</title>
-  <meta name="description" content="Merry Queens Salon – premium hair, makeup, bridal, spa & beauty services in Islamabad. Book appointments online.">
-  <meta name="keywords" content="salon, beauty, makeup, bridal, spa, Islamabad, Merry Queens">
-  <link rel="icon" type="image/png" href="images/logo.png">
-  <!-- Open Graph -->
-  <meta property="og:title" content="Merry Queens Salon | Beauty & Wellness">
-  <meta property="og:description" content="Premium hair, makeup, bridal, spa & beauty services in Islamabad. Book appointments online.">
-  <meta property="og:type" content="website">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"LocalBusiness","name":"Merry Queens Salon","description":"Premium hair, makeup, bridal, spa & beauty services in Islamabad","address":{"@type":"PostalAddress","streetAddress":"I-8 Markaz","addressLocality":"Islamabad"}}
-  </script>
-</head>
-<body>
-
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark">
-  <div class="container">
-    <a class="navbar-brand" href="index.html">
-      <img src="images/logo.png" alt="Logo">
-      <span class="brand-text ms-2">Merry Queens Salon</span>
-
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
-         <li class="nav-item"><a class="nav-link" href="about.html">About Us</a></li>
-         <li class="nav-item"><a class="nav-link " href="courses.html">Courses </a></li>
-        <li class="nav-item"><a class="nav-link" href="services.html">Services </a></li> 
-        <li class="nav-item"><a class="nav-link " href="deals.html">Deals/Offers </a></li>
-        <li class="nav-item"><a class="nav-link" href="appointments.html">Book Appointment</a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
-<!-- Hero Section Slider -->
-<section class="hero-section">
-  <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="3000">
-    <div class="carousel-inner">
-      <!-- Slide 1 -->
-      <div class="carousel-item active">
-        <img src="images/haircut.jpg" class="d-block w-100" alt="Hero Image 1" style="height: 100vh; object-fit: cover;">
-      <div class="carousel-caption d-flex flex-column justify-content-center h-100">
-          <h1 class="display-1 fw-bold text-white">INCREASE <br> BEAUTY</h1>
-        </div>
-      </div>
-      <!-- Slide 2 -->
-      <div class="carousel-item">
-       
-        <img src="images/waxing.png" class="d-block w-100" alt="Hero Image 2" style="height: 100vh; object-fit: cover;">
-      <div class="carousel-caption d-flex flex-column justify-content-center h-100">
-          <h1 class="display-1 fw-bold text-white">FEEL<br>CONFIDENT</h1>
-        </div>
-      </div>
-      <!-- Slide 3 -->
-      <div class="carousel-item">
-        <img src="images/hairironin.png" class="d-block w-100" alt="Hero Image 3" style="height: 100vh; object-fit: cover;">
-        <div class="carousel-caption d-flex flex-column justify-content-center h-100">
-          <h1 class="display-1 fw-bold text-white">SHINE<br> EVERYDAY</h1>
-        </div>      
-      </div>
-      <!-- Slide 4 -->
-      <div class="carousel-item">
-        <img src="images/hydrafacial.jpg" class="d-block w-100" alt="Hero Image 4" style="height: 100vh; object-fit: cover;">
-      <div class="carousel-caption d-flex flex-column justify-content-center h-100">
-          <h1 class="display-1 fw-bold text-white">REFRESH<br>YOUR SKIN</h1>
-        </div>
-      </div>
-      <!-- Slide 5 -->
-      <div class="carousel-item">
-        <img src="images/makeup.jpeg" class="d-block w-100" alt="Hero Image 5" style="height: 100vh; object-fit: cover;">
-          <div class="carousel-caption d-flex flex-column justify-content-center h-100">
-          <h1 class="display-1 fw-bold text-white">LOOK  <br> GLAMOROUS</h1>
-        </div>
-      </div>
-    </div>
-
-    <!-- Optional: Carousel controls -->
-    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-      <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    </button>
-  </div>
-</section>
-<!-- about section-->
- <section class="about-section home-about py-5">
-  <div class="container">
-    <div class="row align-items-center">
-      <!-- Image Left -->
-      <div class="col-md-6 mb-4 mb-md-0">
-        <img src="images/salon-interior.jpg" alt="Salon Interior" class="img-fluid rounded shadow">
-      </div>
-      <!-- Text Right -->
-      <div class="col-md-6">
-        <h2 class="mb-4">Welcome to Merry Queens Salon</h2>
-         <p class="text-xl">Where beauty meets perfection</p>
-        <p class="mb-4">
-          At <strong>Merry Queens Salon</strong>, we believe beauty is more than just appearance it’s confidence,
-           empowerment, and self-care. Our professional stylists are dedicated to providing 
-           a premium experience tailored to your unique style and personality. </p>
-        <p>
-          From stunning hair transformations to relaxing beauty treatments, 
-          we bring elegance and sophistication to every service.
-           Step into our world of beauty and let us pamper you like a queen. </p>
-        <a href="appointments.html" class="btn btn-custom mt-3">Book Your Appointment</a>
-      </div>
-    </div>
-  </div>
-</section>
-<!-- Signature Services Section -->
-<section class="services-section home-services py-5">
-  <div class="container">
-    <div class="row align-items-center">
-      <!-- Text Left -->
-      <div class="col-md-6 text-white">
-        <h2 class="mb-4 text-dark">Signature Services</h2>
-        <p class="mb-4">
-          Discover our most loved services crafted to bring out your inner queen. We use the finest products and techniques to ensure you leave our salon glowing with confidence.
-        </p>
-        <ul class="list-unstyled">
-          <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i><strong>Luxury Hair Styling</strong> – Perfect cuts, colors, and treatments.</li>
-          <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i><strong>Bridal Makeover</strong> – Make your big day unforgettable.</li>
-          <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i><strong>Spa & Relaxation</strong> – Rejuvenate with soothing treatments.</li>
-          
-        </ul>
-        <a href="services.html" class="btn btn-light mt-3">View All Services</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Footer Section -->
-  <footer>
-    <div class="container">
-      <div class="row">
-        <!-- Logo -->
-        <div class="col-md-4 footer-logo mb-4">
-          <img src="images/logo.png" alt="logo">
-          <h5>Queen's Marry</h5>
-        </div>
-
-        <!-- Address -->
-        <div class="col-md-4 mb-4">
-          <h5>Address</h5>
-          <p><i class="bi bi-geo-alt"></i> I-8 Markaz Islamabad</p>
-        </div>
-
-        <!-- Contact + Social -->
-        <div class="col-md-4 mb-4">
-          <h5>Contact</h5>
-           <p><i class="bi bi-telephone"></i> +92-308-5494369</p>
-          <p><i class="bi bi-envelope"></i> info@marryqueens.com</p>
-
-          <h5>Connect With Us</h5>
-          <div class="app-buttons">
-            <a href="https://play.google.com/store/apps/details?id=com.example.salon" target="_blank" rel="noopener" aria-label="Download on Google Play"><img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play"></a>
-            <a href="appointments.html" target="_blank" rel="noopener" aria-label="Book Appointment"><img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store" style="opacity:0.7;"></a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom -->
-      <div class="footer-bottom">
-        <p>Copyright ©2025 Queen's Marry. All Rights Reserved</p>
-      </div>
-    </div>
-  </footer>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/images/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Merry Queens Salon</title>
+    
+    <!-- Google Fonts: Poppins for headings, Inter for body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap and Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
 </html>
