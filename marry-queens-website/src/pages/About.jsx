@@ -142,7 +142,7 @@ const About = () => {
       >
         <div className="container py-3">
           <div className="text-center mb-5">
-            <h2 className="fw-bold mb-2" style={{ fontSize: '2.4rem' }}>Guest Reviews</h2>
+            <h2 className="fw-bold mb-2" style={{ fontSize: '2.4rem' }}>Our Customer Reviews</h2>
             <p className="text-muted">Real experiences from our valued clients</p>
           </div>
 
