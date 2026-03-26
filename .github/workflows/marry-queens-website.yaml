@@ -2,7 +2,7 @@ name: Merry Queens Website CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [website]
     paths:
       - 'marry-queens-website/**'
 
