@@ -3,132 +3,135 @@ import { Link } from 'react-router-dom';
 import { getOffers } from '../services/api';
 
 const Deals = () => {
-  const [offers, setOffers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+    const [offers, setOffers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadOffers();
-  }, []);
+    useEffect(() => {
+        loadOffers();
+    }, []);
 
-  async function loadOffers() {
-    try {
-      setLoading(true);
-      setError('');
-      const data = await getOffers();
-      setOffers(data);
-    } catch (err) {
-      console.error('Failed to load offers:', err);
-      setError('Unable to load offers. Please try again later.');
-    } finally {
-      setLoading(false);
+    async function loadOffers() {
+        try {
+            setLoading(true);
+            setError('');
+            const data = await getOffers();
+            setOffers(data);
+        } catch (err) {
+            console.error('Failed to load offers:', err);
+            setError('Unable to load exclusive offers at the moment.');
+        } finally {
+            setLoading(false);
+        }
     }
-  }
 
-  const fallbackImages = ['/images/bride.webp', '/images/makeup.jpeg', '/images/haircut.jpg'];
-  const colorSchemes = [
-    { header: 'bg-danger', badge: 'bg-white text-danger', btn: 'btn-danger', icon: 'text-success' },
-    { header: '', headerStyle: { background: 'linear-gradient(135deg, #FF758C 0%, #9D50BB 100%)' }, badge: 'bg-white text-primary', btn: 'btn-primary btn-gradient', icon: 'text-primary' },
-    { header: 'bg-dark', badge: 'bg-light text-dark', btn: 'btn-dark', icon: 'text-dark' },
-  ];
+    const fallbackImages = ['/images/bride.webp', '/images/makeup.jpeg', '/images/haircut.jpg'];
 
-  function getDaysLeft(endDate) {
-    if (!endDate) return null;
-    const end = new Date(endDate);
-    const now = new Date();
-    const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-    if (days < 0) return 'Expired';
-    if (days === 0) return 'Ends today!';
-    return `${days} days left`;
-  }
+    return (
+        <>
+            {/* ── Premium Hero ── */}
+            <section
+                className="text-white text-center d-flex align-items-center justify-content-center"
+                style={{
+                    backgroundImage: 'url("/images/makeup hero.jpg")',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    minHeight: '60vh',
+                    position: 'relative',
+                }}
+            >
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 60%, rgba(255,255,255,0.05) 100%)' }} />
+                <div className="container position-relative" style={{ zIndex: 1 }}>
+                    <span
+                        className="d-inline-block fw-bold text-uppercase mb-3"
+                        style={{ color: '#FF80A5', letterSpacing: '0.18em', fontSize: '0.85rem' }}
+                    >
+                        Exclusive Offers
+                    </span>
+                    <h1 className="display-3 fw-bold mb-3">Beauty Deals & Combos</h1>
+                    <p className="lead mb-0" style={{ maxWidth: '600px', margin: '0 auto', color: 'rgba(255,255,255,0.85)' }}>
+                        Hurry up! Grab our limited-time beauty combos at unbeatable prices.
+                    </p>
+                </div>
+            </section>
 
-  return (
-    <>
-      <section className="deals-hero py-5 text-white" style={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', position: 'relative', overflow: 'hidden' }}>
-        <div className="container text-center py-4 position-relative z-1">
-          <h1 className="display-4 fw-bold mb-3"><i className="bi bi-tags-fill me-3 text-warning"></i>Exclusive Offers</h1>
-          <p className="lead fw-light">Hurry up! Grab our limited-time beauty combos at unbeatable prices.</p>
-        </div>
-        <div className="position-absolute top-0 start-0 w-100 h-100" style={{ background: 'linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2))' }}></div>
-      </section>
+            {/* ── Deals List ── */}
+            <section className="deals-list py-5 bg-light">
+                <div className="container">
+                    {loading ? (
+                        <div className="text-center py-5">
+                            <div className="spinner-border text-primary" role="status"></div>
+                            <p className="mt-3 text-muted">Fetching latest deals...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="text-center py-5">
+                            <p className="text-muted">{error}</p>
+                            <button className="btn btn-gradient mt-2" onClick={loadOffers}>Retry</button>
+                        </div>
+                    ) : offers.length === 0 ? (
+                        <div className="text-center py-5">
+                            <p className="text-muted">No active deals right now. Check back soon!</p>
+                        </div>
+                    ) : (
+                        <div className="row justify-content-center g-4">
+                            {offers.map((offer, index) => {
+                                const id = offer.id || offer._id;
+                                const title = offer.title || 'Special Deal';
+                                const discountLabel = offer.discount_label || offer.discount || 'Special Offer';
+                                const oldPrice = offer.original_price || offer.old_price;
+                                const newPrice = offer.discounted_price || offer.price || offer.new_price;
+                                const descriptionParts = offer.description ? offer.description.split(',').map(s => s.trim()) : [];
+                                const image = offer.image_url || offer.image || fallbackImages[index % fallbackImages.length];
 
-      <section className="deals-list py-5 bg-light">
-        <div className="container">
-          {loading ? (
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status"></div>
-              <p className="mt-3 text-muted">Loading offers...</p>
-            </div>
-          ) : error ? (
-            <div className="text-center py-5">
-              <p className="text-muted">{error}</p>
-              <button className="btn btn-gradient mt-2" onClick={loadOffers}>Retry</button>
-            </div>
-          ) : offers.length === 0 ? (
-            <div className="text-center py-5">
-              <p className="text-muted">No active offers at the moment. Check back soon!</p>
-            </div>
-          ) : (
-            <div className="row justify-content-center g-4">
-              {offers.map((offer, index) => {
-                const id = offer.id || offer._id;
-                const title = offer.title || 'Special Offer';
-                const image = offer.image_url || offer.image || fallbackImages[index % fallbackImages.length];
-                const scheme = colorSchemes[index % colorSchemes.length];
-                const daysLeft = getDaysLeft(offer.end_date);
-
-                let discountText = 'Special';
-                if (offer.discount_percentage) discountText = `Save ${offer.discount_percentage}%`;
-                else if (offer.discount_amount) discountText = `Save Rs. ${Number(offer.discount_amount).toLocaleString()}`;
-
-                // Build booking link
-                let bookingLink = `/appointments?type=deal&offerId=${id}&item=${encodeURIComponent(title)}`;
-                if (offer.service_id) bookingLink += `&serviceId=${offer.service_id}`;
-                if (offer.course_id) bookingLink += `&courseId=${offer.course_id}`;
-
-                return (
-                  <div key={id} className="col-lg-4 col-md-6">
-                    <div className="card h-100 deal-card shadow-lg border-0 rounded-4 overflow-hidden position-relative">
-                      <img
-                        src={image}
-                        className="card-img-top w-100"
-                        style={{ height: '220px', objectFit: 'cover' }}
-                        alt={title}
-                        onError={(e) => { e.target.src = fallbackImages[index % fallbackImages.length]; }}
-                      />
-                      <div
-                        className={`deal-header ${scheme.header} text-white text-center py-3`}
-                        style={scheme.headerStyle || {}}
-                      >
-                        <h4 className="mb-0 fw-bold">{title}</h4>
-                        <span className={`badge ${scheme.badge} mt-2 px-3 py-1 rounded-pill`}>{discountText}</span>
-                      </div>
-                      <div className="card-body p-4 text-center d-flex flex-column">
-                        {daysLeft && (
-                          <p className={`mb-3 fw-bold ${daysLeft === 'Expired' ? 'text-danger' : 'text-success'}`}>
-                            <i className="bi bi-clock me-1"></i>{daysLeft}
-                          </p>
-                        )}
-                        {offer.description && (
-                          <p className="text-muted mb-4">{offer.description}</p>
-                        )}
-                        <Link
-                          to={bookingLink}
-                          className={`btn ${scheme.btn} btn-lg rounded-pill w-100 mt-auto fw-bold shadow-sm grab-deal-btn`}
-                        >
-                          Grab Deal
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-    </>
-  );
+                                return (
+                                    <div key={id} className="col-lg-4 col-md-6">
+                                        <div className="card h-100 deal-card shadow-lg border-0 rounded-4 overflow-hidden position-relative">
+                                            <img
+                                                src={image}
+                                                className="card-img-top w-100"
+                                                style={{ height: '220px', objectFit: 'cover' }}
+                                                alt={title}
+                                                onError={(e) => { e.target.src = fallbackImages[index % fallbackImages.length]; }}
+                                            />
+                                            <div className="deal-header bg-danger text-white text-center py-3">
+                                                <h4 className="mb-0 fw-bold">{title}</h4>
+                                                <span className="badge bg-white text-danger mt-2 px-3 py-1 rounded-pill">{discountLabel}</span>
+                                            </div>
+                                            <div className="card-body p-4 text-center d-flex flex-column">
+                                                <h2 className="display-6 fw-bold text-dark mb-4">
+                                                    Rs. {Number(newPrice).toLocaleString()}
+                                                    {oldPrice && (
+                                                        <span className="text-decoration-line-through text-muted fs-5 ms-2">
+                                                            Rs. {Number(oldPrice).toLocaleString()}
+                                                        </span>
+                                                    )}
+                                                </h2>
+                                                {descriptionParts.length > 0 && (
+                                                    <ul className="list-unstyled text-start mb-4 text-muted mx-auto" style={{ maxWidth: '80%' }}>
+                                                        {descriptionParts.map((part, i) => (
+                                                            <li key={i} className="mb-2">
+                                                                <i className="bi bi-check2-circle text-success me-2"></i> {part}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                                <Link
+                                                    to={`/appointments?type=deal&dealId=${id}&item=${encodeURIComponent(title)}`}
+                                                    className="btn btn-danger btn-lg rounded-pill w-100 mt-auto fw-bold shadow-sm grab-deal-btn"
+                                                >
+                                                    Grab Deal
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </section>
+        </>
+    );
 };
 
 export default Deals;

@@ -55,10 +55,29 @@ const Services = () => {
   return (
     <>
       {/* Hero */}
-      <section className="hero-services text-center text-white py-5">
-        <div className="container my-5">
-          <h1 className="fw-bold display-4">Our Services</h1>
-          <p className="lead">Luxury treatments designed to bring out your inner queen.</p>
+      <section
+        className="text-white text-center d-flex align-items-center justify-content-center"
+        style={{
+          backgroundImage: 'url(/images/service-hero.png)',
+          backgroundColor: '#8f284d',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          minHeight: '60vh',
+          position: 'relative',
+        }}
+      >
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 60%, rgba(255,255,255,0.05) 100%)' }} />
+        <div className="container position-relative" style={{ zIndex: 1 }}>
+          <span
+            className="d-inline-block fw-bold text-uppercase mb-3"
+            style={{ color: '#FF80A5', letterSpacing: '0.18em', fontSize: '0.85rem' }}
+          >
+            Pamper Yourself
+          </span>
+          <h1 className="display-3 fw-bold mb-3">Our Services</h1>
+          <p className="lead mb-0" style={{ maxWidth: '600px', margin: '0 auto', color: 'rgba(255,255,255,0.85)' }}>
+            Luxury treatments designed to bring out your inner queen.
+          </p>
         </div>
       </section>
 

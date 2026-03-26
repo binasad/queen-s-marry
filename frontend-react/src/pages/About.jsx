@@ -1,35 +1,32 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
 
 const testimonials = [
   {
     img: '/images/background.png',
-    text: '"The salon experience was amazing. I left feeling refreshed and confident!"',
+    text: '"The attention to detail at Queen\'s Marry is unmatched. My bridal makeup was exactly what I dreamed of — sophisticated and radiant."',
     name: 'Sarah',
     role: 'Regular Client',
   },
   {
     img: '/images/farhana.jpg',
-    text: '"They really listen to what I want and always deliver perfectly!"',
+    text: '"They really listen to what I want and always deliver perfectly! The most relaxing experience I\'ve ever had."',
     name: 'Farhana',
     role: 'Bridal Client',
   },
   {
     img: '/images/shanzay.avif',
-    text: '"Best salon in town! Excellent service and welcoming atmosphere."',
+    text: '"Best salon in town! Their hair coloring experts are magical. Excellent service and welcoming atmosphere."',
     name: 'Shanzay',
     role: 'Loyal Client',
   },
 ];
 
 const About = () => {
-  const [current, setCurrent] = useState(0);
-
   return (
     <>
       {/* ── Hero Banner ── */}
       <section
-        className="about-hero text-white text-center d-flex align-items-center"
+        className="text-white text-center d-flex align-items-center justify-content-center"
         style={{
           backgroundImage: 'url(/images/about-salon.webp)',
           backgroundSize: 'cover',
@@ -38,165 +35,241 @@ const About = () => {
           position: 'relative',
         }}
       >
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)' }} />
-        <div className="container position-relative z-1">
+        {/* gradient fade bottom so it blends into the next white section */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 60%, rgba(255,255,255,0.05) 100%)' }} />
+        <div className="container position-relative" style={{ zIndex: 1 }}>
+          <span
+            className="d-inline-block fw-bold text-uppercase mb-3"
+            style={{ color: '#FF80A5', letterSpacing: '0.18em', fontSize: '0.85rem' }}
+          >
+            The Art of Transformation
+          </span>
           <h1 className="display-3 fw-bold mb-3">About Us</h1>
-          <p className="lead mb-0" style={{ maxWidth: '600px', margin: '0 auto' }}>
-            Passionate about beauty. Dedicated to you.
+          <p className="lead mb-0" style={{ maxWidth: '600px', margin: '0 auto', color: 'rgba(255,255,255,0.85)' }}>
+            Where royal treatment meets modern expertise in the heart of Islamabad.
           </p>
         </div>
       </section>
 
-      {/* ── About Content ── */}
-      <section className="about-salon py-5 py-lg-6 bg-white">
-        <div className="container">
-          <div className="row g-5 align-items-center">  {/* Changed to align-items-center for vertical centering if needed; or remove for top-align */}
+      {/* ── Story / About Section ── */}
+      <section className="py-5 py-lg-6 bg-white">
+        <div className="container py-3">
+          <div className="row g-5 align-items-center">
 
-            {/* Image Side – now controls its own height, no forced stretch */}
+            {/* Image with decorative block behind it */}
             <div className="col-lg-6 position-relative">
+              {/* Decorative pink block */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: -20,
+                  left: -20,
+                  width: 220,
+                  height: 220,
+                  background: '#ffd0e5',
+                  borderRadius: '1rem',
+                  zIndex: 0,
+                }}
+              />
               <img
                 src="/images/photoshot.jpg"
                 alt="Our Salon"
-                className="img-fluid rounded-4 shadow-lg w-100"
+                className="img-fluid rounded-4 shadow-lg w-100 position-relative"
                 style={{
                   objectFit: 'cover',
-                  aspectRatio: '4/5',           // ← optional: enforce portrait feel like many salon about images
-                  maxHeight: '580px'            // ← cap it so it doesn't get too tall on large screens
+                  aspectRatio: '4/5',
+                  maxHeight: '560px',
+                  zIndex: 1,
                 }}
               />
-
-              {/* Experience badge – bottom-left overlap, like the example */}
+              {/* Soft blur orb bottom-right */}
               <div
-                className="experience-badge position-absolute bottom-0 start-0 bg-white p-4 rounded-end shadow-lg text-center"
-                style={{ transform: 'translate(-15px, 30px)' }}  // adjust translate to taste
-              >
-                <h3 className="text-gradient fw-bold mb-1 display-5">10+</h3>
-                <p className="text-muted fw-semibold mb-0 small">Years Experience</p>
-              </div>
+                style={{
+                  position: 'absolute',
+                  bottom: -30,
+                  right: -30,
+                  width: 160,
+                  height: 160,
+                  background: 'rgba(196,113,237,0.18)',
+                  borderRadius: '50%',
+                  filter: 'blur(40px)',
+                  zIndex: 0,
+                  display: 'none',
+                }}
+                className="d-lg-block"
+              />
             </div>
 
-            {/* Text Side – starts from top, natural height, more space */}
-            <div className="col-lg-6 ps-lg-5 pe-lg-4">
-              <h6 className="text-uppercase text-gradient fw-bold mb-3">OUR STORY</h6>
-              <h2 className="display-5 fw-bold mb-4">
-                About Queen's Marry
+            {/* Text Side */}
+            <div className="col-lg-6">
+              <span
+                className="d-block fw-bold text-uppercase mb-3"
+                style={{ color: '#9f3458', letterSpacing: '0.2em', fontSize: '0.8rem' }}
+              >
+                Our Legacy
+              </span>
+              <h2 className="fw-bold mb-4" style={{ fontSize: '2.6rem', lineHeight: 1.15 }}>
+                About Our Salon
               </h2>
-              <p className="lead text-muted mb-4">
-                At <strong>Queen's Marry Beauty Salon</strong>, we believe beauty is more than looks — it's confidence.
-                Our expert stylists, warm ambiance, and top-quality products ensure every visit is a refreshing
-                experience. Whether it's a simple trim, a bold makeover, or a relaxing spa treatment, we're here
-                to make you shine.
+              <p className="text-muted mb-3" style={{ fontSize: '1.05rem', lineHeight: 1.8 }}>
+                Founded on the principle that every individual deserves a moment of pure royalty,{' '}
+                <strong>Queen's Marry Beauty Salon</strong> has become Islamabad's premier destination for
+                luxury grooming and bridal expertise.
               </p>
-              <ul className="list-unstyled mb-5">
-                <li className="mb-2">
-                  <i className="bi bi-check-circle-fill text-gradient" />
-                  Professional & Certified Stylists
-                </li>
-                <li className="mb-2">
-                  <i className="bi bi-check-circle-fill text-gradient" />
-                  Premium Quality Products Only
-                </li>
-                <li className="mb-2">
-                  <i className="bi bi-check-circle-fill text-gradient" />
-                  Relaxing & Luxurious Environment
-                </li>
-                <li className="mb-2">
-                  <i className="bi bi-check-circle-fill text-gradient" />
-                  10+ Years of Trusted Service
-                </li>
-              </ul>
-              <Link
-                to="/services"
-                className="btn btn-gradient btn-lg px-5 py-3 rounded-pill shadow"
+              <p className="text-muted mb-5" style={{ fontSize: '1.05rem', lineHeight: 1.8 }}>
+                Our mission is simple: to blend traditional hospitality with cutting-edge beauty techniques. From
+                high-fashion hair styling to meditative skincare rituals, we provide a sanctuary where your inner
+                radiance is brought to life by our master technicians.
+              </p>
+              <div className="d-flex flex-wrap gap-3">
+                <Link
+                  to="/services"
+                  className="btn btn-gradient btn-lg px-5 py-3 rounded-pill shadow d-flex align-items-center gap-2"
+                >
+                  Explore Our Services <i className="bi bi-arrow-right" />
+                </Link>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── Testimonials — 3-column cards ── */}
+      <section
+        className="py-5 py-lg-6"
+        style={{ background: '#fff4f6', borderRadius: '2.5rem 2.5rem 0 0' }}
+      >
+        <div className="container py-3">
+          <div className="text-center mb-5">
+            <h2 className="fw-bold mb-2" style={{ fontSize: '2.4rem' }}>Guest Reviews</h2>
+            <p className="text-muted">Real experiences from our valued clients</p>
+          </div>
+
+          <div className="row g-4 align-items-start">
+            {testimonials.map((t, i) => (
+              <div
+                key={i}
+                className="col-md-4"
+                style={{ marginTop: i === 1 ? '2rem' : 0 }}
               >
-                Explore Our Services <i className="bi bi-arrow-right ms-2" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-      {/* ── Testimonials ── */}
-      <section className="py-5" style={{ background: 'linear-gradient(135deg,#fff0f5,#f5f0ff)' }}>
-        <div className="container text-center py-3">
-          <h6 className="text-uppercase text-gradient fw-bold mb-2">Happy Clients</h6>
-          <h2 className="fw-bold mb-5">What Our Clients Say</h2>
-
-          {/* Single active testimonial card */}
-          <div className="row justify-content-center">
-            <div className="col-lg-7 col-md-10">
-              <div className="card border-0 shadow rounded-4 p-4 p-md-5">
-                <img
-                  src={testimonials[current].img}
-                  alt={testimonials[current].name}
+                <div
+                  className="h-100 p-4 rounded-4 d-flex flex-column justify-content-between"
                   style={{
-                    width: 90, height: 90, borderRadius: '50%',
-                    objectFit: 'cover', border: '4px solid #FF758C',
-                    margin: '0 auto 1rem',
-                    display: 'block',
+                    background: '#fff',
+                    boxShadow: '0 24px 48px -12px rgba(73,33,55,0.08)',
                   }}
-                />
-                <div className="mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <i key={i} className="bi bi-star-fill text-warning me-1" />
-                  ))}
+                >
+                  {/* Stars */}
+                  <div>
+                    <div className="mb-3">
+                      {[...Array(5)].map((_, j) => (
+                        <i key={j} className="bi bi-star-fill me-1" style={{ color: '#9f3458' }} />
+                      ))}
+                    </div>
+                    {/* Quote */}
+                    <p className="fst-italic text-muted mb-0" style={{ lineHeight: 1.75, fontSize: '0.97rem' }}>
+                      {t.text}
+                    </p>
+                  </div>
+
+                  {/* Avatar + name */}
+                  <div className="d-flex align-items-center gap-3 mt-4 pt-3" style={{ borderTop: '1px solid #f5e0eb' }}>
+                    <img
+                      src={t.img}
+                      alt={t.name}
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '2px solid #FF80A5',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div>
+                      <p className="fw-bold mb-0" style={{ color: '#1a1a1a' }}>{t.name}</p>
+                      <small className="text-muted">{t.role}</small>
+                    </div>
+                  </div>
                 </div>
-                <p className="fs-5 fst-italic text-muted mb-4">{testimonials[current].text}</p>
-                <h5 className="fw-bold text-gradient mb-0">{testimonials[current].name}</h5>
-                <small className="text-muted">{testimonials[current].role}</small>
               </div>
-
-              {/* Prev / Next + Dot nav */}
-              <div className="d-flex align-items-center justify-content-center gap-3 mt-4">
-                <button
-                  className="btn btn-outline-secondary rounded-circle p-0 d-flex align-items-center justify-content-center"
-                  style={{ width: 40, height: 40 }}
-                  onClick={() => setCurrent((current - 1 + testimonials.length) % testimonials.length)}
-                  aria-label="Previous"
-                >
-                  <i className="bi bi-chevron-left" />
-                </button>
-
-                {testimonials.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrent(i)}
-                    style={{
-                      width: 12, height: 12, borderRadius: '50%',
-                      border: 'none', padding: 0, cursor: 'pointer',
-                      background: i === current ? '#FF758C' : '#ddd',
-                      transition: 'background 0.3s',
-                    }}
-                    aria-label={`Go to testimonial ${i + 1}`}
-                  />
-                ))}
-
-                <button
-                  className="btn btn-outline-secondary rounded-circle p-0 d-flex align-items-center justify-content-center"
-                  style={{ width: 40, height: 40 }}
-                  onClick={() => setCurrent((current + 1) % testimonials.length)}
-                  aria-label="Next"
-                >
-                  <i className="bi bi-chevron-right" />
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Map ── */}
-      <section className="map-section py-5 bg-white">
-        <div className="container text-center">
-          <h2 className="mb-4 fw-bold">Find Us Here</h2>
-          <div className="ratio ratio-21x9 shadow-sm" style={{ borderRadius: '15px', overflow: 'hidden' }}>
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3321.308894892646!2d73.06990461520111!3d33.64936308071853!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38df95217469aaff%3A0xe5a20af9ceb2e6aa!2sI-8%20Markaz%20Islamabad%2C%20Islamabad%20Capital%20Territory%2C%20Pakistan!5e0!3m2!1sen!2s!4v1690000000000!5m2!1sen!2s"
-              style={{ border: 0 }}
-              allowFullScreen=""
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Merry Queens Salon Location"
-            />
+      {/* ── Find Us — split card with working map ── */}
+      <section className="py-5 py-lg-6 bg-white">
+        <div className="container">
+          <div
+            className="overflow-hidden rounded-4"
+            style={{
+              background: '#ffd0e5',
+              boxShadow: '0 24px 48px -12px rgba(73,33,55,0.08)',
+            }}
+          >
+            <div className="row g-0" style={{ minHeight: 420 }}>
+
+              {/* Left — info */}
+              <div className="col-lg-5 p-5 d-flex flex-column justify-content-center">
+                <h2 className="fw-bold mb-2" style={{ fontSize: '2rem' }}>Find Us</h2>
+                <p className="text-muted mb-4">Visit our sanctuary in the heart of the capital.</p>
+
+                <div className="d-flex align-items-start gap-3 mb-4">
+                  <div
+                    className="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                    style={{ width: 48, height: 48, background: 'rgba(159,52,88,0.1)' }}
+                  >
+                    <i className="bi bi-geo-alt-fill" style={{ color: '#9f3458', fontSize: '1.2rem' }} />
+                  </div>
+                  <div>
+                    <p className="fw-bold mb-0" style={{ color: '#1a1a1a' }}>Address</p>
+                    <p className="text-muted mb-0">Plot #14, I-8 Markaz, Islamabad, Pakistan</p>
+                  </div>
+                </div>
+
+                <div className="d-flex align-items-start gap-3 mb-4">
+                  <div
+                    className="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                    style={{ width: 48, height: 48, background: 'rgba(159,52,88,0.1)' }}
+                  >
+                    <i className="bi bi-telephone-fill" style={{ color: '#9f3458', fontSize: '1.1rem' }} />
+                  </div>
+                  <div>
+                    <p className="fw-bold mb-0" style={{ color: '#1a1a1a' }}>Contact</p>
+                    <p className="text-muted mb-0">+92-308-5494369</p>
+                    <p className="text-muted mb-0">info@marryqueens.com</p>
+                  </div>
+                </div>
+
+                <div className="d-flex align-items-start gap-3">
+                  <div
+                    className="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                    style={{ width: 48, height: 48, background: 'rgba(159,52,88,0.1)' }}
+                  >
+                    <i className="bi bi-clock-fill" style={{ color: '#9f3458', fontSize: '1.1rem' }} />
+                  </div>
+                  <div>
+                    <p className="fw-bold mb-0" style={{ color: '#1a1a1a' }}>Working Hours</p>
+                    <p className="text-muted mb-0">Mon – Sun: 10:00 AM – 09:00 PM</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right — Google Maps iframe (working, not static) */}
+              <div className="col-lg-7" style={{ minHeight: 380 }}>
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3321.308894892646!2d73.06990461520111!3d33.64936308071853!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38df95217469aaff%3A0xe5a20af9ceb2e6aa!2sI-8%20Markaz%20Islamabad%2C%20Islamabad%20Capital%20Territory%2C%20Pakistan!5e0!3m2!1sen!2s!4v1690000000000!5m2!1sen!2s"
+                  style={{ border: 0, width: '100%', height: '100%', minHeight: 380 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Queen's Marry Salon Location"
+                />
+              </div>
+
+            </div>
           </div>
         </div>
       </section>
