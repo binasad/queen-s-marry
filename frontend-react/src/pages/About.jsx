@@ -3,19 +3,19 @@ import { useState } from 'react';
 
 const testimonials = [
   {
-    img:  '/images/background.png',
+    img: '/images/background.png',
     text: '"The salon experience was amazing. I left feeling refreshed and confident!"',
     name: 'Sarah',
     role: 'Regular Client',
   },
   {
-    img:  '/images/farhana.jpg',
+    img: '/images/farhana.jpg',
     text: '"They really listen to what I want and always deliver perfectly!"',
     name: 'Farhana',
     role: 'Bridal Client',
   },
   {
-    img:  '/images/shanzay.avif',
+    img: '/images/shanzay.avif',
     text: '"Best salon in town! Excellent service and welcoming atmosphere."',
     name: 'Shanzay',
     role: 'Loyal Client',
@@ -48,49 +48,73 @@ const About = () => {
       </section>
 
       {/* ── About Content ── */}
-      <section className="about-salon py-5 bg-white">
+      <section className="about-salon py-5 py-lg-6 bg-white">
         <div className="container">
-          <div className="row align-items-center g-5 py-4">
-            {/* Image Side */}
-            <div className="col-lg-6">
-              <div className="position-relative">
-                <img
-                  src="/images/photoshot.jpg"
-                  alt="Our Salon"
-                  className="img-fluid rounded-4 shadow-lg w-100"
-                  style={{ objectFit: 'cover', height: '550px' }}
-                />
-                <div className="experience-badge position-absolute bottom-0 end-0 bg-white p-3 p-md-4 rounded-start shadow-lg" style={{ transform: 'translate(15px, -20px)' }}>
-                  <h3 className="text-gradient fw-bold mb-0 display-6">10+</h3>
-                  <p className="text-muted fw-semibold mb-0">Years Experience</p>
-                </div>
+          <div className="row g-5 align-items-center">  {/* Changed to align-items-center for vertical centering if needed; or remove for top-align */}
+
+            {/* Image Side – now controls its own height, no forced stretch */}
+            <div className="col-lg-6 position-relative">
+              <img
+                src="/images/photoshot.jpg"
+                alt="Our Salon"
+                className="img-fluid rounded-4 shadow-lg w-100"
+                style={{
+                  objectFit: 'cover',
+                  aspectRatio: '4/5',           // ← optional: enforce portrait feel like many salon about images
+                  maxHeight: '580px'            // ← cap it so it doesn't get too tall on large screens
+                }}
+              />
+
+              {/* Experience badge – bottom-left overlap, like the example */}
+              <div
+                className="experience-badge position-absolute bottom-0 start-0 bg-white p-4 rounded-end shadow-lg text-center"
+                style={{ transform: 'translate(-15px, 30px)' }}  // adjust translate to taste
+              >
+                <h3 className="text-gradient fw-bold mb-1 display-5">10+</h3>
+                <p className="text-muted fw-semibold mb-0 small">Years Experience</p>
               </div>
             </div>
 
-            {/* Content Side */}
-            <div className="col-lg-6 ps-lg-5">
-              <h6 className="text-uppercase text-gradient fw-bold mb-2">Our Story</h6>
-              <h2 className="display-5 fw-bold mb-4">About Queen's Marry Beauty Salon</h2>
-              <p className="lead text-muted mb-4 pe-lg-4">
-                At <strong>Queen's Marry Beauty Salon</strong>, we believe beauty is more than looks —
-                it's confidence. Our expert stylists, warm ambiance, and top-quality products
-                ensure every visit is a refreshing experience. Whether it's a simple trim,
-                a bold makeover, or a relaxing spa treatment, we're here to make you shine.
+            {/* Text Side – starts from top, natural height, more space */}
+            <div className="col-lg-6 ps-lg-5 pe-lg-4">
+              <h6 className="text-uppercase text-gradient fw-bold mb-3">OUR STORY</h6>
+              <h2 className="display-5 fw-bold mb-4">
+                About Queen's Marry
+              </h2>
+              <p className="lead text-muted mb-4">
+                At <strong>Queen's Marry Beauty Salon</strong>, we believe beauty is more than looks — it's confidence.
+                Our expert stylists, warm ambiance, and top-quality products ensure every visit is a refreshing
+                experience. Whether it's a simple trim, a bold makeover, or a relaxing spa treatment, we're here
+                to make you shine.
               </p>
               <ul className="list-unstyled mb-5">
-                <li className="mb-3 fs-5"><i className="bi bi-check2-circle text-gradient me-3 fs-4 align-middle" /> Professional &amp; Certified Stylists</li>
-                <li className="mb-3 fs-5"><i className="bi bi-check2-circle text-gradient me-3 fs-4 align-middle" /> Premium Quality Products Only</li>
-                <li className="mb-3 fs-5"><i className="bi bi-check2-circle text-gradient me-3 fs-4 align-middle" /> Relaxing &amp; Luxurious Environment</li>
-                <li className="mb-3 fs-5"><i className="bi bi-check2-circle text-gradient me-3 fs-4 align-middle" /> 10+ Years of Trusted Service</li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle-fill text-gradient" />
+                  Professional & Certified Stylists
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle-fill text-gradient" />
+                  Premium Quality Products Only
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle-fill text-gradient" />
+                  Relaxing & Luxurious Environment
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle-fill text-gradient" />
+                  10+ Years of Trusted Service
+                </li>
               </ul>
-              <Link to="/services" className="btn btn-gradient btn-lg px-5 py-3 rounded-pill shadow-sm">
+              <Link
+                to="/services"
+                className="btn btn-gradient btn-lg px-5 py-3 rounded-pill shadow"
+              >
                 Explore Our Services <i className="bi bi-arrow-right ms-2" />
               </Link>
             </div>
           </div>
         </div>
       </section>
-
       {/* ── Testimonials ── */}
       <section className="py-5" style={{ background: 'linear-gradient(135deg,#fff0f5,#f5f0ff)' }}>
         <div className="container text-center py-3">
