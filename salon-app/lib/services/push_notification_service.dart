@@ -18,7 +18,7 @@ class PushNotificationService {
       FlutterLocalNotificationsPlugin();
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'default',
-    "Queen's Marry Notifications",
+    "Queens Saloon Notifications",
     description: 'Appointment reminders and updates',
     importance: Importance.max,
     playSound: true,
@@ -85,7 +85,7 @@ class PushNotificationService {
       if (message.notification != null) {
         debugPrint('PushNotificationService: Foreground message: ${message.notification!.title}');
         NotificationManager.instance.addPushNotification(
-          title: message.notification!.title ?? 'Merry Queen',
+          title: message.notification!.title ?? 'Queens Saloon',
           body: message.notification!.body ?? '',
         );
         _showForegroundNotification(message);
@@ -96,7 +96,7 @@ class PushNotificationService {
     final initial = await _fcm.getInitialMessage();
     if (initial?.notification != null) {
       NotificationManager.instance.addPushNotification(
-        title: initial!.notification!.title ?? 'Merry Queen',
+        title: initial!.notification!.title ?? 'Queens Saloon',
         body: initial.notification!.body ?? '',
       );
       _handleNotificationTap(initial);
@@ -104,7 +104,7 @@ class PushNotificationService {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       if (message.notification != null) {
         NotificationManager.instance.addPushNotification(
-          title: message.notification!.title ?? 'Merry Queen',
+          title: message.notification!.title ?? 'Queens Saloon',
           body: message.notification!.body ?? '',
         );
         _handleNotificationTap(message);
@@ -158,7 +158,7 @@ class PushNotificationService {
 
     await _localNotifications.show(
       message.hashCode,
-      message.notification?.title ?? "Queen's Marry",
+      message.notification?.title ?? "Queens Saloon",
       message.notification?.body ?? '',
       details,
     );

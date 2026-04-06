@@ -64,12 +64,20 @@ resource "aws_instance" "my_instance" {
   key_name               = aws_key_pair.my_key.key_name
   vpc_security_group_ids = [aws_security_group.my_security_group.id]
 
-  # Bootstrap: installs Node 20, PM2, Nginx reverse-proxy, Docker, Certbot
+  # Bootstrap: installs Node 20, PM2, Nginx reverse-proxy, Docker, Certbot, CloudWatch
   user_data = file("${path.module}/user-data.sh")
 
   root_block_device {
     volume_size = 15
     volume_type = "gp3"
+  }
+
+  # Ignore user_data changes on existing instance.
+  # user_data only runs on first boot of a NEW server.
+  # To apply user_data changes: manually run the commands on the server,
+  # or intentionally recreate the instance by removing this block.
+  lifecycle {
+    ignore_changes = [user_data, ami]
   }
 
   tags = {

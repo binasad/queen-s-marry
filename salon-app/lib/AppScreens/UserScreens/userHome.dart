@@ -444,7 +444,7 @@ class _UserHomeState extends ConsumerState<UserHome>
                       ),
                     ),
                     const Text(
-                      "Welcome to Queen's Marry",
+                      "Welcome to Queens Saloon",
                       style: TextStyle(fontSize: 13, color: Colors.grey),
                     ),
                   ],

@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import io from 'socket.io-client';
 import { fetchDashboardStats, fetchRecentAppointments, fetchRecentPayments } from '@/lib/api/dashboard';
 import PaymentsTable from './PaymentsTable';
 import AuthGuard from '@/components/AuthGuard';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { useAuthStore } from '@/store/authStore';
+import wsService from '@/services/websocket';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Link from 'next/link';
 
@@ -62,18 +62,20 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const signal = controller.signal;
-    loadData(signal);
+    loadData(controller.signal);
 
-    const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000');
-    socket.on('appointments-updated', () => loadData(signal));
-    socket.on('payments-updated', () => loadData(signal));
-    socket.on('offer-created', () => loadData(signal));
-    socket.on('offer-updated', () => loadData(signal));
+    // Use the global wsService — avoids creating a duplicate socket connection
+    wsService.onAppointmentsUpdated = () => loadData();
+    wsService.onPaymentsUpdated = () => loadData();
+    wsService.onOfferCreated = () => loadData();
+    wsService.onOfferUpdated = () => loadData();
 
     return () => {
       controller.abort();
-      socket.disconnect();
+      wsService.onAppointmentsUpdated = undefined;
+      wsService.onPaymentsUpdated = undefined;
+      wsService.onOfferCreated = undefined;
+      wsService.onOfferUpdated = undefined;
     };
   }, [loadData]);
 

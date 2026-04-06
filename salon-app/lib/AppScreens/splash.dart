@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:ui'; // Added for ImageFilter if you uncomment the blur
+// Added for ImageFilter if you uncomment the blur
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../utils/route_animations.dart';
@@ -72,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  "Queen's Marry", // Fixed: Used double quotes to allow the apostrophe
+                  "Queens Saloon", // Fixed: Used double quotes to allow the apostrophe
                   style: TextStyle(
                     fontSize: 32,
                     color: Colors.black,

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merry Queen — Salon Booking System</title>
+  <meta name="description" content="Full-stack salon management platform: Flutter app, Admin dashboard, REST API, CI/CD to Google Play">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      color: #24292f;
+      background: linear-gradient(135deg, #fafbfc 0%, #f0f4f8 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .subtitle { color: #57606a; margin-bottom: 2rem; }
+    .badges { margin: 1rem 0; }
+    .badges img { height: 24px; margin: 0 4px 4px 0; }
+    .links { margin: 2rem 0; }
+    .links a {
+      display: inline-block;
+      margin-right: 1rem;
+      margin-bottom: 0.5rem;
+      color: #0969da;
+      text-decoration: none;
+    }
+    .links a:hover { text-decoration: underline; }
+    .card {
+      background: #fff;
+      border: 1px solid #d0d7de;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .card h2 { font-size: 1.25rem; margin-bottom: 0.75rem; }
+    ul { margin-left: 1.25rem; }
+    li { margin: 0.25rem 0; }
+    code { background: #f6f8fa; padding: 0.2em 0.4em; border-radius: 6px; font-size: 0.9em; }
+    .footer { margin-top: 3rem; text-align: center; color: #57606a; font-size: 0.9rem; }
+    .footer a { color: #0969da; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✨ Merry Queen — Salon Booking System</h1>
+    <p class="subtitle">A full-stack salon management platform built for real-world production use</p>
+
+    <div class="badges">
+      <img src="https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter&logoColor=white" alt="Flutter">
+      <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js">
+      <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white" alt="Next.js">
+      <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL">
+      <img src="https://img.shields.io/badge/AWS_EC2-FF9900?style=flat-square&logo=amazon-aws&logoColor=white" alt="AWS">
+      <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white" alt="GitHub Actions">
+    </div>
+
+    <p><strong>Mobile App</strong> · <strong>Admin Dashboard</strong> · <strong>REST API</strong> · <strong>Automated CI/CD to Google Play</strong></p>
+
+    <div class="links">
+      <a href="https://github.com/binasad/queen-s-marry/blob/main/README.md">📖 Full README</a>
+      <a href="privacy-policy.html">Privacy Policy</a>
+      <a href="docs/TECHNICAL_DECISIONS.md">Technical Decisions</a>
+      <a href="CICD_GOOGLE_PLAY_BLOG.md">CI/CD Blog</a>
+      <a href="docs/sha-fingerprints-google-play.html">SHA Fingerprints</a>
+      <a href="ARCHITECTURE.md">Architecture</a>
+    </div>
+
+    <div class="card">
+      <h2>🏗️ Project Structure</h2>
+      <ul>
+        <li><code>salon-app/</code> — Flutter mobile app (user-facing)</li>
+        <li><code>marry-queens-website/</code> — Static marketing site (Bootstrap)</li>
+        <li><code>backend/</code> — Node.js REST API + PostgreSQL</li>
+        <li><code>admin-web/</code> — Next.js admin dashboard</li>
+        <li><code>terraform/</code> — AWS infrastructure</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>🚀 Quick Start</h2>
+      <p><strong>Backend:</strong> <code>cd backend && npm install && npm run dev</code></p>
+      <p><strong>Admin:</strong> <code>cd admin-web && npm install && npm run dev</code></p>
+      <p><strong>Mobile:</strong> <code>cd salon-app && flutter pub get && flutter run</code></p>
+    </div>
+
+    <div class="footer">
+      Built by <a href="https://github.com/binasad/queen-s-marry">Aztrosys</a> · MIT License · PRs welcome
+    </div>
+  </div>
+</body>
+</html>

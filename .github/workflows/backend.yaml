@@ -64,7 +64,7 @@ jobs:
             
             sudo docker run -d \
               --name salon-backend \
-              -p 5000:5000 \
+              -p 127.0.0.1:5000:5000 \
               --restart always \
               $ENV_ARGS \
               ${{ secrets.DOCKER_HUB_USERNAME }}/salon-backend:latest

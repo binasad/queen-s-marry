@@ -14,6 +14,7 @@ import 'services/image_preload_service.dart';
 import 'services/push_notification_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'theme.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -72,6 +73,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        theme: buildAppTheme(),
         home: const AuthWrapper(),
         routes: {
           '/home': (ctx) => const AuthWrapper(),
