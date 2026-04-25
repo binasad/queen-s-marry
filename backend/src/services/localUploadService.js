@@ -32,4 +32,43 @@ async function uploadToLocal(fileBuffer, originalName, folder = 'assets') {
   return publicUrl;
 }
 
-module.exports = { uploadToLocal, UPLOADS_DIR };
+/**
+ * Delete a previously uploaded local file by its public URL.
+ * @param {string} fileUrl - Public URL returned by uploadToLocal
+ * @returns {Promise<boolean>} true if file was deleted
+ */
+async function deleteFromLocal(fileUrl) {
+  if (!fileUrl) return false;
+
+  let uploadsRelativePath = null;
+  try {
+    const parsed = new URL(fileUrl);
+    const marker = '/uploads/';
+    const idx = parsed.pathname.indexOf(marker);
+    if (idx !== -1) uploadsRelativePath = parsed.pathname.slice(idx + marker.length);
+  } catch (error) {
+    const marker = '/uploads/';
+    const idx = fileUrl.indexOf(marker);
+    if (idx !== -1) uploadsRelativePath = fileUrl.slice(idx + marker.length);
+  }
+
+  if (!uploadsRelativePath) return false;
+
+  const normalizedRelative = path.normalize(uploadsRelativePath).replace(/^([.][.][\\/])+/, '');
+  const targetPath = path.join(UPLOADS_DIR, normalizedRelative);
+  const resolvedUploadsDir = path.resolve(UPLOADS_DIR);
+  const resolvedTargetPath = path.resolve(targetPath);
+
+  if (!resolvedTargetPath.startsWith(resolvedUploadsDir)) {
+    return false;
+  }
+
+  if (!fs.existsSync(resolvedTargetPath)) {
+    return false;
+  }
+
+  fs.unlinkSync(resolvedTargetPath);
+  return true;
+}
+
+module.exports = { uploadToLocal, deleteFromLocal, UPLOADS_DIR };

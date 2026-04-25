@@ -1,4 +1,4 @@
-const { PutObjectCommand } = require('@aws-sdk/client-s3');
+const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { s3Client, bucket, baseUrl } = require('../config/s3');
 const path = require('path');
 const crypto = require('crypto');
@@ -68,6 +68,46 @@ class S3Service {
     const contentType = contentTypeMap[ext] || 'image/jpeg';
 
     return this.uploadFile(fileBuffer, originalName, folder, contentType);
+  }
+
+  /**
+   * Delete a previously uploaded file from S3 by public URL.
+   * Supports CloudFront/baseUrl URLs and direct S3 object URLs.
+   * @param {string} fileUrl - Public file URL
+   * @returns {Promise<boolean>} true when delete command was sent
+   */
+  async deleteFileByUrl(fileUrl) {
+    if (!fileUrl || !bucket) return false;
+
+    let key = null;
+    const normalizedBase = (baseUrl || '').replace(/\/$/, '');
+
+    if (normalizedBase && fileUrl.startsWith(`${normalizedBase}/`)) {
+      key = fileUrl.slice(normalizedBase.length + 1);
+    }
+
+    if (!key) {
+      try {
+        const parsed = new URL(fileUrl);
+        const pathname = decodeURIComponent(parsed.pathname || '');
+        const bucketPrefix = `/${bucket}/`;
+        if (pathname.startsWith(bucketPrefix)) {
+          key = pathname.slice(bucketPrefix.length);
+        }
+      } catch (error) {
+        return false;
+      }
+    }
+
+    if (!key) return false;
+
+    const command = new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    await s3Client.send(command);
+    return true;
   }
 }
 

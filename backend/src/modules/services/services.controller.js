@@ -1,6 +1,6 @@
 const { query } = require('../../config/db');
 const s3Service = require('../../services/s3Service');
-const { uploadToLocal } = require('../../services/localUploadService');
+const { uploadToLocal, deleteFromLocal } = require('../../services/localUploadService');
 
 const isS3Configured = () => {
   const key = process.env.AWS_ACCESS_KEY_ID || '';
@@ -8,7 +8,38 @@ const isS3Configured = () => {
   return key && secret && !key.includes('your_') && !secret.includes('your_');
 };
 
+const isLikelyS3Url = (url) => {
+  const cloudfrontBase = (process.env.AWS_S3_BASE_URL || '').replace(/\/$/, '');
+  if (cloudfrontBase && url.startsWith(`${cloudfrontBase}/`)) return true;
+  return /\.amazonaws\.com\//i.test(url || '');
+};
+
 class ServicesController {
+  async maybeDeleteImageIfUnused(imageUrl, excludedServiceId) {
+    if (!imageUrl) return;
+
+    const refsResult = await query(
+      `SELECT (
+         (SELECT COUNT(*) FROM services WHERE image_url = $1 AND is_active = TRUE AND id <> $2) +
+         (SELECT COUNT(*) FROM service_categories WHERE image_url = $1 AND is_active = TRUE)
+       )::int AS refs_count`,
+      [imageUrl, excludedServiceId]
+    );
+
+    const refsCount = refsResult.rows[0]?.refs_count || 0;
+    if (refsCount > 0) return;
+
+    try {
+      if (isLikelyS3Url(imageUrl) && isS3Configured()) {
+        await s3Service.deleteFileByUrl(imageUrl);
+      } else {
+        await deleteFromLocal(imageUrl);
+      }
+    } catch (cleanupError) {
+      console.warn('Image cleanup skipped:', cleanupError.message);
+    }
+  }
+
   // Get all service categories
   async getCategories(req, res) {
     try {
@@ -228,6 +259,20 @@ class ServicesController {
       const { id } = req.params;
       const { categoryId, name, description, price, duration, imageUrl, tags, isActive } = req.body;
 
+      const existingResult = await query(
+        'SELECT id, image_url FROM services WHERE id = $1 LIMIT 1',
+        [id]
+      );
+
+      if (existingResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Service not found.',
+        });
+      }
+
+      const previousImageUrl = existingResult.rows[0].image_url;
+
       const result = await query(
         `UPDATE services 
          SET category_id = COALESCE($1, category_id),
@@ -251,6 +296,11 @@ class ServicesController {
       }
 
       const updatedService = result.rows[0];
+      const nextImageUrl = updatedService.image_url;
+      if (previousImageUrl && previousImageUrl !== nextImageUrl) {
+        await this.maybeDeleteImageIfUnused(previousImageUrl, id);
+      }
+
       if (global.io) {
         console.log('📢 Emitting service-updated and services-updated events');
         global.io.to('admin').emit('service-updated', { service: updatedService });
@@ -277,7 +327,7 @@ class ServicesController {
       const { id } = req.params;
 
       const result = await query(
-        'UPDATE services SET is_active = FALSE WHERE id = $1 RETURNING id',
+        'UPDATE services SET is_active = FALSE WHERE id = $1 RETURNING id, image_url',
         [id]
       );
 
@@ -289,6 +339,9 @@ class ServicesController {
       }
 
       const deletedServiceId = result.rows[0].id;
+      const deletedImageUrl = result.rows[0].image_url;
+      await this.maybeDeleteImageIfUnused(deletedImageUrl, id);
+
       if (global.io) {
         global.io.to('admin').emit('service-deleted', { serviceId: deletedServiceId });
         global.io.emit('services-updated', { action: 'deleted', serviceId: deletedServiceId });
