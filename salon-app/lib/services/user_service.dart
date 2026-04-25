@@ -29,10 +29,10 @@ class UserService {
     String? profileImageUrl,
   }) async {
     final body = <String, dynamic>{};
-    if (name != null) body['name'] = name;
-    if (phone != null) body['phone'] = phone;
-    if (address != null) body['address'] = address;
-    if (gender != null) body['gender'] = gender;
+    if (name != null && name.isNotEmpty) body['name'] = name;
+    if (phone != null && phone.isNotEmpty) body['phone'] = phone;
+    if (address != null && address.isNotEmpty) body['address'] = address;
+    if (gender != null && gender.isNotEmpty) body['gender'] = gender.toLowerCase();
     if (profileImageUrl != null) body['profileImageUrl'] = profileImageUrl;
 
     final response = await _api.put('/profile', body);

@@ -284,6 +284,7 @@ class _UserHomeState extends ConsumerState<UserHome>
         email = userData['email']?.toString() ?? "";
         profile =
             userData['profile_image_url']?.toString() ??
+            userData['profileImageUrl']?.toString() ??
             userData['profileImage']?.toString() ??
             "";
         _userLoading = false;
@@ -306,7 +307,9 @@ class _UserHomeState extends ConsumerState<UserHome>
           setState(() {
             name = user['name']?.toString() ?? name;
             email = user['email']?.toString() ?? email;
-            profile = user['profile_image_url']?.toString() ?? profile;
+            profile = user['profile_image_url']?.toString()
+                ?? user['profileImageUrl']?.toString()
+                ?? profile;
             _userLoading = false;
           });
         }

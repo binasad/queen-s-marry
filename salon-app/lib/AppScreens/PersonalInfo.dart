@@ -23,7 +23,6 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
   // Editable state variables
   String userName = "";
   String userEmail = "";
-  DateTime? selectedDate;
   String phone = "";
   String address = "";
   String gender = "Male";
@@ -49,7 +48,9 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
         phone = user['phone'] ?? "";
         address = user['address'] ?? "";
         gender = user['gender'] ?? "Male";
-        profile = user['profile_image_url'] ?? "";
+        profile = user['profile_image_url']
+            ?? user['profileImageUrl']
+            ?? "";
         isLoading = false;
       });
     } catch (e) {
@@ -86,32 +87,6 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
     } catch (e) {
       setState(() => isLoading = false);
       ErrorHandler.show(context, e);
-    }
-  }
-
-  Future<void> _pickDate(BuildContext context) async {
-    final DateTime? datePicked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate ?? DateTime(2000, 1, 1),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Colors.blue,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ), dialogTheme: DialogThemeData(backgroundColor: Colors.blueGrey),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (datePicked != null && datePicked != selectedDate) {
-      setState(() {
-        selectedDate = datePicked;
-      });
     }
   }
 
@@ -350,16 +325,6 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
                 ListTile(
                   leading: Icon(CupertinoIcons.mail),
                   title: Text(userEmail),
-                ),
-                ListTile(
-                  leading: Icon(CupertinoIcons.calendar_today),
-                  title: Text(
-                    selectedDate == null
-                        ? "Select Date of Birth"
-                        : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
-                  ),
-                  trailing: Icon(CupertinoIcons.calendar_badge_minus),
-                  onTap: () => _pickDate(context),
                 ),
                 ListTile(
                   leading: Icon(CupertinoIcons.phone),

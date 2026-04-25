@@ -10,6 +10,7 @@ import '../services/favorites_service.dart';
 import '../services/push_notification_service.dart';
 import 'OwnerScreens/OwnerTabbar.dart';
 import 'UserScreens/userTabbar.dart';
+import 'ForgotPassword.dart';
 import 'signup.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -213,7 +214,26 @@ class _LoginScreenState extends State<LoginScreen> {
                           hint: "Password",
                           isPassword: true,
                         ),
-                        const SizedBox(height: 25),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ForgetPassword(),
+                              ),
+                            ),
+                            child: const Text(
+                              "Forgot Password?",
+                              style: TextStyle(
+                                color: Color(0xFFE91E63),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                         _isLoading
                             ? const CircularProgressIndicator(
                                 color: Color(0xFFE91E63),
