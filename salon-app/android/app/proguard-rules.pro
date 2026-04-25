@@ -6,6 +6,8 @@
 -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Error
 -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter
 -dontwarn com.stripe.android.pushProvisioning.PushProvisioningEphemeralKeyProvider
+-dontwarn com.stripe.android.pushProvisioning.EphemeralKeyUpdateListener
+-dontwarn com.reactnativestripesdk.pushprovisioning.**
 
 # Kotlin reflection / parcelize used by Stripe
 -dontwarn kotlinx.parcelize.Parceler$DefaultImpls
