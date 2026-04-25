@@ -62,6 +62,10 @@ class ErrorHandler {
           return error.message ?? 'Connection failed. Please check your internet connection.';
       }
     }
+    final raw = error?.toString() ?? '';
+    if (raw.isNotEmpty && raw != 'null') {
+      return 'An unexpected error occurred.\n\n$raw';
+    }
     return 'An unexpected error occurred.';
   }
 

@@ -77,7 +77,6 @@ class _UserHomeState extends ConsumerState<UserHome>
   // Loading states
   bool _offersLoading = true;
   bool _expertsLoading = true;
-  bool _userLoading = true;
 
   // Offer card slider
   late PageController _offerPageController;
@@ -270,8 +269,6 @@ class _UserHomeState extends ConsumerState<UserHome>
   }
 
   Future<void> loadUserData() async {
-    if (mounted) setState(() => _userLoading = true);
-
     // First try AuthProvider (cached data - fast)
     final authProvider = provider_package.Provider.of<app_auth.AuthProvider>(
       context,
@@ -279,16 +276,17 @@ class _UserHomeState extends ConsumerState<UserHome>
     );
     if (authProvider.user != null) {
       final userData = authProvider.user!;
-      setState(() {
-        name = userData['name']?.toString() ?? "Guest";
-        email = userData['email']?.toString() ?? "";
-        profile =
-            userData['profile_image_url']?.toString() ??
-            userData['profileImageUrl']?.toString() ??
-            userData['profileImage']?.toString() ??
-            "";
-        _userLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          name = userData['name']?.toString() ?? "Guest";
+          email = userData['email']?.toString() ?? "";
+          profile =
+              userData['profile_image_url']?.toString() ??
+              userData['profileImageUrl']?.toString() ??
+              userData['profileImage']?.toString() ??
+              "";
+        });
+      }
 
       // Return early if we have valid name
       if (name.isNotEmpty && name != "Guest") return;
@@ -310,15 +308,12 @@ class _UserHomeState extends ConsumerState<UserHome>
             profile = user['profile_image_url']?.toString()
                 ?? user['profileImageUrl']?.toString()
                 ?? profile;
-            _userLoading = false;
           });
         }
       }
     } catch (e) {
       debugPrint('Failed to load user profile: $e');
     }
-
-    if (mounted) setState(() => _userLoading = false);
   }
 
   void _onSearchChanged() {
@@ -350,7 +345,6 @@ class _UserHomeState extends ConsumerState<UserHome>
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider);
-    final categoriesLoading = ref.watch(categoriesLoadingProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9FB),
@@ -413,58 +407,72 @@ class _UserHomeState extends ConsumerState<UserHome>
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const UserPersonalInfo(),
-                  ),
-                );
-              },
-              child: profile.isNotEmpty
-                  ? CachedCircleImage(imageUrl: profile, radius: 24)
-                  : CircleAvatar(
-                      radius: 24,
-                      backgroundImage: const AssetImage('assets/profile.jpg'),
-                    ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => Scaffold.of(context).openDrawer(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hello, $name',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2D2D3A),
+        child: provider_package.Consumer<app_auth.AuthProvider>(
+          builder: (context, authProvider, _) {
+            final user = authProvider.user;
+            final liveName = user?['name']?.toString().isNotEmpty == true
+                ? user!['name'].toString()
+                : name;
+            final liveProfile = user?['profile_image_url']?.toString()
+                ?? user?['profileImageUrl']?.toString()
+                ?? user?['profileImage']?.toString()
+                ?? profile;
+            return Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const UserPersonalInfo(),
                       ),
-                    ),
-                    const Text(
-                      "Welcome to Queens Saloon",
-                      style: TextStyle(fontSize: 13, color: Colors.grey),
-                    ),
-                  ],
+                    );
+                  },
+                  child: liveProfile.isNotEmpty
+                      ? CachedCircleImage(imageUrl: liveProfile, radius: 24)
+                      : const CircleAvatar(
+                          radius: 24,
+                          backgroundImage: AssetImage('assets/profile.jpg'),
+                        ),
                 ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-              ),
-              child: const Icon(
-                Icons.notifications_none_rounded,
-                color: Color(0xFF2D2D3A),
-              ),
-            ),
-          ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Scaffold.of(context).openDrawer(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hello, $liveName',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D2D3A),
+                          ),
+                        ),
+                        const Text(
+                          "Welcome to Queens Saloon",
+                          style: TextStyle(fontSize: 13, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationsScreen(),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.notifications_none_rounded,
+                    color: Color(0xFF2D2D3A),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -636,7 +644,7 @@ class _UserHomeState extends ConsumerState<UserHome>
                   decoration: BoxDecoration(
                     color: _currentOfferPage == index
                         ? const Color(0xFFE91E63)
-                        : const Color(0xFFE91E63).withOpacity(0.3),
+                        : const Color(0xFFE91E63).withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -860,7 +868,7 @@ class _UserHomeState extends ConsumerState<UserHome>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -883,7 +891,7 @@ class _UserHomeState extends ConsumerState<UserHome>
                         imagePath,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
-                          color: const Color(0xFFE91E63).withOpacity(0.1),
+                          color: const Color(0xFFE91E63).withValues(alpha: 0.1),
                           child: const Icon(Icons.image, size: 40, color: Colors.grey),
                         ),
                       ),
@@ -896,7 +904,7 @@ class _UserHomeState extends ConsumerState<UserHome>
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.7),
+                        Colors.black.withValues(alpha: 0.7),
                       ],
                     ),
                   ),
@@ -1083,7 +1091,7 @@ class _UserHomeState extends ConsumerState<UserHome>
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE91E63).withOpacity(0.15),
+                  color: const Color(0xFFE91E63).withValues(alpha: 0.15),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -1192,7 +1200,7 @@ class _UserHomeState extends ConsumerState<UserHome>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -1227,7 +1235,7 @@ class _UserHomeState extends ConsumerState<UserHome>
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
                     stops: const [0.3, 1.0],
                   ),
                 ),
@@ -1289,7 +1297,7 @@ class _UserHomeState extends ConsumerState<UserHome>
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE91E63).withOpacity(0.9),
+                        color: const Color(0xFFE91E63).withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
