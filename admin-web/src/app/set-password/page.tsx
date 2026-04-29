@@ -157,7 +157,7 @@ export default function SetPasswordPage() {
 
           {/* Footer */}
           <div className="mt-6 text-center text-sm text-gray-600">
-            <p>© 2026 Salon App. All rights reserved.</p>
+            <p>© 2026 Saloon App. All rights reserved.</p>
           </div>
         </div>
       </div>

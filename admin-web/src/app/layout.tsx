@@ -19,8 +19,8 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: 'Salon Admin Dashboard',
-  description: 'Admin panel for salon booking management',
+  title: 'Saloon Admin Dashboard',
+  description: 'Admin panel for saloon booking management',
 }
 
 export default function RootLayout({

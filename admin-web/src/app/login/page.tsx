@@ -102,8 +102,8 @@ export default function LoginPage() {
           {/* Logo/Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">BeautyHub</h1>
-            <p className="text-gray-500 text-sm mb-1">Marry-Queen Salon</p>
-            <p className="text-gray-600">Sign in to manage your salon</p>
+            <p className="text-gray-500 text-sm mb-1">Queen's Merry Beauty Saloon</p>
+            <p className="text-gray-600">Sign in to manage your saloon</p>
           </div>
 
           {/* Login Form */}
@@ -154,7 +154,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <div className="mt-6 text-center text-sm text-gray-600">
-            <p>© 2026 Salon App. All rights reserved.</p>
+            <p>© 2026 Saloon App. All rights reserved.</p>
           </div>
         </div>
       </div>

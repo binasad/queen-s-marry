@@ -36,7 +36,7 @@ export default function Sidebar() {
     <aside className="hidden md:flex md:w-64 bg-white shadow-lg md:h-screen flex-col">
       <div className="p-6 border-b">
         <h2 className="text-2xl font-bold text-primary-500">BeautyHub</h2>
-        <p className="text-xs text-gray-500 mt-1">Marry-Queen Salon</p>
+        <p className="text-xs text-gray-500 mt-1">Queen's Merry Beauty Saloon</p>
       </div>
 
       <nav className="flex-1 mt-6 overflow-y-auto">

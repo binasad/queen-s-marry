@@ -13,7 +13,7 @@ const heroSlides = [
 const testimonials = [
   {
     img:    '/images/background.png',
-    quote:  '"The salon experience was amazing. I left feeling refreshed and confident!"',
+    quote:  '"The saloon experience was amazing. I left feeling refreshed and confident!"',
     name:   'Sarah',
     rating: 5,
   },
@@ -25,7 +25,7 @@ const testimonials = [
   },
   {
     img:    '/images/shanzay.avif',
-    quote:  '"Best salon in town! Excellent service and welcoming atmosphere."',
+    quote:  '"Best saloon in town! Excellent service and welcoming atmosphere."',
     name:   'Shanzay',
     rating: 5,
   },
@@ -138,7 +138,7 @@ const Home = () => {
               <div className="position-relative">
                 <img
                   src="/images/salon-interior.jpg"
-                  alt="Salon Interior"
+                  alt="Saloon Interior"
                   className="img-fluid rounded-4 shadow-lg w-100"
                   style={{ objectFit: 'cover', height: '400px' }}
                 />
@@ -149,7 +149,7 @@ const Home = () => {
               </div>
             </div>
             <div className="col-lg-6">
-              <h6 className="text-uppercase text-gradient fw-bold mb-2">Welcome to Queen's Marry Beauty Salon</h6>
+              <h6 className="text-uppercase text-gradient fw-bold mb-2">Welcome to Queen's Merry Beauty Saloon</h6>
               <h2 className="display-5 fw-bold mb-4">Elevating Beauty, Defy Expectations.</h2>
               <p className="lead text-muted mb-4">
                 Our expert stylists and premium products ensure every visit is a refreshing experience tailored uniquely for you.

@@ -8,7 +8,7 @@ const Footer = () => {
           {/* Logo */}
           <div className="col-md-3 footer-logo mb-4">
             <img src="/images/logo.png" alt="logo" style={{ maxHeight: '60px' }} />
-            <h5 className="mt-2 fw-bold">Queen's Marry Beauty Salon</h5>
+            <h5 className="mt-2 fw-bold">Queen's Merry Beauty Saloon</h5>
           </div>
 
           {/* Address */}
@@ -43,7 +43,7 @@ const Footer = () => {
 
         {/* Bottom */}
         <div className="footer-bottom text-center mt-4 pt-4 border-top border-secondary">
-          <p className="mb-0 text-secondary">Copyright ©2026 Queen's Marry Beauty Salon. All Rights Reserved</p>
+          <p className="mb-0 text-secondary">Copyright ©2026 Queen's Merry Beauty Saloon. All Rights Reserved</p>
         </div>
       </div>
     </footer>
