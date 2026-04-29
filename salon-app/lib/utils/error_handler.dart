@@ -16,7 +16,9 @@ class ErrorHandler {
       // Fall back to status code messages
       switch (error.statusCode) {
         case 400:
-          return 'Invalid request. Please check your input.';
+          return error.message.isNotEmpty && error.message != 'Unknown error'
+              ? error.message
+              : 'Invalid request. Please check your input.';
         case 401:
           final msg = error.message.toLowerCase();
           if (msg.contains('authentication') || msg.contains('credentials')) {
@@ -59,6 +61,10 @@ class ErrorHandler {
         default:
           return error.message ?? 'Connection failed. Please check your internet connection.';
       }
+    }
+    final raw = error?.toString() ?? '';
+    if (raw.isNotEmpty && raw != 'null') {
+      return 'An unexpected error occurred.\n\n$raw';
     }
     return 'An unexpected error occurred.';
   }

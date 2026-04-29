@@ -23,7 +23,6 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
   // Editable state variables
   String userName = "";
   String userEmail = "";
-  DateTime? selectedDate;
   String phone = "";
   String address = "";
   String gender = "Male";
@@ -43,16 +42,20 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
       final userData = await UserService().getProfile();
       final user = userData['user'];
 
+      if (!mounted) return;
       setState(() {
         userName = user['name'] ?? "No Name";
         userEmail = user['email'] ?? "";
         phone = user['phone'] ?? "";
         address = user['address'] ?? "";
         gender = user['gender'] ?? "Male";
-        profile = user['profile_image_url'] ?? "";
+        profile = user['profile_image_url']
+            ?? user['profileImageUrl']
+            ?? "";
         isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => isLoading = false);
       ErrorHandler.show(context, e);
     }
@@ -64,7 +67,7 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
       context,
       actionDescription: 'update your profile',
     );
-    if (!canProceed) return;
+    if (!canProceed || !mounted) return;
 
     try {
       setState(() => isLoading = true);
@@ -77,41 +80,27 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
       );
 
       if (mounted) {
+        final authProvider = provider_package.Provider.of<AuthProvider>(
+          context,
+          listen: false,
+        );
+        authProvider.updateUserProfile({
+          'name': userName,
+          'phone': phone,
+          'address': address,
+          'gender': gender,
+        });
+
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Profile updated successfully')));
       }
 
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     } catch (e) {
+      if (!mounted) return;
       setState(() => isLoading = false);
       ErrorHandler.show(context, e);
-    }
-  }
-
-  Future<void> _pickDate(BuildContext context) async {
-    final DateTime? datePicked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate ?? DateTime(2000, 1, 1),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Colors.blue,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ), dialogTheme: DialogThemeData(backgroundColor: Colors.blueGrey),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (datePicked != null && datePicked != selectedDate) {
-      setState(() {
-        selectedDate = datePicked;
-      });
     }
   }
 
@@ -197,7 +186,6 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
           ElevatedButton(
             onPressed: () {
               setState(() => gender = tempGender);
-              _updateUserInfo();
               Navigator.pop(context);
             },
             child: const Text("Save"),
@@ -212,7 +200,7 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
       context,
       actionDescription: 'upload a profile photo',
     );
-    if (!canProceed) return;
+    if (!canProceed || !mounted) return;
 
     showModalBottomSheet(
       context: context,
@@ -344,7 +332,6 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
                   trailing: const Icon(Icons.edit_outlined),
                   onTap: () => _editField("Username", userName, (val) {
                     setState(() => userName = val);
-                    _updateUserInfo();
                   }),
                 ),
                 ListTile(
@@ -352,22 +339,11 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
                   title: Text(userEmail),
                 ),
                 ListTile(
-                  leading: Icon(CupertinoIcons.calendar_today),
-                  title: Text(
-                    selectedDate == null
-                        ? "Select Date of Birth"
-                        : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
-                  ),
-                  trailing: Icon(CupertinoIcons.calendar_badge_minus),
-                  onTap: () => _pickDate(context),
-                ),
-                ListTile(
                   leading: Icon(CupertinoIcons.phone),
                   title: Text(phone.isEmpty ? "Add Phone" : phone),
                   trailing: const Icon(Icons.edit_outlined),
                   onTap: () => _editField("Phone", phone, (val) {
                     setState(() => phone = val);
-                    _updateUserInfo();
                   }),
                 ),
                 ListTile(
@@ -376,7 +352,6 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
                   trailing: const Icon(Icons.edit_outlined),
                   onTap: () => _editField("Address", address, (val) {
                     setState(() => address = val);
-                    _updateUserInfo();
                   }),
                 ),
                 ListTile(
@@ -385,6 +360,26 @@ class _UserPersonalInfoState extends State<UserPersonalInfo> {
                   trailing: const Icon(Icons.edit_outlined),
                   onTap: _editGender,
                 ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: _updateUserInfo,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE91E63),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    "Save Changes",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
               ],
             ),
     );

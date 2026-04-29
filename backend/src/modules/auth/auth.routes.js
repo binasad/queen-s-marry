@@ -60,10 +60,22 @@ router.post('/forgot-password',
     bind(authController.forgotPassword)
 );
 
-router.post('/reset-password', 
-    validationRules.resetPassword, 
-    handleValidationErrors, 
+router.post('/reset-password',
+    validationRules.resetPassword,
+    handleValidationErrors,
     bind(authController.resetPassword)
+);
+
+router.post('/forgot-password-otp',
+    validationRules.forgotPassword,
+    handleValidationErrors,
+    bind(authController.forgotPasswordOtp)
+);
+
+router.post('/reset-password-otp',
+    validationRules.resetPasswordOtp,
+    handleValidationErrors,
+    bind(authController.resetPasswordOtp)
 );
 
 router.post('/refresh-token', 
