@@ -32,7 +32,7 @@ const Privacy = () => {
                                 <p>Our website uses cookies to enhance your browsing experience, analyze site traffic, and remember your preferences. You can manage cookie settings through your browser at any time.</p>
 
                                 <h3 className="fw-bold mt-5 mb-4">4. Third-Party Sharing</h3>
-                                <p>We do NOT sell, trade, or share your personal information with third parties for marketing purposes. Your data is only shared with trusted service providers who assist us in operating our salon or app, subject to strict confidentiality agreements.</p>
+                                <p>We do NOT sell, trade, or share your personal information with third parties for marketing purposes. Your data is only shared with trusted service providers who assist us in operating our saloon or app, subject to strict confidentiality agreements.</p>
 
                                 <h3 className="fw-bold mt-5 mb-4">5. Security Measures</h3>
                                 <p>We implement technical and organizational security measures to protect your data from unauthorized access, loss, or misuse. This includes SSL encryption for all web traffic.</p>

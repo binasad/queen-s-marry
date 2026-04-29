@@ -219,7 +219,7 @@ const Appointments = () => {
                                         </div>
                                         <h2 className="fw-bold mb-3">Bookings Are Now on Our App!</h2>
                                         <p className="lead text-muted mb-5">
-                                            For a faster, smoother, and more personalized booking experience, please download the official Queen's Marry Beauty Salon app.
+                                            For a faster, smoother, and more personalized booking experience, please download the official Queen's Merry Beauty Saloon app.
                                         </p>
                                         <div className="d-flex justify-content-center gap-3 flex-wrap">
                                             <a href="#" className="btn btn-dark btn-lg px-4 py-3 rounded-pill d-flex align-items-center">

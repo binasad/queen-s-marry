@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 const testimonials = [
   {
     img: '/images/background.png',
-    text: '"The attention to detail at Queen\'s Marry is unmatched. My bridal makeup was exactly what I dreamed of — sophisticated and radiant."',
+    text: '"The attention to detail at Queen\'s Merry is unmatched. My bridal makeup was exactly what I dreamed of — sophisticated and radiant."',
     name: 'Sarah',
     role: 'Regular Client',
   },
@@ -15,7 +15,7 @@ const testimonials = [
   },
   {
     img: '/images/shanzay.avif',
-    text: '"Best salon in town! Their hair coloring experts are magical. Excellent service and welcoming atmosphere."',
+    text: '"Best saloon in town! Their hair coloring experts are magical. Excellent service and welcoming atmosphere."',
     name: 'Shanzay',
     role: 'Loyal Client',
   },
@@ -73,7 +73,7 @@ const About = () => {
               />
               <img
                 src="/images/photoshot.jpg"
-                alt="Our Salon"
+                alt="Our Saloon"
                 className="img-fluid rounded-4 shadow-lg w-100 position-relative"
                 style={{
                   objectFit: 'cover',
@@ -109,11 +109,11 @@ const About = () => {
                 Our Legacy
               </span>
               <h2 className="fw-bold mb-4" style={{ fontSize: '2.6rem', lineHeight: 1.15 }}>
-                About Our Salon
+                About Our Saloon
               </h2>
               <p className="text-muted mb-3" style={{ fontSize: '1.05rem', lineHeight: 1.8 }}>
                 Founded on the principle that every individual deserves a moment of pure royalty,{' '}
-                <strong>Queen's Marry Beauty Salon</strong> has become Islamabad's premier destination for
+                <strong>Queen's Merry Beauty Saloon</strong> has become Islamabad's premier destination for
                 luxury grooming and bridal expertise.
               </p>
               <p className="text-muted mb-5" style={{ fontSize: '1.05rem', lineHeight: 1.8 }}>
@@ -265,7 +265,7 @@ const About = () => {
                   allowFullScreen=""
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Queen's Marry Salon Location"
+                  title="Queen's Merry Saloon Location"
                 />
               </div>
 
