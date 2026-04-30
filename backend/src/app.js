@@ -56,6 +56,7 @@ const allowedOrigins = [
   env.backendUrl,
   'http://localhost:5173', // React Vite default port
   'https://api.queensmarrybeautysaloon.com',
+  'https://aztrosyssalonappapi.ddns.net',
 ].filter(Boolean);
 
 const corsOptions = {
