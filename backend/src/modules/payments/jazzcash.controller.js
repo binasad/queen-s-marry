@@ -14,6 +14,46 @@ function generateHash(params, salt) {
   return crypto.createHash('sha256').update(hashString).digest('hex');
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildRedirectHtml(paymentUrl, formData) {
+  const inputs = Object.entries(formData)
+    .map(([key, value]) => `<input type="hidden" name="${escapeHtml(key)}" value="${escapeHtml(value)}" />`)
+    .join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting to JazzCash</title>
+  <style>
+    body { font-family: Arial, sans-serif; display: flex; min-height: 100vh; align-items: center; justify-content: center; margin: 0; background: #f8f9fa; }
+    .card { text-align: center; padding: 32px; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.08); }
+    .spinner { width: 42px; height: 42px; margin: 0 auto 16px; border: 4px solid #eee; border-top-color: #c4151c; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="spinner"></div>
+    <p>Redirecting to JazzCash...</p>
+  </div>
+  <form id="jazzcash_form" method="POST" action="${escapeHtml(paymentUrl)}">
+    ${inputs}
+  </form>
+  <script>document.getElementById('jazzcash_form').submit();</script>
+</body>
+</html>`;
+}
+
 function formatDate(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -89,6 +129,10 @@ class JazzCashController {
       };
 
       const hash = generateHash(params, JAZZCASH_INTEGRITY_SALT);
+      const formData = {
+        ...params,
+        pp_SecureHash: hash,
+      };
 
       await query(
         `INSERT INTO jazzcash_transactions (txn_ref_no, user_id, amount, metadata, status, created_at)
@@ -96,13 +140,16 @@ class JazzCashController {
         [txnRefNo, req.user.id, amount, metadata]
       );
 
+      const wantsHtml = req.accepts(['html', 'json']) === 'html' || String(req.query.format || '').toLowerCase() === 'html';
+
+      if (wantsHtml) {
+        return res.status(200).send(buildRedirectHtml(JAZZCASH_ENDPOINT, formData));
+      }
+
       res.status(200).json({
         success: true,
         paymentUrl: JAZZCASH_ENDPOINT,
-        formData: {
-          ...params,
-          pp_SecureHash: hash,
-        },
+        formData,
         txnRefNo,
       });
     } catch (error) {
