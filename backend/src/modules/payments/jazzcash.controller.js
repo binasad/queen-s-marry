@@ -11,7 +11,7 @@ const JAZZCASH_RETURN_URL = process.env.JAZZCASH_RETURN_URL;
 function generateHash(params, salt) {
   const sortedKeys = Object.keys(params).sort();
   const hashString = salt + '&' + sortedKeys.map(k => params[k]).join('&');
-  return crypto.createHmac('sha256', salt).update(hashString).digest('hex');
+  return crypto.createHash('sha256').update(hashString).digest('hex');
 }
 
 function formatDate(date) {
