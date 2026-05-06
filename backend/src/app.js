@@ -77,6 +77,11 @@ const corsOptions = {
       return callback(null, true);
     }
 
+    // Allow JazzCash payment gateway redirects
+    if (origin.endsWith('.jazzcash.com.pk') || origin === 'https://payments.jazzcash.com.pk' || origin === 'https://sandbox.jazzcash.com.pk') {
+      return callback(null, true);
+    }
+
     console.log('❌ Blocking origin:', origin);
     return callback(new Error('Not allowed by CORS'));
   },
