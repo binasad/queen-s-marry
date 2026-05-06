@@ -7,6 +7,7 @@ import '../../services/user_service.dart';
 import '../../services/api_service.dart';
 import '../../utils/error_handler.dart';
 import '../PersonalInfo.dart';
+import 'JazzCashPaymentScreen.dart';
 
 class AppColors {
   static const Color primaryPink = Color(0xFFFF0068);
@@ -47,6 +48,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
   bool _isLoading = false;
   String? _userEmail, _userName, _userPhone;
   List<DateTime> _dates = [];
+  String _selectedPaymentMethod = 'jazzcash'; // 'jazzcash' or 'stripe'
 
   final List<String> _timeSlots = [
     '9:00 am',
@@ -239,49 +241,11 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       final String rawTimeLabel = _timeSlots[_selectedTimeIndex];
       final String timeStr = _convertTo24Hour(rawTimeLabel);
 
-      final double price = _getChargeAmount();
-      final int amountInCents = (price * 100).round().clamp(100, 999999999);
-
-      // Create PaymentIntent with booking metadata - webhook will create appointment on success
-      final paymentIntentResponse = await _api.post('/payments/create-intent', {
-        'amount': amountInCents,
-        'currency': 'pkr',
-        'serviceId': widget.service['id'].toString(),
-        'appointmentDate': dateStr,
-        'appointmentTime': timeStr,
-        'customerName': _userName ?? 'Customer',
-        'customerEmail': _userEmail ?? '',
-        'customerPhone': _userPhone ?? '',
-        if (widget.offerId != null && widget.offerId!.isNotEmpty) 'offerId': widget.offerId,
-      });
-
-      final clientSecret = paymentIntentResponse['clientSecret'];
-      final paymentIntentId = paymentIntentResponse['paymentIntentId'];
-
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: clientSecret,
-          merchantDisplayName: 'Aztrosys Salon',
-          style: ThemeMode.light,
-        ),
-      );
-
-      await Stripe.instance.presentPaymentSheet();
-
-      // Payment verified by Stripe - create appointment (fallback if webhook hasn't)
-      debugPrint('✅ Payment Successful. Creating appointment...');
-      if (paymentIntentId != null && paymentIntentId.toString().isNotEmpty) {
-        try {
-          await _api.post('/payments/confirm-appointment', {
-            'paymentIntentId': paymentIntentId,
-          });
-          debugPrint('✅ Appointment created.');
-        } catch (e) {
-          debugPrint('⚠️ confirm-appointment: $e (webhook may have created it)');
-        }
+      if (_selectedPaymentMethod == 'jazzcash') {
+        await _payWithJazzCash(dateStr, timeStr);
+      } else {
+        await _payWithStripe(dateStr, timeStr);
       }
-
-      if (mounted) _showSuccessDialog();
     } catch (e) {
       if (e is StripeException) {
         _showSnackBar("Payment Cancelled", Colors.orange);
@@ -291,6 +255,96 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _payWithStripe(String dateStr, String timeStr) async {
+    final double price = _getChargeAmount();
+    final int amountInCents = (price * 100).round().clamp(100, 999999999);
+
+    final paymentIntentResponse = await _api.post('/payments/create-intent', {
+      'amount': amountInCents,
+      'currency': 'pkr',
+      'serviceId': widget.service['id'].toString(),
+      'appointmentDate': dateStr,
+      'appointmentTime': timeStr,
+      'customerName': _userName ?? 'Customer',
+      'customerEmail': _userEmail ?? '',
+      'customerPhone': _userPhone ?? '',
+      if (widget.offerId != null && widget.offerId!.isNotEmpty) 'offerId': widget.offerId,
+    });
+
+    final clientSecret = paymentIntentResponse['clientSecret'];
+    final paymentIntentId = paymentIntentResponse['paymentIntentId'];
+
+    await Stripe.instance.initPaymentSheet(
+      paymentSheetParameters: SetupPaymentSheetParameters(
+        paymentIntentClientSecret: clientSecret,
+        merchantDisplayName: 'Queens Marry Salon',
+        style: ThemeMode.light,
+      ),
+    );
+
+    await Stripe.instance.presentPaymentSheet();
+
+    debugPrint('✅ Payment Successful. Creating appointment...');
+    if (paymentIntentId != null && paymentIntentId.toString().isNotEmpty) {
+      try {
+        await _api.post('/payments/confirm-appointment', {
+          'paymentIntentId': paymentIntentId,
+        });
+        debugPrint('✅ Appointment created.');
+      } catch (e) {
+        debugPrint('⚠️ confirm-appointment: $e (webhook may have created it)');
+      }
+    }
+
+    if (mounted) _showSuccessDialog();
+  }
+
+  Future<void> _payWithJazzCash(String dateStr, String timeStr) async {
+    final double price = _getChargeAmount();
+    final int amountInPaisa = (price * 100).round();
+
+    final response = await _api.post('/payments/jazzcash/initiate', {
+      'amount': amountInPaisa,
+      'serviceId': widget.service['id'].toString(),
+      'appointmentDate': dateStr,
+      'appointmentTime': timeStr,
+      'customerName': _userName ?? 'Customer',
+      'customerEmail': _userEmail ?? '',
+      'customerPhone': _userPhone ?? '',
+      if (widget.offerId != null && widget.offerId!.isNotEmpty) 'offerId': widget.offerId,
+    });
+
+    if (response['success'] != true) {
+      throw Exception(response['message'] ?? 'Failed to initiate JazzCash payment');
+    }
+
+    final paymentUrl = response['paymentUrl'] as String;
+    final formData = Map<String, String>.from(
+      (response['formData'] as Map).map((k, v) => MapEntry(k.toString(), v.toString())),
+    );
+
+    if (!mounted) return;
+
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => JazzCashPaymentScreen(
+          paymentUrl: paymentUrl,
+          formData: formData,
+          returnUrlBase: 'payment-',
+        ),
+      ),
+    );
+
+    if (result == 'success') {
+      if (mounted) _showSuccessDialog();
+    } else if (result == 'failed') {
+      _showSnackBar('Payment failed. Please try again.', Colors.red);
+    } else {
+      _showSnackBar('Payment cancelled', Colors.orange);
     }
   }
 
@@ -397,6 +451,12 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                           "Available booking hours",
                         ),
                         _buildTimeGrid(),
+                        const SizedBox(height: 32),
+                        _buildSectionHeader(
+                          "Payment Method",
+                          "Choose how to pay",
+                        ),
+                        _buildPaymentMethodSelector(),
                         const SizedBox(height: 120),
                       ],
                     ),
@@ -667,6 +727,82 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildPaymentMethodSelector() {
+    return Column(
+      children: [
+        _buildPaymentOption(
+          'jazzcash',
+          'JazzCash',
+          'Debit/Credit Card via JazzCash',
+          Icons.credit_card,
+          const Color(0xFFE2001A),
+        ),
+        const SizedBox(height: 12),
+        _buildPaymentOption(
+          'stripe',
+          'Card (International)',
+          'Visa, Mastercard via Stripe',
+          Icons.payment,
+          const Color(0xFF6772E5),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentOption(String value, String title, String subtitle, IconData icon, Color color) {
+    final isSelected = _selectedPaymentMethod == value;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPaymentMethod = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.withOpacity(0.15),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [BoxShadow(color: color.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))]
+              : [],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  Text(subtitle, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                ],
+              ),
+            ),
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: isSelected ? color : Colors.grey.shade300, width: 2),
+                color: isSelected ? color : Colors.transparent,
+              ),
+              child: isSelected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
