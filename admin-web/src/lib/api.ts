@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Resolve API base URL (order: env var → hard-coded production fallback)
-const PROD_API = 'https://aztrosyssalonappapi.ddns.net/api/v1';
+const PROD_API = 'https://api.queensmarrybeautysaloon.com/api/v1';
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1` : '') ||

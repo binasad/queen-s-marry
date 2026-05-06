@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.queensmarrybeautysaloon.com/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 async function get(endpoint) {
   const res = await fetch(`${API_BASE_URL}${endpoint}`);

@@ -4,7 +4,7 @@ const nextConfig = {
   images: {
     domains: [
       'localhost',
-      'aztrosyssalonappapi.ddns.net',
+      'api.queensmarrybeautysaloon.com',
       'salon-app-assets-queensmarry-2026.s3.us-east-1.amazonaws.com',
       'd1vkudmp7ebh7p.cloudfront.net',
     ],
@@ -12,7 +12,7 @@ const nextConfig = {
   async rewrites() {
     // Production backend – hard-coded so rewrites always resolve to an absolute URL,
     // even when env vars are missing at build time on Vercel.
-    const PROD_BACKEND = 'https://aztrosyssalonappapi.ddns.net';
+    const PROD_BACKEND = 'https://api.queensmarrybeautysaloon.com';
 
     // Resolve an *absolute* backend base URL (must start with http)
     const candidates = [
@@ -53,7 +53,7 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PUBLIC_BACKEND_URL
         ? '/api/v1'
-        : (process.env.NEXT_PUBLIC_API_URL || 'https://aztrosyssalonappapi.ddns.net/api/v1'),
+        : (process.env.NEXT_PUBLIC_API_URL || 'https://api.queensmarrybeautysaloon.com/api/v1'),
   },
 }
 
