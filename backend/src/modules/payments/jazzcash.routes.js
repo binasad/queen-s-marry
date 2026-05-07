@@ -14,6 +14,8 @@ const initiateValidation = [
   body('customerEmail').trim().notEmpty().isEmail().withMessage('Valid email is required'),
   body('customerPhone').trim().notEmpty().withMessage('Customer phone is required'),
   body('offerId').optional().isUUID().withMessage('Invalid offer ID'),
+  body('paymentMethod').optional().isIn(['wallet', 'card']).withMessage('paymentMethod must be wallet or card'),
+  body('returnUrl').optional().isURL({ require_tld: false }).withMessage('Invalid returnUrl'),
 ];
 
 router.post('/initiate', auth, initiateValidation, handleValidationErrors, jazzcashController.initiatePayment);

@@ -32,6 +32,81 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+function buildCardCheckoutHtml({ payload, hpcBase, returnUrl }) {
+  const cardFieldOrder = [
+    'pp_Version', 'pp_MerchantID', 'pp_SubMerchantID', 'pp_Language', 'pp_TxnType',
+    'pp_Password', 'pp_TxnRefNo', 'pp_Amount', 'pp_DiscountedAmount', 'pp_DiscountBank',
+    'pp_TxnCurrency', 'pp_TxnDateTime', 'pp_TxnExpiryDateTime', 'pp_BillReference',
+    'pp_Description', 'pp_ReturnURL', 'ppmpf_1', 'ppmpf_2', 'ppmpf_3', 'ppmpf_4',
+    'ppmpf_5', 'pp_SecureHash', 'pp_Frequency', 'C3DSecureID', 'GateWayCode',
+    'SummaryStatus', 'ResponseCode', 'ResponseMessage', 'pp_RetreivalReferenceNo',
+    'pp_InstrToken',
+  ];
+  const initialFields = cardFieldOrder
+    .map(k => `      <input type="hidden" id="${k}" name="${k}" value="${escapeHtml(payload[k])}" />`)
+    .join('\n');
+
+  const payloadJs = JSON.stringify(payload);
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JazzCash Card Payment</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; background:#f8f9fa; min-height:100vh; }
+    .wrap { max-width:560px; margin:0 auto; padding:20px; }
+    h2 { color:#c4151c; }
+    #JazzCashErrorDiv { color:red; padding:8px 0; }
+    #JazzCashSuccessDiv { color:green; padding:8px 0; }
+  </style>
+  <script src="https://code.jquery.com/jquery-2.1.4.js"></script>
+  <script src="${hpcBase}/HostedPay/Scripts/PayChk3DS.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Pay with Card</h2>
+    <form id="onlineform" action="${escapeHtml(returnUrl)}" method="POST">
+      <div id="JazzCashFields">
+        <div id="JazzCashErrorDiv" style="display:none;"></div>
+        <div id="JazzCashSuccessDiv" style="display:none;"></div>
+      </div>
+${initialFields}
+      <noscript><button type="submit">Continue</button></noscript>
+    </form>
+  </div>
+  <script>
+    var pp_payload = ${payloadJs};
+    $(document).ready(function () {
+      try {
+        populateJazzCashFields(pp_payload);
+      } catch (e) {
+        var err = document.getElementById('JazzCashErrorDiv');
+        err.style.display = 'block';
+        err.textContent = 'Failed to initialize JazzCash card form: ' + e.message;
+      }
+    });
+    window.addEventListener('message', function (evt) {
+      try {
+        var obj = typeof evt.data === 'string' ? JSON.parse(evt.data) : evt.data;
+        if (!obj || typeof obj !== 'object') return;
+        Object.keys(obj).forEach(function (k) {
+          var el = document.getElementById(k);
+          if (el) el.value = obj[k] == null ? '' : obj[k];
+        });
+        document.getElementById('onlineform').submit();
+      } catch (e) {
+        var err = document.getElementById('JazzCashErrorDiv');
+        err.style.display = 'block';
+        err.textContent = 'Failed to process card response: ' + e.message;
+      }
+    }, false);
+  </script>
+</body>
+</html>`;
+}
+
 function buildHostedCheckoutHtml({ payload, postUrl }) {
   const fieldOrder = [
     'pp_Version', 'pp_MerchantID', 'pp_Language', 'pp_TxnType', 'pp_SubMerchantID',
@@ -123,7 +198,9 @@ class JazzCashController {
         customerPhone,
         offerId,
         returnUrl: returnUrlOverride,
+        paymentMethod,
       } = req.body;
+      const method = String(paymentMethod || 'wallet').toLowerCase() === 'card' ? 'card' : 'wallet';
 
       if (!JAZZCASH_MERCHANT_ID || !JAZZCASH_PASSWORD) {
         return res.status(500).json({ success: false, message: 'JazzCash not configured' });
@@ -154,39 +231,67 @@ class JazzCashController {
       // Amount expected in paisas (e.g. 1 PKR -> 100). Caller already converts.
       const formattedAmount = String(Math.round(parseFloat(amount)));
 
-      const payload = {
-        pp_Version: '1.1',
-        pp_MerchantID: JAZZCASH_MERCHANT_ID,
-        pp_Language: 'EN',
-        pp_TxnType: 'MWALLET',
-        pp_SubMerchantID: '',
-        pp_Password: JAZZCASH_PASSWORD,
-        pp_BankID: '',
-        pp_ProductID: '',
-        pp_TxnRefNo: txnRefNo,
-        pp_Amount: formattedAmount,
-        pp_TxnCurrency: 'PKR',
-        pp_TxnDateTime: txnDateTime,
-        pp_TxnExpiryDateTime: txnExpiryDateTime,
-        pp_BillReference: 'billRef',
-        pp_Description: `Salon Appointment - ${customerName || 'Customer'}`,
-        pp_ReturnURL: returnUrl,
-        ppmpf_1: txnRefNo,
-        ppmpf_2: '',
-        ppmpf_3: '',
-        ppmpf_4: '',
-        ppmpf_5: '',
-        pp_MobileNumber: customerPhone || '',
-        pp_CNIC: '',
-      };
-
       if (!JAZZCASH_INTEGRITY_SALT) {
         return res.status(500).json({
           success: false,
           message: 'JAZZCASH_INTEGRITY_SALT env var is required to sign the request',
         });
       }
-      payload.pp_SecureHash = generateHash(payload, JAZZCASH_INTEGRITY_SALT);
+
+      let payload;
+      let html;
+      if (method === 'card') {
+        const cardExpiry = formatDate(new Date(now.getTime() + 3 * 60 * 60 * 1000));
+        payload = {
+          pp_Version: '1.1',
+          pp_MerchantID: JAZZCASH_MERCHANT_ID,
+          pp_TxnType: 'MPAY',
+          pp_Password: JAZZCASH_PASSWORD,
+          pp_TxnRefNo: txnRefNo,
+          pp_DiscountedAmount: '',
+          pp_DiscountBank: '',
+          pp_Amount: formattedAmount,
+          pp_TxnCurrency: 'PKR',
+          pp_TxnDateTime: txnDateTime,
+          pp_TxnExpiryDateTime: cardExpiry,
+          pp_BillReference: 'billRef',
+          pp_Description: `Salon Appointment - ${customerName || 'Customer'}`,
+          pp_ReturnURL: returnUrl,
+          ppmpf_1: txnRefNo,
+          ppmpf_2: '',
+          ppmpf_3: '',
+          ppmpf_4: '',
+          ppmpf_5: '',
+        };
+        payload.pp_SecureHash = generateHash(payload, JAZZCASH_INTEGRITY_SALT);
+      } else {
+        payload = {
+          pp_Version: '1.1',
+          pp_MerchantID: JAZZCASH_MERCHANT_ID,
+          pp_Language: 'EN',
+          pp_TxnType: 'MWALLET',
+          pp_SubMerchantID: '',
+          pp_Password: JAZZCASH_PASSWORD,
+          pp_BankID: '',
+          pp_ProductID: '',
+          pp_TxnRefNo: txnRefNo,
+          pp_Amount: formattedAmount,
+          pp_TxnCurrency: 'PKR',
+          pp_TxnDateTime: txnDateTime,
+          pp_TxnExpiryDateTime: txnExpiryDateTime,
+          pp_BillReference: 'billRef',
+          pp_Description: `Salon Appointment - ${customerName || 'Customer'}`,
+          pp_ReturnURL: returnUrl,
+          ppmpf_1: txnRefNo,
+          ppmpf_2: '',
+          ppmpf_3: '',
+          ppmpf_4: '',
+          ppmpf_5: '',
+          pp_MobileNumber: customerPhone || '',
+          pp_CNIC: '',
+        };
+        payload.pp_SecureHash = generateHash(payload, JAZZCASH_INTEGRITY_SALT);
+      }
 
       await query(
         `INSERT INTO jazzcash_transactions (txn_ref_no, user_id, amount, metadata, status, created_at)
@@ -194,10 +299,18 @@ class JazzCashController {
         [txnRefNo, req.user.id, amount, metadata]
       );
 
-      const html = buildHostedCheckoutHtml({
-        payload,
-        postUrl: JAZZCASH_POST_URL,
-      });
+      if (method === 'card') {
+        html = buildCardCheckoutHtml({
+          payload,
+          hpcBase: JAZZCASH_HPC_BASE,
+          returnUrl,
+        });
+      } else {
+        html = buildHostedCheckoutHtml({
+          payload,
+          postUrl: JAZZCASH_POST_URL,
+        });
+      }
 
       const wantsHtml = req.accepts(['html', 'json']) === 'html' || String(req.query.format || '').toLowerCase() === 'html';
       if (wantsHtml) {
@@ -208,8 +321,9 @@ class JazzCashController {
       res.status(200).json({
         success: true,
         txnRefNo,
+        paymentMethod: method,
         checkoutHtml: html,
-        hpcUrl: JAZZCASH_POST_URL,
+        hpcUrl: method === 'card' ? returnUrl : JAZZCASH_POST_URL,
         payload,
       });
     } catch (error) {
@@ -223,10 +337,12 @@ class JazzCashController {
       const data = { ...(req.body || {}), ...(req.query || {}) };
       console.log('📥 JazzCash return:', JSON.stringify(data));
 
-      const responseCode = data.pp_ResponseCode;
-      const responseMessage = data.pp_ResponseMessage || '';
+      const responseCode = data.pp_ResponseCode || data.ResponseCode;
+      const responseMessage = data.pp_ResponseMessage || data.ResponseMessage || '';
       const rrn = data.pp_RetreivalReferenceNo || data.pp_RetrievalReferenceNo || '';
       const txnRefNo = data.pp_TxnRefNo || data.ppmpf_1 || '';
+      const instrToken = data.pp_InstrToken || '';
+      if (instrToken) console.log('💳 JazzCash card instr token for', txnRefNo, ':', instrToken);
 
       const success = responseCode === '000' || responseCode === '121';
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
