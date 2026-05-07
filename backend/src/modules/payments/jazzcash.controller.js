@@ -1,31 +1,48 @@
+const crypto = require('crypto');
 const { query } = require('../../config/db');
 const emailService = require('../auth/auth.service.email');
 
 const JAZZCASH_MERCHANT_ID = process.env.JAZZCASH_MERCHANT_ID || 'MC735135';
 const JAZZCASH_PASSWORD = process.env.JAZZCASH_PASSWORD || 'y6yhfw7130';
+const JAZZCASH_INTEGRITY_SALT = process.env.JAZZCASH_INTEGRITY_SALT || '';
 const JAZZCASH_HPC_BASE = process.env.JAZZCASH_HPC_BASE || 'https://sandbox.jazzcash.com.pk';
+const JAZZCASH_POST_URL = process.env.JAZZCASH_POST_URL
+  || `${JAZZCASH_HPC_BASE}/CustomerPortal/transactionmanagement/merchantform/`;
 const JAZZCASH_RETURN_URL = process.env.JAZZCASH_RETURN_URL;
+
+function generateHash(params, salt) {
+  const sortedKeys = Object.keys(params)
+    .filter(k => k !== 'pp_SecureHash' && params[k] !== '' && params[k] != null)
+    .sort();
+  const hashString = salt + '&' + sortedKeys.map(k => params[k]).join('&');
+  return crypto.createHmac('sha256', salt).update(hashString).digest('hex').toUpperCase();
+}
 
 function pad(n) { return String(n).padStart(2, '0'); }
 function formatDate(date) {
   return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 }
 
-function escapeJs(value) {
-  return JSON.stringify(value == null ? '' : String(value));
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function buildHostedCheckoutHtml({ payload, hpcBase }) {
-  const fields = [
+function buildHostedCheckoutHtml({ payload, postUrl }) {
+  const fieldOrder = [
     'pp_Version', 'pp_MerchantID', 'pp_Language', 'pp_TxnType', 'pp_SubMerchantID',
     'pp_Password', 'pp_BankID', 'pp_ProductID', 'pp_TxnRefNo', 'pp_Amount',
     'pp_TxnCurrency', 'pp_TxnDateTime', 'pp_TxnExpiryDateTime', 'pp_BillReference',
     'pp_Description', 'pp_ReturnURL', 'ppmpf_1', 'ppmpf_2', 'ppmpf_3', 'ppmpf_4',
     'ppmpf_5', 'pp_SecureHash', 'pp_MobileNumber', 'pp_CNIC',
   ];
-  const payloadJs = fields
-    .map(k => `        ${k}: ${escapeJs(payload[k] != null ? payload[k] : '')}`)
-    .join(',\n');
+  const inputs = fieldOrder
+    .map(k => `      <input type="hidden" name="${k}" value="${escapeHtml(payload[k])}" />`)
+    .join('\n');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -38,38 +55,19 @@ function buildHostedCheckoutHtml({ payload, hpcBase }) {
     .card { text-align:center; padding:32px; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.08); }
     .spinner { width:42px; height:42px; margin:0 auto 16px; border:4px solid #eee; border-top-color:#c4151c; border-radius:50%; animation:spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #JazzCashErrorDiv { color:red; margin-top:12px; }
   </style>
-  <script src="https://code.jquery.com/jquery-2.1.4.js"></script>
-  <script src="${hpcBase}/HostedPay/Scripts/ChkOut.js"></script>
 </head>
 <body>
   <div class="card">
     <div class="spinner"></div>
     <p>Redirecting to JazzCash...</p>
-    <form id="onlineform" action="${hpcBase}/HPC/action_POST.php" method="POST">
-      <div id="JazzCashFields">
-        <div id="JazzCashErrorDiv" style="display:none;"></div>
-      </div>
+    <form id="onlineform" action="${escapeHtml(postUrl)}" method="POST">
+${inputs}
       <noscript><button type="submit">Continue to JazzCash</button></noscript>
     </form>
   </div>
   <script>
-    $(document).ready(function () {
-      var pp_payload = {
-${payloadJs}
-      };
-      try {
-        populateJazzCashFields(pp_payload);
-        setTimeout(function () {
-          var f = document.getElementById('onlineform');
-          if (f) f.submit();
-        }, 200);
-      } catch (e) {
-        document.getElementById('JazzCashErrorDiv').style.display = 'block';
-        document.getElementById('JazzCashErrorDiv').textContent = 'Failed to initialize JazzCash: ' + e.message;
-      }
-    });
+    document.getElementById('onlineform').submit();
   </script>
 </body>
 </html>`;
@@ -124,6 +122,7 @@ class JazzCashController {
         customerEmail,
         customerPhone,
         offerId,
+        returnUrl: returnUrlOverride,
       } = req.body;
 
       if (!JAZZCASH_MERCHANT_ID || !JAZZCASH_PASSWORD) {
@@ -146,7 +145,11 @@ class JazzCashController {
         offerId: offerId || '',
       });
 
-      const returnUrl = JAZZCASH_RETURN_URL || `${process.env.BACKEND_URL}/api/${process.env.API_VERSION || 'v1'}/payments/jazzcash/return`;
+      const defaultReturn = JAZZCASH_RETURN_URL
+        || (process.env.BACKEND_URL
+          ? `${process.env.BACKEND_URL}/api/${process.env.API_VERSION || 'v1'}/payments/jazzcash/return`
+          : 'https://api.queensmarrybeautysaloon.com/api/v1/payments/jazzcash/return');
+      const returnUrl = (returnUrlOverride && String(returnUrlOverride).trim()) || defaultReturn;
 
       // Amount expected in paisas (e.g. 1 PKR -> 100). Caller already converts.
       const formattedAmount = String(Math.round(parseFloat(amount)));
@@ -173,10 +176,17 @@ class JazzCashController {
         ppmpf_3: '',
         ppmpf_4: '',
         ppmpf_5: '',
-        pp_SecureHash: '',
         pp_MobileNumber: customerPhone || '',
         pp_CNIC: '',
       };
+
+      if (!JAZZCASH_INTEGRITY_SALT) {
+        return res.status(500).json({
+          success: false,
+          message: 'JAZZCASH_INTEGRITY_SALT env var is required to sign the request',
+        });
+      }
+      payload.pp_SecureHash = generateHash(payload, JAZZCASH_INTEGRITY_SALT);
 
       await query(
         `INSERT INTO jazzcash_transactions (txn_ref_no, user_id, amount, metadata, status, created_at)
@@ -184,7 +194,10 @@ class JazzCashController {
         [txnRefNo, req.user.id, amount, metadata]
       );
 
-      const html = buildHostedCheckoutHtml({ payload, hpcBase: JAZZCASH_HPC_BASE });
+      const html = buildHostedCheckoutHtml({
+        payload,
+        postUrl: JAZZCASH_POST_URL,
+      });
 
       const wantsHtml = req.accepts(['html', 'json']) === 'html' || String(req.query.format || '').toLowerCase() === 'html';
       if (wantsHtml) {
@@ -196,7 +209,7 @@ class JazzCashController {
         success: true,
         txnRefNo,
         checkoutHtml: html,
-        hpcUrl: `${JAZZCASH_HPC_BASE}/HPC/action_POST.php`,
+        hpcUrl: JAZZCASH_POST_URL,
         payload,
       });
     } catch (error) {
