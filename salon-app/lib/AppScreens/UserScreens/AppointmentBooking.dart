@@ -321,10 +321,10 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       throw Exception(response['message'] ?? 'Failed to initiate JazzCash payment');
     }
 
-    final paymentUrl = response['paymentUrl'] as String;
-    final formData = Map<String, String>.from(
-      (response['formData'] as Map).map((k, v) => MapEntry(k.toString(), v.toString())),
-    );
+    final checkoutHtml = response['checkoutHtml'] as String?;
+    if (checkoutHtml == null || checkoutHtml.isEmpty) {
+      throw Exception('JazzCash checkout HTML missing in response');
+    }
 
     if (!mounted) return;
 
@@ -332,8 +332,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => JazzCashPaymentScreen(
-          paymentUrl: paymentUrl,
-          formData: formData,
+          checkoutHtml: checkoutHtml,
           returnUrlBase: 'payment-',
         ),
       ),

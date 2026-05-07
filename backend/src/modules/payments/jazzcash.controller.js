@@ -15,7 +15,13 @@ function generateHash(params, salt) {
     .filter(k => k !== 'pp_SecureHash' && params[k] !== '' && params[k] != null)
     .sort();
   const hashString = salt + '&' + sortedKeys.map(k => params[k]).join('&');
-  return crypto.createHmac('sha256', salt).update(hashString).digest('hex').toUpperCase();
+  const hash = crypto.createHmac('sha256', salt).update(hashString).digest('hex').toUpperCase();
+  if (process.env.JAZZCASH_DEBUG === '1') {
+    console.log('🔐 JazzCash hash sortedKeys:', sortedKeys);
+    console.log('🔐 JazzCash hash dataString:', hashString);
+    console.log('🔐 JazzCash hash result:', hash);
+  }
+  return hash;
 }
 
 function pad(n) { return String(n).padStart(2, '0'); }
