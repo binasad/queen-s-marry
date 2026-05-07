@@ -148,8 +148,8 @@ class JazzCashController {
 
       const returnUrl = JAZZCASH_RETURN_URL || `${process.env.BACKEND_URL}/api/${process.env.API_VERSION || 'v1'}/payments/jazzcash/return`;
 
-      // Amount in paisas (e.g. 1 PKR -> 100)
-      const formattedAmount = String(Math.round(parseFloat(amount) * 100));
+      // Amount expected in paisas (e.g. 1 PKR -> 100). Caller already converts.
+      const formattedAmount = String(Math.round(parseFloat(amount)));
 
       const payload = {
         pp_Version: '1.1',
