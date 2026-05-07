@@ -68,7 +68,7 @@ server.listen(PORT, '0.0.0.0', async () => {
   console.log(`\n🚀 Server running on port ${PORT}`);
   console.log(`📝 Environment: ${env.nodeEnv}`);
   console.log(`🔗 API Base URL: ${env.backendUrl}`);
-  console.log(`🔌 WebSocket enabled`);
+  console.log(`🔌 WebSocket enableed`);
 
   // Test database connection and run migrations
   try {

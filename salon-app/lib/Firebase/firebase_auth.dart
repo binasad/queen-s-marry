@@ -26,6 +26,7 @@ class AuthService {
       });
     } catch (error) {
       print(error.toString());
+      print("check the error");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Center(

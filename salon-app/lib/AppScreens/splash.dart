@@ -72,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  "Queens Saloon", // Fixed: Used double quotes to allow the apostrophe
+                  "Queen's Marry", // Fixed: Used double quotes to allow the apostrophe
                   style: TextStyle(
                     fontSize: 32,
                     color: Colors.black,

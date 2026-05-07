@@ -36,8 +36,7 @@ resource "aws_security_group" "my_security_group" {
     description = "HTTP"
   }
 
-  # Port 5000 is intentionally NOT exposed publicly.
-  # Nginx (port 443/80) proxies to localhost:5000 internally.
+  
 
   ingress {
     from_port   = 443
@@ -64,20 +63,12 @@ resource "aws_instance" "my_instance" {
   key_name               = aws_key_pair.my_key.key_name
   vpc_security_group_ids = [aws_security_group.my_security_group.id]
 
-  # Bootstrap: installs Node 20, PM2, Nginx reverse-proxy, Docker, Certbot, CloudWatch
+  # Bootstrap: installs Node 20, PM2, Nginx reverse-proxy, Docker, Certbot
   user_data = file("${path.module}/user-data.sh")
 
   root_block_device {
     volume_size = 15
     volume_type = "gp3"
-  }
-
-  # Ignore user_data changes on existing instance.
-  # user_data only runs on first boot of a NEW server.
-  # To apply user_data changes: manually run the commands on the server,
-  # or intentionally recreate the instance by removing this block.
-  lifecycle {
-    ignore_changes = [user_data, ami]
   }
 
   tags = {

@@ -18,6 +18,7 @@ const initiateValidation = [
 
 router.post('/initiate', auth, initiateValidation, handleValidationErrors, jazzcashController.initiatePayment);
 router.post('/return', jazzcashController.handleReturn);
+router.get('/return', jazzcashController.handleReturn);
 router.post('/notify', jazzcashController.handleServerNotification);
 router.get('/status/:txnRefNo', auth, jazzcashController.getTransactionStatus);
 
