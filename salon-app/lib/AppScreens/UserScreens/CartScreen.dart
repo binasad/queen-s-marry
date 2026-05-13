@@ -7,7 +7,6 @@ import 'package:lottie/lottie.dart';
 
 import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
-import '../../services/appointment_service.dart';
 import '../../services/user_service.dart';
 import '../../utils/error_handler.dart';
 import '../../utils/haptic_feedback.dart';
@@ -34,7 +33,6 @@ class CartScreen extends ConsumerStatefulWidget {
 class _CartScreenState extends ConsumerState<CartScreen> {
   final ApiService _api = ApiService();
   final UserService _userService = UserService();
-  final AppointmentService _appointments = AppointmentService();
 
   String _paymentMethod = 'jazzcash'; // 'jazzcash' | 'stripe'
   bool _processing = false;
@@ -329,18 +327,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
   // ─────────────────────────── Booking flow ───────────────────────────
   //
-  // Design: one combined payment for the running total covers the entire cart.
-  //   1. The first cart item acts as the "anchor" — the existing
-  //      `/payments/*` endpoint always couples the transaction to one service,
-  //      and the backend creates that appointment automatically on success.
-  //   2. After the single payment succeeds, every other cart item is created
-  //      via `POST /appointments` with `payNow: true` so they're recorded as
-  //      paid alongside the anchor.
-  //   3. Cart is cleared and the user is taken to "My Bookings".
+  // Design: one combined payment for the cart total. The full cartItems array
+  // is sent to the backend so the Stripe webhook / JazzCash return handler can
+  // materialise *one paid appointment per cart line* and emit one push
+  // notification for each.
 
   Future<void> _bookNow(List<Map<String, dynamic>> items) async {
-    // Every item must already have a schedule (we enforce this at Add-to-Cart
-    // time, but guard against legacy items that pre-date the change).
+    // Every item must already have a schedule.
     for (var i = 0; i < items.length; i++) {
       final d = items[i]['scheduledDate'];
       final t = items[i]['scheduledTime'];
@@ -376,20 +369,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         return;
       }
 
-      // Create the secondary appointments (items 1..n). The anchor (items[0])
-      // is created server-side by the payment webhook / confirm step.
-      int extraBooked = 0;
-      for (var i = 1; i < items.length; i++) {
-        try {
-          await _createPaidAppointment(items[i]);
-          extraBooked += 1;
-        } catch (e) {
-          debugPrint('⚠️ Failed to create secondary appointment $i: $e');
-        }
-      }
-
+      // Backend has now created one appointment per cart line and emitted a
+      // push notification for each. Clear the cart and show the success
+      // dialog.
+      final count = items.length;
       await ref.read(cartProvider.notifier).clear();
-      if (mounted) _showSuccessDialog(1 + extraBooked);
+      if (mounted) _showSuccessDialog(count);
     } catch (e) {
       if (e is StripeException) {
         _toast('Payment cancelled', Colors.orange);
@@ -401,24 +386,34 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     }
   }
 
-  /// One Stripe Payment Sheet charging the cart total. The anchor service's
-  /// id/date/time is attached so the existing webhook creates that appointment.
+  /// Build the `cartItems` payload sent to the backend's payment endpoints.
+  List<Map<String, dynamic>> _buildCartItemsPayload(List<Map<String, dynamic>> items) {
+    return items.map((item) {
+      final service = Map<String, dynamic>.from(item['service'] as Map);
+      return {
+        'serviceId': service['id'].toString(),
+        'appointmentDate': item['scheduledDate'].toString(),
+        'appointmentTime': _convertTo24Hour(item['scheduledTime'].toString()),
+        if ((item['offerId']?.toString() ?? '').isNotEmpty)
+          'offerId': item['offerId'].toString(),
+        'unitPrice': (item['unitPrice'] as num?)?.toDouble() ?? 0,
+      };
+    }).toList();
+  }
+
+  /// One Stripe Payment Sheet charging the cart total. The backend webhook
+  /// reads the embedded `cartItems` metadata and creates N appointments + N
+  /// push notifications on success.
   Future<bool> _payStripeTotal(List<Map<String, dynamic>> items, double total) async {
-    final anchor = items.first;
-    final anchorService = Map<String, dynamic>.from(anchor['service'] as Map);
     final cents = (total * 100).round().clamp(100, 999999999);
 
     final intent = await _api.post('/payments/create-intent', {
       'amount': cents,
       'currency': 'pkr',
-      'serviceId': anchorService['id'].toString(),
-      'appointmentDate': anchor['scheduledDate'].toString(),
-      'appointmentTime': _convertTo24Hour(anchor['scheduledTime'].toString()),
       'customerName': _userName ?? 'Customer',
       'customerEmail': _userEmail ?? '',
       'customerPhone': _userPhone ?? '',
-      if ((anchor['offerId']?.toString() ?? '').isNotEmpty)
-        'offerId': anchor['offerId'].toString(),
+      'cartItems': _buildCartItemsPayload(items),
     });
 
     final clientSecret = intent['clientSecret'];
@@ -445,23 +440,18 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     return true;
   }
 
-  /// One JazzCash checkout session charging the cart total. The anchor service
-  /// is attached so the backend creates that appointment on success.
+  /// One JazzCash checkout session charging the cart total. The backend's
+  /// return handler reads the persisted `cartItems` metadata and creates N
+  /// appointments + N push notifications on success.
   Future<bool> _payJazzCashTotal(List<Map<String, dynamic>> items, double total) async {
-    final anchor = items.first;
-    final anchorService = Map<String, dynamic>.from(anchor['service'] as Map);
     final amountInPaisa = (total * 100).round();
 
     final response = await _api.post('/payments/jazzcash/initiate', {
       'amount': amountInPaisa,
-      'serviceId': anchorService['id'].toString(),
-      'appointmentDate': anchor['scheduledDate'].toString(),
-      'appointmentTime': _convertTo24Hour(anchor['scheduledTime'].toString()),
       'customerName': _userName ?? 'Customer',
       'customerEmail': _userEmail ?? '',
       'customerPhone': _userPhone ?? '',
-      if ((anchor['offerId']?.toString() ?? '').isNotEmpty)
-        'offerId': anchor['offerId'].toString(),
+      'cartItems': _buildCartItemsPayload(items),
     });
 
     if (response['success'] != true) {
@@ -483,28 +473,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       ),
     );
     return result == 'success';
-  }
-
-  /// Create a paid appointment record for a non-anchor cart item.
-  ///
-  /// Backend's `POST /appointments` with `payNow: true` already (a) marks the
-  /// row paid + confirmed, (b) emits the WebSocket events, and (c) sends the
-  /// push notification + confirmation email. No follow-up `markAsPaid` call is
-  /// needed — and that endpoint is admin-only anyway.
-  Future<void> _createPaidAppointment(Map<String, dynamic> item) async {
-    final service = Map<String, dynamic>.from(item['service'] as Map);
-    final offerId = item['offerId']?.toString();
-    await _appointments.createAppointment(
-      serviceId: service['id'].toString(),
-      appointmentDate: item['scheduledDate'].toString(),
-      appointmentTime: _convertTo24Hour(item['scheduledTime'].toString()),
-      customerName: _userName ?? 'Customer',
-      customerEmail: _userEmail ?? '',
-      customerPhone: _userPhone ?? '',
-      payNow: true,
-      paymentMethod: _paymentMethod, // 'jazzcash' | 'stripe' (validator now accepts both)
-      offerId: offerId,
-    );
   }
 
   void _showSuccessDialog(int count) {

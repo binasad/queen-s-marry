@@ -11,7 +11,6 @@ import '../../services/service_catalog_service.dart';
 import '../../services/user_service.dart';
 import '../../services/websocket_service.dart';
 import '../../providers/services_provider.dart';
-import '../../utils/debouncer.dart';
 import '../../utils/error_handler.dart';
 import '../../utils/haptic_feedback.dart';
 import '../../widgets/skeleton_loader.dart';
@@ -22,6 +21,7 @@ import 'AppointmentBooking.dart';
 import 'Course Screens/CourseDetails.dart';
 import 'Course Screens/CoursesScreen.dart';
 import 'UserNotifications.dart';
+import 'ServiceSearchScreen.dart';
 import '../PersonalInfo.dart';
 import '../../widgets/cart_icon_button.dart';
 import '../../services/course_service.dart';
@@ -58,8 +58,6 @@ class UserHome extends ConsumerStatefulWidget {
 class _UserHomeState extends ConsumerState<UserHome>
     with SingleTickerProviderStateMixin {
   String location = "I8 Markaz, ISB";
-  final TextEditingController _searchController = TextEditingController();
-  late Debouncer _searchDebouncer;
 
   // Animation controller for the internal staggered entrance
   late AnimationController _entranceController;
@@ -120,14 +118,8 @@ class _UserHomeState extends ConsumerState<UserHome>
       }
     });
 
-    _searchDebouncer = Debouncer(delay: const Duration(milliseconds: 500));
-
     // Load all data from APIs
     _loadAllData();
-
-    _searchController.addListener(() {
-      _searchDebouncer.call(_onSearchChanged);
-    });
 
     // Refresh offers when admin updates (WebSocket)
     _offersUpdatedSubscription = WebSocketService().offersUpdatedStream.listen((_) {
@@ -160,7 +152,6 @@ class _UserHomeState extends ConsumerState<UserHome>
   void dispose() {
     _offersUpdatedSubscription?.cancel();
     _entranceController.dispose();
-    _searchController.dispose();
     _offerPageController.dispose();
     super.dispose();
   }
@@ -315,32 +306,6 @@ class _UserHomeState extends ConsumerState<UserHome>
     } catch (e) {
       debugPrint('Failed to load user profile: $e');
     }
-  }
-
-  void _onSearchChanged() {
-    final query = _searchController.text.toLowerCase().trim();
-    if (query.isEmpty) {
-      // Reset to full lists
-      loadOffers();
-      loadExperts();
-      return;
-    }
-
-    setState(() {
-      // Filter offers
-      filteredOffers = filteredOffers.where((offer) {
-        final title = (offer['title'] ?? '').toString().toLowerCase();
-        final discount = (offer['discount'] ?? '').toString().toLowerCase();
-        return title.contains(query) || discount.contains(query);
-      }).toList();
-
-      // Filter experts
-      filteredExperts = filteredExperts.where((expert) {
-        final name = (expert['name'] ?? '').toString().toLowerCase();
-        final specialty = (expert['specialty'] ?? '').toString().toLowerCase();
-        return name.contains(query) || specialty.contains(query);
-      }).toList();
-    });
   }
 
   @override
@@ -542,22 +507,65 @@ class _UserHomeState extends ConsumerState<UserHome>
   }
 
   Widget _buildSearchBar() {
+    // Tapping anywhere on the bar pushes the dedicated search screen, which
+    // has the real autofocused input + live results. We render the home bar
+    // as a non-interactive look-alike so the home screen stays clean and the
+    // backend search is only hit once a user actually opens search.
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-        child: TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Search services...',
-            prefixIcon: const Icon(
-              CupertinoIcons.search,
-              color: Color(0xFFE91E63),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+        child: Material(
+          color: Colors.white,
+          elevation: 0,
+          borderRadius: BorderRadius.circular(18),
+          shadowColor: const Color(0xFFFF6CBF).withOpacity(0.10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            splashColor: const Color(0xFFFF6CBF).withOpacity(0.08),
+            highlightColor: const Color(0xFFFF6CBF).withOpacity(0.05),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ServiceSearchScreen()),
+              );
+            },
+            child: Container(
+              height: 52,
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: const Color(0xFFFF6CBF).withOpacity(0.15),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6CBF).withOpacity(0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    CupertinoIcons.search,
+                    color: Color(0xFFE91E63),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Search services',
+                    style: TextStyle(
+                      color: Colors.grey[500],
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

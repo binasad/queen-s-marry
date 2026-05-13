@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -36,6 +38,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           _apiNotifications = list;
           _loading = false;
         });
+      }
+      // Auto-mark everything as read once the user has actually seen the list.
+      // Fires in the background — failures are non-fatal.
+      if (list.any((n) => !n.isRead)) {
+        unawaited(_notificationService.markAllAsRead());
       }
     } catch (e) {
       if (mounted) {
@@ -89,7 +96,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Clear all'),
         content: const Text(
-          'Clear all notifications? This clears only in-app notifications from this session.',
+          'Clear all your notifications? This cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -97,10 +104,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              NotificationManager.instance.clearAll();
-              setState(() {});
+            onPressed: () async {
+              // Capture the messenger before any async gap so we don't
+              // dereference `context` post-await.
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
+              // Clear the live in-memory list immediately for snappy UI.
+              NotificationManager.instance.clearAll();
+              // Optimistically empty the API list, then call the backend.
+              setState(() => _apiNotifications = []);
+              final ok = await _notificationService.clearAll();
+              if (!mounted) return;
+              if (!ok) {
+                // Fall back to a reload so the list reflects backend state.
+                await _loadNotifications();
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Could not clear notifications. Please try again.')),
+                );
+              }
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFFF6CBF),

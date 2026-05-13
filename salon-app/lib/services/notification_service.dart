@@ -52,4 +52,44 @@ class NotificationService {
       return [];
     }
   }
+
+  /// Mark a single notification as read on the backend.
+  Future<bool> markAsRead(String id) async {
+    try {
+      await _api.put('/notifications/$id/read', {});
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Mark all of the current user's notifications as read.
+  Future<bool> markAllAsRead() async {
+    try {
+      await _api.put('/notifications/read-all', {});
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Delete a single notification (scoped to the current user).
+  Future<bool> deleteOne(String id) async {
+    try {
+      await _api.delete('/notifications/$id');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Clear all notifications for the current user on the backend.
+  Future<bool> clearAll() async {
+    try {
+      await _api.delete('/notifications/my');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 }
