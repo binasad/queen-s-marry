@@ -121,23 +121,6 @@ async function createAppointmentsForPayment(opts) {
 
   for (const item of items) {
     try {
-      // Skip if a row for this exact (intent, service, date, time) already
-      // exists — handles webhook retries and partial-failure replays without
-      // double-booking.
-      const dupCheck = await query(
-        `SELECT id FROM appointments
-         WHERE payment_intent_id = $1
-           AND service_id = $2
-           AND appointment_date = $3
-           AND appointment_time = $4
-         LIMIT 1`,
-        [paymentIntentId, item.serviceId, item.appointmentDate, item.appointmentTime]
-      );
-      if (dupCheck.rows.length > 0) {
-        console.log('⏭️  payments: skipping already-created appointment for', paymentIntentId, item.serviceId);
-        continue;
-      }
-
       const serviceResult = await query(
         'SELECT id, name, price FROM services WHERE id = $1 AND is_active = TRUE',
         [item.serviceId]
@@ -170,6 +153,14 @@ async function createAppointmentsForPayment(opts) {
         appliedOfferId = pricing.appliedOfferId;
       }
 
+      // Race-safe insert: if the Stripe webhook AND
+      // /payments/confirm-appointment fire concurrently for the same payment,
+      // only one of them actually creates each cart line — the other's INSERT
+      // is a no-op (ON CONFLICT DO NOTHING). Only the winner returns a row and
+      // fires email/WebSocket/push, so we never double-notify.
+      // Relies on the unique partial index
+      //   (payment_intent_id, service_id, appointment_date, appointment_time)
+      // installed by migrations/unique_appointment_per_cart_line.sql.
       const result = await query(
         `INSERT INTO appointments (
           user_id, service_id, customer_name, customer_phone, customer_email,
@@ -177,6 +168,9 @@ async function createAppointmentsForPayment(opts) {
           total_price, notes, paid_at, payment_intent_id, offer_id
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'confirmed', 'paid', $8, $9, '', CURRENT_TIMESTAMP, $10, $11)
+        ON CONFLICT (payment_intent_id, service_id, appointment_date, appointment_time)
+          WHERE payment_intent_id IS NOT NULL
+        DO NOTHING
         RETURNING *`,
         [
           userId,
@@ -192,6 +186,12 @@ async function createAppointmentsForPayment(opts) {
           appliedOfferId,
         ]
       );
+      if (result.rows.length === 0) {
+        // A concurrent caller (webhook ↔ confirm-appointment) already inserted
+        // this exact line — let them own the side effects.
+        console.log('⏭️  payments: appointment already created by concurrent path for', paymentIntentId, item.serviceId);
+        continue;
+      }
       const appointment = result.rows[0];
       created.push({ appointment, service });
       console.log('✅ payments: created appointment', appointment.id, 'for', paymentIntentId);
