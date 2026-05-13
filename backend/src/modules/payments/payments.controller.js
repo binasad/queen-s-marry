@@ -121,6 +121,23 @@ async function createAppointmentsForPayment(opts) {
 
   for (const item of items) {
     try {
+      // Skip if a row for this exact (intent, service, date, time) already
+      // exists — handles webhook retries and partial-failure replays without
+      // double-booking.
+      const dupCheck = await query(
+        `SELECT id FROM appointments
+         WHERE payment_intent_id = $1
+           AND service_id = $2
+           AND appointment_date = $3
+           AND appointment_time = $4
+         LIMIT 1`,
+        [paymentIntentId, item.serviceId, item.appointmentDate, item.appointmentTime]
+      );
+      if (dupCheck.rows.length > 0) {
+        console.log('⏭️  payments: skipping already-created appointment for', paymentIntentId, item.serviceId);
+        continue;
+      }
+
       const serviceResult = await query(
         'SELECT id, name, price FROM services WHERE id = $1 AND is_active = TRUE',
         [item.serviceId]
@@ -306,17 +323,6 @@ class PaymentsController {
   async _handlePaymentSucceeded(paymentIntent) {
     const { id: paymentIntentId, metadata } = paymentIntent;
 
-    // Idempotency: if we've already materialised any appointment for this
-    // intent, assume the whole cart was processed and skip a re-run.
-    const existing = await query(
-      'SELECT id FROM appointments WHERE payment_intent_id = $1',
-      [paymentIntentId]
-    );
-    if (existing.rows.length > 0) {
-      console.log('✅ Webhook: appointment(s) already created for', paymentIntentId);
-      return;
-    }
-
     const { userId, customerName, customerEmail, customerPhone } = metadata;
     if (!userId) {
       console.error('❌ Webhook: missing userId in metadata', metadata);
@@ -335,6 +341,18 @@ class PaymentsController {
         serviceId, appointmentDate, appointmentTime,
         offerId: offerId || '', unitPrice: null,
       }];
+    }
+
+    // Idempotency: skip only when the full cart has already been materialised
+    // for this payment. A partial result (e.g. a previous run crashed mid-loop)
+    // should still be allowed to finish on retry.
+    const existing = await query(
+      'SELECT id FROM appointments WHERE payment_intent_id = $1',
+      [paymentIntentId]
+    );
+    if (existing.rows.length >= items.length) {
+      console.log('✅ Webhook: appointment(s) already created for', paymentIntentId);
+      return;
     }
 
     try {

@@ -136,7 +136,7 @@ CREATE TABLE appointments (
     cancelled_reason TEXT,
     paid_at TIMESTAMP,
     cancelled_at TIMESTAMP,
-    payment_intent_id VARCHAR(255) UNIQUE,
+    payment_intent_id VARCHAR(255), -- not UNIQUE: cart-checkout produces N rows per payment intent
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
