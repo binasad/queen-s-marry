@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import '../../services/service_catalog_service.dart';
 import '../../widgets/cached_image.dart';
+import '../../widgets/cart_icon_button.dart';
 import '../../services/websocket_service.dart';
 import 'ApiCategoryServicesTabbed.dart';
 
@@ -106,6 +107,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
             letterSpacing: -0.5,
           ),
         ),
+        actions: const [CartIconButton(iconColor: Colors.black87)],
       ),
       body: Column(
         children: [

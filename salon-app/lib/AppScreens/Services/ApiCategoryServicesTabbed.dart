@@ -3,6 +3,7 @@ import 'dart:async';
 import '../../services/service_catalog_service.dart';
 import '../../widgets/cached_image.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../widgets/cart_icon_button.dart';
 import '../../services/websocket_service.dart';
 import 'servicesdetails.dart';
 
@@ -141,7 +142,7 @@ class _ApiCategoryServicesTabbedScreenState
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: const [SizedBox(width: 48)],
+        actions: const [CartIconButton(iconColor: Colors.black87)],
         title: Text(
           widget.title,
           style: const TextStyle(

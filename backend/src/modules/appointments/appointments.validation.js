@@ -38,7 +38,7 @@ const validationRules = {
       .withMessage('payNow must be a boolean'),
     body('paymentMethod')
       .optional()
-      .isIn(['online', 'cash', 'card'])
+      .isIn(['online', 'cash', 'card', 'jazzcash', 'stripe'])
       .withMessage('Invalid payment method'),
     body('expertId')
       .optional()
@@ -71,7 +71,7 @@ const validationRules = {
     body('paymentMethod')
       .notEmpty()
       .withMessage('Payment method is required')
-      .isIn(['online', 'cash', 'card'])
+      .isIn(['online', 'cash', 'card', 'jazzcash', 'stripe'])
       .withMessage('Invalid payment method'),
   ],
 

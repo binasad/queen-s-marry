@@ -1,12 +1,8 @@
-import 'dart:ui';
+import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
-
 import 'package:flutter/material.dart';
-
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../UserScreens/AppointmentBooking.dart';
 
 import '../../services/service_catalog_service.dart';
 import '../../services/offer_service.dart';
@@ -14,9 +10,13 @@ import '../../services/review_service.dart';
 import '../../services/favorites_service.dart';
 import '../../services/api_service.dart';
 import '../../providers/favorites_provider.dart';
+import '../../providers/cart_provider.dart';
 import '../../utils/guest_guard.dart';
 import '../../utils/haptic_feedback.dart';
 import '../../widgets/cached_image.dart';
+import '../../widgets/cart_icon_button.dart';
+import '../../widgets/schedule_picker_sheet.dart';
+import '../UserScreens/CartScreen.dart';
 
 class ServiceDetailedScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> service;
@@ -315,9 +315,9 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
 
           ),
 
-          // Floating Swipe-to-Book Bar
+          // Floating "Add to Cart" CTA bar
 
-          _buildSwipeToBookBar(),
+          _buildAddToCartBar(),
 
         ],
 
@@ -359,6 +359,17 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
 
       ),
       actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: CircleAvatar(
+            backgroundColor: Colors.white.withOpacity(0.9),
+            child: const CartIconButton(
+              iconColor: Colors.black87,
+              iconSize: 22,
+              padding: EdgeInsets.zero,
+            ),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.only(right: 8),
           child: CircleAvatar(
@@ -648,86 +659,104 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
 
 
 
-  Widget _buildSwipeToBookBar() {
+  Future<void> _addToCart() async {
+    HapticHelper.mediumImpact();
+    // Force the user to pick a date/time before the service can enter the cart.
+    final schedule = await showSchedulePickerSheet(
+      context,
+      title: 'Choose your slot',
+      subtitle: 'Pick a date and time, then add to cart',
+      confirmLabel: 'Add to Cart',
+    );
+    if (schedule == null) return; // cancelled
 
+    final offer = _selectedOffer ?? widget.activeOffer;
+    await ref.read(cartProvider.notifier).addService(
+          Map<String, dynamic>.from(widget.service),
+          offerId: offer?['id']?.toString(),
+          offerTitle: offer?['title']?.toString(),
+          discountedPrice: _getEffectivePrice(),
+          scheduledDate: schedule.date,
+          scheduledTime: schedule.time,
+        );
+    if (!mounted) return;
+    _showCartToast('Service added to cart');
+  }
+
+  /// Overlay-based toast that we time ourselves — survives the schedule
+  /// bottom-sheet's pop animation (which dismisses ScaffoldMessenger snackbars).
+  /// Stays for ~10 seconds.
+  void _showCartToast(String message) {
+    final overlay = Overlay.of(context, rootOverlay: true);
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _CartToast(
+        message: message,
+        onViewCart: () {
+          entry.remove();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CartScreen()),
+          );
+        },
+        onDismissed: () {
+          if (entry.mounted) entry.remove();
+        },
+      ),
+    );
+    overlay.insert(entry);
+  }
+
+  Widget _buildAddToCartBar() {
     return Positioned(
-
       bottom: 30,
-
       left: 20,
-
       right: 20,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFFF6CBF).withOpacity(0.25),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(32),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+      child: SafeArea(
+        top: false,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _addToCart,
+            borderRadius: BorderRadius.circular(28),
             child: Container(
-              padding: const EdgeInsets.all(8),
+              height: 60,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFFFF6CBF).withOpacity(0.95),
-                    const Color(0xFFFF8E9E).withOpacity(0.95),
-                  ],
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF0068), Color(0xFFFF6CBF)],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.4),
-                  width: 1,
-                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF0068).withOpacity(0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              child: _SwipeToBookButton(
-                onCompleted: () {
-                  HapticFeedback.heavyImpact();
-                  final serviceToPass = Map<String, dynamic>.from(widget.service);
-                  final offer = _selectedOffer ?? widget.activeOffer;
-                  final offerId = offer?['id']?.toString();
-                  final discountedPrice = _getEffectivePrice();
-                  final basePrice = (widget.service['_base_price'] != null)
-                      ? (double.tryParse(widget.service['_base_price'].toString()) ?? 0)
-                      : (double.tryParse(widget.service['price']?.toString() ?? '0') ?? 0);
-                  if (offerId != null && offer != null) {
-                    serviceToPass['_offer_id'] = offerId;
-                    serviceToPass['_offer_title'] = offer['title']?.toString();
-                    serviceToPass['_base_price'] = basePrice; // For Standard Rate display
-                    serviceToPass['price'] = discountedPrice.toStringAsFixed(0);
-                  }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AppointmentBookingScreen(
-                        service: serviceToPass,
-                        offerId: offerId,
-                        offerDiscountedPrice: offerId != null ? discountedPrice : null,
-                      ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.add_shopping_cart_rounded, color: Colors.white, size: 22),
+                  SizedBox(width: 10),
+                  Text(
+                    'Add to Cart',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.3,
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
     );
-
   }
 
 
@@ -836,137 +865,130 @@ class _ServiceDetailedScreenState extends ConsumerState<ServiceDetailedScreen> {
 
 
 
-// --- Custom Swipe Widget ---
-
-class _SwipeToBookButton extends StatefulWidget {
-
-  final VoidCallback onCompleted;
-
-  const _SwipeToBookButton({required this.onCompleted});
-
-
+class _CartToast extends StatefulWidget {
+  final String message;
+  final VoidCallback onViewCart;
+  final VoidCallback onDismissed;
+  const _CartToast({
+    required this.message,
+    required this.onViewCart,
+    required this.onDismissed,
+  });
 
   @override
-
-  State<_SwipeToBookButton> createState() => _SwipeToBookButtonState();
-
+  State<_CartToast> createState() => _CartToastState();
 }
 
-
-
-class _SwipeToBookButtonState extends State<_SwipeToBookButton> {
-
-  double _dragValue = 0.0;
-  static const double _thumbSize = 52.0;
-  static const double _trackHeight = 56.0;
-
-
+class _CartToastState extends State<_CartToast> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+  late final Animation<Offset> _slide;
+  Timer? _dismissTimer;
 
   @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      duration: const Duration(milliseconds: 240),
+      vsync: this,
+    );
+    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _slide = Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
 
-  Widget build(BuildContext context) {
-
-    return LayoutBuilder(builder: (context, constraints) {
-      final maxWidth = constraints.maxWidth;
-      final slideRange = maxWidth - _thumbSize - 16;
-
-      return SizedBox(
-        height: _trackHeight,
-        child: Stack(
-          alignment: Alignment.centerLeft,
-          children: [
-            Container(
-              width: double.infinity,
-              height: _trackHeight,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(_trackHeight / 2),
-              ),
-            ),
-            Center(
-              child: Text(
-                "Slide to Book",
-                style: TextStyle(
-                  color: Colors.white.withOpacity(_dragValue > 0.5 ? 0.0 : 1.0),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              left: 8 + _dragValue * slideRange,
-              child: GestureDetector(
-
-                onHorizontalDragUpdate: (details) {
-                  setState(() {
-                    _dragValue = (_dragValue + details.delta.dx / slideRange).clamp(0.0, 1.0);
-                  });
-                },
-                onHorizontalDragEnd: (_) {
-                  if (_dragValue > 0.8) {
-
-                    setState(() => _dragValue = 1.0);
-
-                    widget.onCompleted();
-                    Future.delayed(const Duration(milliseconds: 400), () {
-                      if (mounted) setState(() => _dragValue = 0.0);
-
-                    });
-
-                  } else {
-
-                    setState(() => _dragValue = 0.0);
-
-                  }
-
-                },
-
-                child: Container(
-                  width: _thumbSize,
-                  height: _thumbSize,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: Color(0xFFFF6CBF),
-                    size: 20,
-                  ),
-                ),
-
-              ),
-
-            ),
-
-          ],
-
-        ),
-
-      );
-
-    });
-
+    _ctrl.forward();
+    _dismissTimer = Timer(const Duration(seconds: 3), _hide);
   }
 
+  Future<void> _hide() async {
+    if (!mounted) return;
+    await _ctrl.reverse();
+    if (mounted) widget.onDismissed();
+  }
+
+  @override
+  void dispose() {
+    _dismissTimer?.cancel();
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    return Positioned(
+      left: 20,
+      right: 20,
+      bottom: 110 + bottomInset,
+      child: IgnorePointer(
+        ignoring: false,
+        child: FadeTransition(
+          opacity: _opacity,
+          child: SlideTransition(
+            position: _slide,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF0068),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.18),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded,
+                        color: Colors.white, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        _dismissTimer?.cancel();
+                        widget.onViewCart();
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'View Cart',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
-
-
 
 class _StatItem extends StatelessWidget {
 

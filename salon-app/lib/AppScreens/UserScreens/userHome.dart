@@ -23,6 +23,7 @@ import 'Course Screens/CourseDetails.dart';
 import 'Course Screens/CoursesScreen.dart';
 import 'UserNotifications.dart';
 import '../PersonalInfo.dart';
+import '../../widgets/cart_icon_button.dart';
 import '../../services/course_service.dart';
 import '../../services/api_service.dart';
 import '../../providers/auth_provider.dart' as app_auth;
@@ -457,6 +458,11 @@ class _UserHomeState extends ConsumerState<UserHome>
                       ],
                     ),
                   ),
+                ),
+                const CartIconButton(
+                  iconColor: Color(0xFF2D2D3A),
+                  iconSize: 24,
+                  padding: EdgeInsets.only(right: 14),
                 ),
                 GestureDetector(
                   onTap: () => Navigator.push(
