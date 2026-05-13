@@ -16,6 +16,12 @@ router.get('/notifications/token', auth, notificationsController.getToken);
 // Get current user's notifications (for in-app list)
 router.get('/notifications/my', auth, notificationsController.getMyNotifications);
 
+// Mark + delete (scoped to the calling user)
+router.put('/notifications/read-all', auth, notificationsController.markAllAsRead);
+router.put('/notifications/:id/read', auth, notificationsController.markAsRead);
+router.delete('/notifications/my', auth, notificationsController.clearAll);
+router.delete('/notifications/:id', auth, notificationsController.deleteOne);
+
 // Test push – admin only (send test notification to a user)
 router.post('/notifications/test/:userId', auth, hasRole(['Admin', 'Owner']), notificationsController.testPush);
 

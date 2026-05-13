@@ -131,10 +131,10 @@ class NotificationsController {
         return res.json({ success: true, data: [] });
       }
       const result = await query(
-        `SELECT id, title, message, type, is_read, created_at 
-         FROM notifications 
-         WHERE user_id = $1 
-         ORDER BY created_at DESC 
+        `SELECT id, title, message, type, is_read, created_at
+         FROM notifications
+         WHERE user_id = $1
+         ORDER BY created_at DESC
          LIMIT 100`,
         [userId]
       );
@@ -148,6 +148,89 @@ class NotificationsController {
         success: false,
         message: 'Failed to fetch notifications.',
       });
+    }
+  }
+
+  // Mark a single notification as read (scoped to current user).
+  async markAsRead(req, res) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'Unauthorized.' });
+      }
+      const { id } = req.params;
+      const result = await query(
+        `UPDATE notifications SET is_read = TRUE
+         WHERE id = $1 AND user_id = $2
+         RETURNING id`,
+        [id, userId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Notification not found.' });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Mark notification read error:', error);
+      res.status(500).json({ success: false, message: 'Failed to mark as read.' });
+    }
+  }
+
+  // Mark every notification for the current user as read.
+  async markAllAsRead(req, res) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'Unauthorized.' });
+      }
+      const result = await query(
+        `UPDATE notifications SET is_read = TRUE
+         WHERE user_id = $1 AND is_read = FALSE`,
+        [userId]
+      );
+      res.json({ success: true, data: { updated: result.rowCount } });
+    } catch (error) {
+      console.error('Mark all notifications read error:', error);
+      res.status(500).json({ success: false, message: 'Failed to mark all as read.' });
+    }
+  }
+
+  // Delete a single notification (scoped to current user).
+  async deleteOne(req, res) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'Unauthorized.' });
+      }
+      const { id } = req.params;
+      const result = await query(
+        `DELETE FROM notifications WHERE id = $1 AND user_id = $2 RETURNING id`,
+        [id, userId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Notification not found.' });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete notification error:', error);
+      res.status(500).json({ success: false, message: 'Failed to delete notification.' });
+    }
+  }
+
+  // Clear all notifications for the current user.
+  async clearAll(req, res) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'Unauthorized.' });
+      }
+      const result = await query(
+        `DELETE FROM notifications WHERE user_id = $1`,
+        [userId]
+      );
+      res.json({ success: true, data: { deleted: result.rowCount } });
+    } catch (error) {
+      console.error('Clear notifications error:', error);
+      res.status(500).json({ success: false, message: 'Failed to clear notifications.' });
     }
   }
 

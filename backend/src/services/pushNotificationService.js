@@ -77,6 +77,12 @@ async function sendToUser(userId, { title, body, data = {}, type = 'general' }) 
 async function sendToToken(token, { title, body, data = {} }) {
   if (!initFirebase()) return;
   try {
+    // Unique tag per push so multiple notifications fired in quick succession
+    // (e.g. one per cart item) don't collapse into a single tray entry on
+    // Android. Same applies to APNs via `thread-id` — leaving each unique
+    // ensures iOS shows them stacked rather than replaced.
+    const uniqueTag = `notif-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+
     const message = {
       token,
       notification: {
@@ -88,6 +94,8 @@ async function sendToToken(token, { title, body, data = {} }) {
       },
       android: {
         priority: 'high',
+        // No collapseKey — we want every message delivered separately even if
+        // many are queued while the device is offline.
         notification: {
           channelId: 'default',
           priority: 'max',
@@ -95,13 +103,18 @@ async function sendToToken(token, { title, body, data = {} }) {
           defaultVibrateTimings: true,
           visibility: 'public',
           notificationCount: 1,
+          tag: uniqueTag, // Distinct tag = distinct system-tray entry
         },
       },
       apns: {
+        headers: {
+          'apns-collapse-id': uniqueTag, // Per-message identifier (iOS)
+        },
         payload: {
           aps: {
             sound: 'default',
             badge: 1,
+            'thread-id': uniqueTag,
           },
         },
       },
